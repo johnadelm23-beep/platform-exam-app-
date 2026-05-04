@@ -82,12 +82,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: "Email",
                       controller: _emailController,
                       keyboardType: TextInputType.emailAddress,
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
                           return "Email is required";
                         }
-                        if (!value.contains("@") || !value.contains(".")) {
-                          return "Enter a valid email";
+                        final emailRegex = RegExp(
+                          r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
+                        );
+                        if (!emailRegex.hasMatch(v)) {
+                          return "Enter valid email";
                         }
                         return null;
                       },
@@ -99,12 +102,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       hintText: "Password",
                       obscureText: true,
                       controller: _passwordController,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
                           return "Password is required";
                         }
-                        if (value.length < 6) {
-                          return "Password must be at least 6 characters";
+                        if (!RegExp(r'^(?=.*[A-Za-z])(?=.*\d)').hasMatch(v)) {
+                          return "Password must contain letters and numbers";
+                        }
+                        if (v.length < 5) {
+                          return "Wrong password";
                         }
                         return null;
                       },

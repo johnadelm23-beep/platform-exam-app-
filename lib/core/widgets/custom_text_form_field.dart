@@ -28,6 +28,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      style: TextStyle(fontSize: 15.sp),
       autovalidateMode: .onUserInteraction,
       controller: widget.controller,
       maxLines: widget.maxLines,
