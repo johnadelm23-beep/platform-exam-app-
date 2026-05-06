@@ -43,15 +43,6 @@ class _HomeScreenState extends State<HomeScreen> {
               );
             }
 
-            if (state is GetUserDaraError) {
-              return const Center(
-                child: Text(
-                  "Error loading data",
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            }
-
             final user = context.watch<HomeCubit>().userData;
 
             if (user == null) {
@@ -59,6 +50,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: CircularProgressIndicator(color: Colors.white),
               );
             }
+
+            final uid = FirebaseAuth.instance.currentUser!.uid;
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,6 +114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         topRight: Radius.circular(30.r),
                       ),
                     ),
+
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -205,23 +199,26 @@ class _HomeScreenState extends State<HomeScreen> {
 
                         const Divider(),
 
-                        const Text(
-                          "Egtma3na Posts😊",
+                        SizedBox(height: 5.h),
+
+                        Text(
+                          "Egtma3na Posts 😊",
                           style: TextStyle(
-                            fontSize: 20,
+                            fontSize: 20.sp,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
 
                         SizedBox(height: 10.h),
 
-                        /// 📢 POSTS
+                        /// 📢 POSTS WITH LIKE SYSTEM
                         Expanded(
                           child: StreamBuilder<QuerySnapshot>(
                             stream: FirebaseFirestore.instance
                                 .collection("posts")
                                 .orderBy("createdAt", descending: true)
                                 .snapshots(),
+
                             builder: (context, snapshot) {
                               if (snapshot.connectionState ==
                                   ConnectionState.waiting) {
@@ -244,12 +241,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                 itemCount: posts.length,
                                 separatorBuilder: (_, __) =>
                                     SizedBox(height: 10.h),
+
                                 itemBuilder: (context, index) {
+                                  final post = posts[index];
                                   final data =
-                                      posts[index].data()
-                                          as Map<String, dynamic>;
+                                      post.data() as Map<String, dynamic>;
 
                                   final String text = data["text"] ?? "";
+                                  final Map likes = data["likes"] ?? {};
+
+                                  final bool isLiked = likes.containsKey(uid);
+                                  final int likeCount = likes.length;
 
                                   final bool isArabic = RegExp(
                                     r'[\u0600-\u06FF]',
@@ -259,53 +261,125 @@ class _HomeScreenState extends State<HomeScreen> {
                                     textDirection: isArabic
                                         ? TextDirection.rtl
                                         : TextDirection.ltr,
+
                                     child: Container(
                                       padding: EdgeInsets.all(16.r),
                                       decoration: BoxDecoration(
                                         color: Colors.blue.shade50,
                                         borderRadius: BorderRadius.circular(
-                                          12.r,
+                                          14.r,
                                         ),
                                         border: Border.all(
                                           color: Colors.blue.shade100,
                                         ),
                                       ),
-                                      child: Row(
+
+                                      child: Column(
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: [
-                                          Icon(
-                                            Icons.campaign,
-                                            color: Colors.blue,
-                                            size: 22.r,
+                                          /// TEXT
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.campaign,
+                                                color: Colors.blue,
+                                                size: 22.r,
+                                              ),
+                                              SizedBox(width: 10.w),
+                                              Expanded(
+                                                child: Text(
+                                                  text,
+                                                  style: TextStyle(
+                                                    fontSize: 16.sp,
+                                                    fontWeight: FontWeight.w500,
+                                                  ),
+                                                ),
+                                              ),
+                                            ],
                                           ),
 
-                                          SizedBox(width: 10.w),
+                                          SizedBox(height: 12.h),
 
-                                          Expanded(
-                                            child: Text(
-                                              text,
-                                              textAlign: TextAlign.start,
-                                              style: TextStyle(
-                                                fontSize: 16.sp,
-                                                fontWeight: FontWeight.w500,
+                                          /// ❤️ LIKE SECTION
+                                          Row(
+                                            children: [
+                                              GestureDetector(
+                                                onTap: () async {
+                                                  final ref = FirebaseFirestore
+                                                      .instance
+                                                      .collection("posts")
+                                                      .doc(post.id);
+
+                                                  if (isLiked) {
+                                                    await ref.update({
+                                                      "likes.$uid":
+                                                          FieldValue.delete(),
+                                                    });
+                                                  } else {
+                                                    await ref.update({
+                                                      "likes.$uid": true,
+                                                    });
+                                                  }
+                                                },
+
+                                                child: Container(
+                                                  padding: EdgeInsets.symmetric(
+                                                    horizontal: 12.w,
+                                                    vertical: 6.h,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: isLiked
+                                                        ? Colors.red
+                                                              .withOpacity(0.15)
+                                                        : Colors.white,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20.r,
+                                                        ),
+                                                    border: Border.all(
+                                                      color: isLiked
+                                                          ? Colors.red
+                                                          : Colors.grey,
+                                                    ),
+                                                  ),
+                                                  child: Row(
+                                                    children: [
+                                                      Icon(
+                                                        isLiked
+                                                            ? Icons.favorite
+                                                            : Icons
+                                                                  .favorite_border,
+                                                        color: isLiked
+                                                            ? Colors.red
+                                                            : Colors.grey,
+                                                        size: 18.r,
+                                                      ),
+                                                      SizedBox(width: 5.w),
+                                                      Text(
+                                                        "Like",
+                                                        style: TextStyle(
+                                                          color: isLiked
+                                                              ? Colors.red
+                                                              : Colors.grey,
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ),
                                               ),
-                                            ),
+
+                                              SizedBox(width: 10.w),
+
+                                              Text(
+                                                "$likeCount likes",
+                                                style: TextStyle(
+                                                  fontSize: 13.sp,
+                                                  color: Colors.grey,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-
-                                          if (user.isAdmin == true)
-                                            IconButton(
-                                              icon: const Icon(
-                                                IconlyLight.delete,
-                                                color: Colors.red,
-                                              ),
-                                              onPressed: () async {
-                                                await FirebaseFirestore.instance
-                                                    .collection("posts")
-                                                    .doc(posts[index].id)
-                                                    .delete();
-                                              },
-                                            ),
                                         ],
                                       ),
                                     ),
