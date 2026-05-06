@@ -6,6 +6,9 @@ import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
 import 'package:platformexamapp/features/auth/cubit/cubit/auth_cubit.dart';
 import 'package:platformexamapp/features/auth/ui/register_screen.dart';
+import 'package:platformexamapp/features/auth/ui/widgets/custom_container_sigin_with_google.dart';
+import 'package:platformexamapp/features/auth/ui/widgets/custom_text_rich.dart';
+import 'package:platformexamapp/features/home/cubit/cubit/home_cubit.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,41 +30,51 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _submit() {
-    if (_formKey.currentState!.validate()) {
-      context.read<AuthCubit>().login(
-        _emailController.text,
-        _passwordController.text,
-      );
-    }
+  void _showLoading() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.primaryColor),
+      ),
+    );
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
-
+      resizeToAvoidBottomInset: true,
+      backgroundColor: Colors.indigo.shade500,
       body: SafeArea(
-        child: Column(
-          children: [
-            Expanded(
-              flex: 3,
-              child: Center(
-                child: Image.asset(
-                  "assets/images/background.png",
-                  width: 220.w,
-                  // fit: BoxFit.contain,
-                ),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            children: [
+              SizedBox(height: 20.h),
+
+              /// 🖼️ Image
+              Image.asset(
+                'assets/images/background.png',
+                width: 270.w,
+                height: 270.h,
               ),
-            ),
 
-            Expanded(
-              flex: 5,
-              child: Container(
+              SizedBox(height: 20.h),
+
+              /// ⚪ FORM CONTAINER
+              Container(
                 width: double.infinity,
-
                 padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
-
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.only(
@@ -69,146 +82,138 @@ class _LoginScreenState extends State<LoginScreen> {
                     topRight: Radius.circular(25.r),
                   ),
                 ),
-
-                child: SingleChildScrollView(
-                  child: Column(
-                    children: [
-                      Form(
-                        key: _formKey,
-                        child: Column(
-                          children: [
-                            Text(
-                              "Welcome back 👋",
-                              style: TextStyle(
-                                fontSize: 26.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            SizedBox(height: 25.h),
-
-                            CustomTextFormField(
-                              hintText: "Email",
-                              controller: _emailController,
-                              keyboardType: .emailAddress,
-                              validator: (v) {
-                                if (v == null || v.isEmpty) {
-                                  return "Email is required";
-                                }
-                                final emailRegex = RegExp(
-                                  r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                                );
-                                if (!emailRegex.hasMatch(v)) {
-                                  return "Enter valid email";
-                                }
-                                return null;
-                              },
-                            ),
-
-                            SizedBox(height: 12.h),
-
-                            CustomTextFormField(
-                              hintText: "Password",
-                              keyboardType: .visiblePassword,
-                              obscureText: true,
-                              controller: _passwordController,
-                              validator: (value) {
-                                if (value == null || value.isEmpty) {
-                                  return "Password is required";
-                                }
-                                return null;
-                              },
-                            ),
-
-                            SizedBox(height: 25.h),
-
-                            BlocListener<AuthCubit, AuthState>(
-                              listener: (context, state) {
-                                if (state is AuthLoadingState) {
-                                  showDialog(
-                                    context: context,
-                                    barrierDismissible: false,
-                                    builder: (_) => const Center(
-                                      child: CircularProgressIndicator(),
-                                    ),
-                                  );
-                                }
-
-                                if (state is AuthSuccessState) {
-                                  Navigator.pop(context);
-
-                                  WidgetsBinding.instance.addPostFrameCallback((
-                                    _,
-                                  ) {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => HomeScreen(),
-                                      ),
-                                      (route) => false,
-                                    );
-                                  });
-                                }
-
-                                if (state is AuthErrorState) {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(state.errorMessage),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                }
-                              },
-
-                              child: SizedBox(
-                                width: double.infinity,
-                                child: AppButton(
-                                  text: "Login",
-                                  onPressed: _submit,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "Welcome back 👋",
+                      style: TextStyle(
+                        fontSize: 24.sp,
+                        fontWeight: FontWeight.bold,
                       ),
+                    ),
 
-                      SizedBox(height: 20.h),
+                    SizedBox(height: 25.h),
 
-                      InkWell(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (c) => const RegisterScreen(),
-                            ),
-                          );
-                        },
-                        child: Text.rich(
-                          TextSpan(
-                            children: [
-                              TextSpan(
-                                text: "Don't have an account? ",
-                                style: TextStyle(fontSize: 18.sp),
-                              ),
-                              TextSpan(
-                                text: "Sign up",
-                                style: TextStyle(
-                                  fontSize: 18.sp,
-                                  color: AppColors.primaryColor,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
+                    /// 🧾 FORM
+                    Form(
+                      key: _formKey,
+                      child: Column(
+                        children: [
+                          CustomTextFormField(
+                            hintText: "Email",
+                            controller: _emailController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Email is required";
+                              }
+                              if (!value.contains("@")) {
+                                return "Enter valid email";
+                              }
+                              return null;
+                            },
                           ),
-                        ),
+
+                          SizedBox(height: 12.h),
+
+                          CustomTextFormField(
+                            hintText: "Password",
+                            controller: _passwordController,
+                            obscureText: true,
+                            keyboardType: TextInputType.visiblePassword,
+                            validator: (value) {
+                              if (value == null || value.isEmpty) {
+                                return "Password is required";
+                              }
+                              return null;
+                            },
+                          ),
+
+                          SizedBox(height: 25.h),
+
+                          /// 🔥 LOGIN BUTTON + LISTENER
+                          BlocListener<AuthCubit, AuthState>(
+                            listener: (context, state) {
+                              if (state is AuthLoading) {
+                                _showLoading();
+                              }
+
+                              if (state is AuthSuccess) {
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).pop();
+
+                                Navigator.pushAndRemoveUntil(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const HomeScreen(),
+                                  ),
+                                  (route) => false,
+                                );
+                                //  context.read<HomeCubit>().getUserData();
+                              }
+
+                              if (state is AuthError) {
+                                Navigator.of(
+                                  context,
+                                  rootNavigator: true,
+                                ).pop();
+
+                                _showError(state.errorMessage);
+                              }
+                            },
+                            child: SizedBox(
+                              width: double.infinity,
+                              child: AppButton(
+                                text: "Login",
+                                onPressed: () {
+                                  if (_formKey.currentState!.validate()) {
+                                    context.read<AuthCubit>().login(
+                                      _emailController.text,
+                                      _passwordController.text,
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+
+                    SizedBox(height: 10.h),
+
+                    /// 🔵 GOOGLE
+                    CustomContainerSiginWithGoogle(
+                      onTap: () {
+                        context.read<AuthCubit>().signInWithGoogle();
+                      },
+                    ),
+
+                    SizedBox(height: 20.h),
+
+                    /// 🔗 REGISTER
+                    InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => const RegisterScreen(),
+                          ),
+                        );
+                      },
+                      child: CustomTextRich(
+                        text1: "Dont't have an account? ",
+                        text2: "Sign up",
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
