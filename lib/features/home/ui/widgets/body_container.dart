@@ -13,8 +13,36 @@ import 'package:platformexamapp/features/states/ui/states_screen.dart';
 
 class BodyContainer extends StatelessWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
+
   final String uid;
   final UserData user;
+
+  /// 🔥 عدد الامتحانات اللي المستخدم لسه ما امتحنهاش
+  Stream<int> getUnattemptedExamsCount() {
+    return FirebaseFirestore.instance.collection("exams").snapshots().asyncMap((
+      examSnapshot,
+    ) async {
+      final exams = examSnapshot.docs;
+
+      final attempts = await FirebaseFirestore.instance
+          .collection("examAttempts")
+          .where("userId", isEqualTo: uid)
+          .get();
+
+      final attemptedExamIds = attempts.docs.map((e) => e["examId"]).toSet();
+
+      int count = 0;
+
+      for (var exam in exams) {
+        if (!attemptedExamIds.contains(exam.id)) {
+          count++;
+        }
+      }
+
+      return count;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -38,28 +66,76 @@ class BodyContainer extends StatelessWidget {
           SizedBox(height: 10.h),
 
           SizedBox(
-            height: 270.h,
-            child: GridView.count(
-              crossAxisCount: 2,
-              crossAxisSpacing: 12,
-              mainAxisSpacing: 12,
-              children: [
-                CustomContainer(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (c) => ExamsScreen(user: user),
-                      ),
-                    );
-                  },
-                  title: "Exams",
-                  icon: IconlyLight.document,
-                  color: Colors.green,
-                ),
+            height: 260.h,
+            child: GridView.builder(
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: user.isAdmin == true ? 4 : 3,
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 2,
+                crossAxisSpacing: 12,
+                mainAxisSpacing: 12,
+                childAspectRatio: 1,
+              ),
+              itemBuilder: (context, index) {
+                final items = [
+                  "exams",
+                  if (user.isAdmin == true) "dashboard",
+                  "results",
+                  "profile",
+                ];
 
-                if (user.isAdmin == true)
-                  CustomContainer(
+                final item = items[index];
+
+                if (item == "exams") {
+                  return StreamBuilder<int>(
+                    stream: getUnattemptedExamsCount(),
+                    builder: (context, snapshot) {
+                      final newCount = snapshot.data ?? 0;
+
+                      return Stack(
+                        children: [
+                          CustomContainer(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (c) => ExamsScreen(user: user),
+                                ),
+                              );
+                            },
+                            title: "Exams",
+                            icon: IconlyLight.document,
+                            color: Colors.green,
+                          ),
+
+                          if (newCount > 0)
+                            Positioned(
+                              right: 5,
+                              top: 5,
+                              child: Container(
+                                padding: EdgeInsets.all(6.r),
+                                decoration: const BoxDecoration(
+                                  color: Colors.red,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Text(
+                                  "$newCount",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 12.sp,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                        ],
+                      );
+                    },
+                  );
+                }
+
+                if (item == "dashboard") {
+                  return CustomContainer(
                     onTap: () {
                       Navigator.push(
                         context,
@@ -71,21 +147,24 @@ class BodyContainer extends StatelessWidget {
                     title: "Dashboard",
                     icon: IconlyLight.setting,
                     color: Colors.indigo,
-                  ),
+                  );
+                }
 
-                CustomContainer(
-                  title: "Results",
-                  icon: IconlyLight.chart,
-                  color: Colors.blue,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (c) => LeaderboardScreen()),
-                    );
-                  },
-                ),
+                if (item == "results") {
+                  return CustomContainer(
+                    title: "Results",
+                    icon: IconlyLight.chart,
+                    color: Colors.blue,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (c) => LeaderboardScreen()),
+                      );
+                    },
+                  );
+                }
 
-                CustomContainer(
+                return CustomContainer(
                   title: "Profile",
                   icon: IconlyLight.profile,
                   color: Colors.red,
@@ -95,8 +174,8 @@ class BodyContainer extends StatelessWidget {
                       MaterialPageRoute(builder: (c) => ProfileScreen()),
                     );
                   },
-                ),
-              ],
+                );
+              },
             ),
           ),
 
@@ -130,14 +209,12 @@ class BodyContainer extends StatelessWidget {
                     child: Lottie.asset("assets/lottie/not found.json"),
                   );
                 }
-
                 return ListView.separated(
                   itemCount: posts.length,
                   separatorBuilder: (_, __) => SizedBox(height: 10.h),
                   itemBuilder: (context, index) {
                     final post = posts[index];
                     final data = post.data() as Map<String, dynamic>;
-
                     final text = data["text"] ?? "";
                     final Map likes = data["likes"] ?? {};
                     final isLiked = likes.containsKey(uid);

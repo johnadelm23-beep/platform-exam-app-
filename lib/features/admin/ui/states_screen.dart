@@ -56,6 +56,7 @@ class ScoresStatisticsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Dialog(
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
@@ -91,7 +92,13 @@ class ScoresStatisticsScreen extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
+                        child: Text(
+                          "Cancel",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                     ),
 
@@ -106,9 +113,12 @@ class ScoresStatisticsScreen extends StatelessWidget {
                           Navigator.pop(context);
                           onDelete();
                         },
-                        child: const Text(
+                        child: Text(
                           "Delete",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                          ),
                         ),
                       ),
                     ),

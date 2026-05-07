@@ -78,7 +78,7 @@ class TopUsersScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      "Top Interactios❤️",
+                      "Top Interactions❤️",
                       style: TextStyle(
                         fontSize: 26.sp,
                         color: Colors.white,
