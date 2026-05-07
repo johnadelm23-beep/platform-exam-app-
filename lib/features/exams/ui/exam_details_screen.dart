@@ -337,8 +337,6 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
     );
   }
 
-  // ---------------- PROFESSIONAL DIALOGS ----------------
-
   void showAlreadyTakenDialog() {
     showDialog(
       context: context,

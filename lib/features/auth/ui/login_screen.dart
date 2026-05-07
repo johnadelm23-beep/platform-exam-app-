@@ -8,7 +8,6 @@ import 'package:platformexamapp/features/auth/cubit/cubit/auth_cubit.dart';
 import 'package:platformexamapp/features/auth/ui/register_screen.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_container_sigin_with_google.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_text_rich.dart';
-import 'package:platformexamapp/features/home/cubit/cubit/home_cubit.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
 
 class LoginScreen extends StatefulWidget {

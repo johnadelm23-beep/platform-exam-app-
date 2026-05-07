@@ -1,12 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:iconly/iconly.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
-import 'package:platformexamapp/features/exams/exam_details_screen.dart';
+import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
 
 class ExamsScreen extends StatelessWidget {
   const ExamsScreen({super.key, required this.user});

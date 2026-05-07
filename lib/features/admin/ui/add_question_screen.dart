@@ -1,6 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:iconly/iconly.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
@@ -60,21 +60,22 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: EdgeInsets.all(16.r),
         child: Column(
           spacing: 10,
           children: [
             CustomTextFormField(
               hintText: "add question",
               controller: questionController,
+              maxLines: 3,
             ),
-            const SizedBox(height: 15),
+            SizedBox(height: 15.h),
 
             CustomTextFormField(hintText: "Option 1", controller: option1),
             CustomTextFormField(hintText: "Option 2", controller: option2),
             CustomTextFormField(hintText: "Option 3", controller: option3),
             CustomTextFormField(hintText: "Option 4", controller: option4),
-            const SizedBox(height: 15),
+            SizedBox(height: 15.r),
 
             DropdownButton<int>(
               focusColor: Colors.white,
@@ -92,11 +93,11 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
               },
             ),
 
-            const SizedBox(height: 20),
+            SizedBox(height: 20.h),
 
             AppButton(onPressed: addQuestion, text: "Add Question"),
 
-            const SizedBox(height: 10),
+            SizedBox(height: 10.h),
 
             AppButton(
               onPressed: () {

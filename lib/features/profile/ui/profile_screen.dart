@@ -1,16 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/features/profile/ui/widgets/custom_app_bar_profile.dart';
+import 'package:platformexamapp/features/profile/ui/widgets/custom_body_container.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
-
-  static final Map<String, String> examCache = {};
-
-  /// 👤 name
   Future<String> getUserName() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -22,7 +19,6 @@ class ProfileScreen extends StatelessWidget {
     return doc.data()?["name"] ?? "Unknown";
   }
 
-  /// 📊 user attempts
   Stream<QuerySnapshot> getUserAttempts() {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
@@ -32,22 +28,6 @@ class ProfileScreen extends StatelessWidget {
         .snapshots();
   }
 
-  /// 📘 exam name
-  Future<String> getExamName(String examId) async {
-    if (examCache.containsKey(examId)) return examCache[examId]!;
-
-    final doc = await FirebaseFirestore.instance
-        .collection("exams")
-        .doc(examId)
-        .get();
-
-    final name = doc.data()?["title"] ?? "Unknown Exam";
-    examCache[examId] = name;
-
-    return name;
-  }
-
-  /// 🔥 total score
   int getTotalScore(List<QueryDocumentSnapshot> docs) {
     int total = 0;
     for (var doc in docs) {
@@ -57,7 +37,6 @@ class ProfileScreen extends StatelessWidget {
     return total;
   }
 
-  /// 🏆 REAL RANK
   Future<int> getUserRank(String uid) async {
     final snap = await FirebaseFirestore.instance
         .collection("examAttempts")
@@ -132,171 +111,13 @@ class ProfileScreen extends StatelessWidget {
 
                   return Column(
                     children: [
-                      /// 🟦 HEADER
-                      Container(
-                        width: double.infinity,
-                        padding: EdgeInsets.symmetric(
-                          vertical: 25.h,
-                          horizontal: 16.w,
-                        ),
-                        decoration: const BoxDecoration(
-                          color: AppColors.primaryColor,
-                        ),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 35.r,
-                              backgroundColor: Colors.white,
-                              child: Text(
-                                name.isNotEmpty ? name[0].toUpperCase() : "U",
-                                style: TextStyle(
-                                  fontSize: 22.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryColor,
-                                ),
-                              ),
-                            ),
-
-                            SizedBox(height: 10.h),
-
-                            Text(
-                              name,
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 20.sp,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-
-                            SizedBox(height: 12.h),
-
-                            /// 📊 STATS (Responsive)
-                            Wrap(
-                              spacing: 12.w,
-                              runSpacing: 10.h,
-                              alignment: WrapAlignment.center,
-                              children: [
-                                _buildStat("Score", "$totalScore"),
-                                _buildStat("Exams", "${docs.length}"),
-                                _buildStat("Rank", "#$rank"),
-                              ],
-                            ),
-                          ],
-                        ),
+                      CustomAppBarProfile(
+                        name: name,
+                        totalScore: totalScore,
+                        docs: docs,
+                        rank: rank,
                       ),
-
-                      /// 📦 BODY
-                      Expanded(
-                        child: Container(
-                          width: double.infinity,
-                          padding: EdgeInsets.all(16.w),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.only(
-                              topLeft: Radius.circular(30.r),
-                              topRight: Radius.circular(30.r),
-                            ),
-                          ),
-
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "My Exams",
-                                style: TextStyle(
-                                  fontSize: 20.sp,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-
-                              SizedBox(height: 15.h),
-
-                              Expanded(
-                                child: ListView.separated(
-                                  itemCount: docs.length,
-                                  separatorBuilder: (_, __) =>
-                                      SizedBox(height: 12.h),
-                                  itemBuilder: (context, index) {
-                                    final doc = docs[index];
-                                    final data =
-                                        doc.data() as Map<String, dynamic>;
-
-                                    final examId = data["examId"];
-                                    final score = data["score"] ?? 0;
-
-                                    return FutureBuilder<String>(
-                                      future: getExamName(examId),
-                                      builder: (context, examSnap) {
-                                        final examName =
-                                            examSnap.data ?? "Loading...";
-
-                                        return Container(
-                                          padding: EdgeInsets.all(16.w),
-                                          decoration: BoxDecoration(
-                                            color: Colors.white,
-                                            borderRadius: BorderRadius.circular(
-                                              16.r,
-                                            ),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: Colors.black.withOpacity(
-                                                  0.05,
-                                                ),
-                                                blurRadius: 10,
-                                                offset: const Offset(0, 4),
-                                              ),
-                                            ],
-                                          ),
-
-                                          child: Row(
-                                            children: [
-                                              Icon(
-                                                Icons.book,
-                                                color: AppColors.primaryColor,
-                                              ),
-
-                                              SizedBox(width: 10.w),
-
-                                              Expanded(
-                                                child: Text(
-                                                  examName,
-                                                  style: TextStyle(
-                                                    fontSize: 15.sp,
-                                                  ),
-                                                ),
-                                              ),
-
-                                              Container(
-                                                padding: EdgeInsets.symmetric(
-                                                  horizontal: 12.w,
-                                                  vertical: 6.h,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.green
-                                                      .withOpacity(0.2),
-                                                  borderRadius:
-                                                      BorderRadius.circular(8),
-                                                ),
-                                                child: Text(
-                                                  "$score",
-                                                  style: const TextStyle(
-                                                    color: Colors.green,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ),
+                      Expanded(child: CustomBodyContainer(docs: docs)),
                     ],
                   );
                 },
@@ -304,34 +125,6 @@ class ProfileScreen extends StatelessWidget {
             },
           );
         },
-      ),
-    );
-  }
-
-  /// 📊 STAT WIDGET (Responsive)
-  Widget _buildStat(String title, String value) {
-    return Container(
-      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.15),
-        borderRadius: BorderRadius.circular(12.r),
-      ),
-      child: Column(
-        children: [
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 16.sp,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          SizedBox(height: 3.h),
-          Text(
-            title,
-            style: TextStyle(color: Colors.white70, fontSize: 12.sp),
-          ),
-        ],
       ),
     );
   }
