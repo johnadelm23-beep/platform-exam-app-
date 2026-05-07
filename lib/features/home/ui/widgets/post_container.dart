@@ -53,8 +53,6 @@ class PostContainer extends StatelessWidget {
                     ),
                   ),
                 ),
-
-                /// 🛑 DELETE (ADMIN ONLY)
                 if (user.isAdmin == true)
                   IconButton(
                     icon: Icon(IconlyLight.delete, color: Colors.red),
@@ -65,7 +63,6 @@ class PostContainer extends StatelessWidget {
 
             SizedBox(height: 10.h),
 
-            /// ❤️ LIKE
             Row(
               children: [
                 GestureDetector(
@@ -103,7 +100,6 @@ class PostContainer extends StatelessWidget {
     );
   }
 
-  /// 🔥 DELETE DIALOG
   void _showDeleteDialog(BuildContext context) {
     showDialog(
       context: context,
@@ -121,6 +117,7 @@ class PostContainer extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(15.r),
                 decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
                   color: Colors.red.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
@@ -187,10 +184,8 @@ class PostContainer extends StatelessWidget {
   }
 
   Future<void> _deletePost(BuildContext context) async {
-    Navigator.pop(context); // يقفل confirmation dialog
-
+    Navigator.pop(context);
     final messenger = ScaffoldMessenger.of(context);
-
     try {
       messenger.showSnackBar(
         const SnackBar(
@@ -198,12 +193,10 @@ class PostContainer extends StatelessWidget {
           duration: Duration(seconds: 1),
         ),
       );
-
       await FirebaseFirestore.instance
           .collection("posts")
           .doc(post.id)
           .delete();
-
       if (context.mounted) {
         messenger.showSnackBar(
           const SnackBar(

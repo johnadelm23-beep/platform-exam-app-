@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
 import 'package:lottie/lottie.dart';
+import 'package:iconly/iconly.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
@@ -24,6 +24,7 @@ class ExamsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         return Dialog(
+          backgroundColor: AppColors.whiteColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20.r),
           ),
@@ -49,7 +50,7 @@ class ExamsScreen extends StatelessWidget {
                 Text(
                   "This action cannot be undone.",
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14.sp, color: Colors.grey),
+                  style: TextStyle(fontSize: 14.sp, color: Colors.black),
                 ),
 
                 SizedBox(height: 20.h),
@@ -59,7 +60,13 @@ class ExamsScreen extends StatelessWidget {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () => Navigator.pop(context),
-                        child: const Text("Cancel"),
+                        child: Text(
+                          "Cancel",
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            color: Colors.black,
+                          ),
+                        ),
                       ),
                     ),
                     SizedBox(width: 10.w),
@@ -67,17 +74,17 @@ class ExamsScreen extends StatelessWidget {
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10.r),
-                          ),
                         ),
                         onPressed: () {
                           Navigator.pop(context);
                           deleteExam(context, examId);
                         },
-                        child: const Text(
+                        child: Text(
                           "Delete",
-                          style: TextStyle(color: Colors.white),
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18.sp,
+                          ),
                         ),
                       ),
                     ),
@@ -94,146 +101,178 @@ class ExamsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.primaryColor,
 
-      appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Text(
-          "Available Exams",
-          style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-        ),
-      ),
+      body: SafeArea(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            /// HEADER (no logout button anymore)
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              child: Text(
+                "Exams",
+                style: TextStyle(
+                  fontSize: 26.sp,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
 
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection("exams").snapshots(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return Center(child: Lottie.asset("assets/lottie/Empty.json"));
-          }
-
-          final exams = snapshot.data!.docs;
-
-          return ListView.separated(
-            padding: EdgeInsets.all(16.r),
-            itemCount: exams.length,
-            separatorBuilder: (_, __) => SizedBox(height: 12.h),
-
-            itemBuilder: (context, index) {
-              final exam = exams[index];
-
-              return GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => ExamDetailsScreen(
-                        examId: exam.id,
-                        title: exam["title"],
-                        time: exam["time"],
-                      ),
-                    ),
-                  );
-                },
-
-                child: Container(
-                  padding: EdgeInsets.all(16.r),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(18.r),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withOpacity(0.06),
-                        blurRadius: 12,
-                        offset: const Offset(0, 6),
-                      ),
-                    ],
+            /// BODY
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(30.r),
+                    topRight: Radius.circular(30.r),
                   ),
+                ),
 
-                  child: Row(
-                    children: [
-                      /// ICON
-                      Container(
-                        padding: EdgeInsets.all(12.r),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.blue.withOpacity(0.2),
-                              Colors.blue.withOpacity(0.05),
-                            ],
-                          ),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.assignment_rounded,
-                          color: Colors.blue,
-                        ),
-                      ),
+                child: StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("exams")
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
 
-                      SizedBox(width: 12.w),
-
-                      /// TITLE + TIME
-                      Expanded(
+                    if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                      return Center(
                         child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
+                            Lottie.asset(
+                              "assets/lottie/Empty.json",
+                              height: 180.h,
+                            ),
+                            SizedBox(height: 10.h),
                             Text(
-                              exam["title"] ?? "",
+                              "No Exams Yet",
                               style: TextStyle(
-                                fontSize: 17.sp,
+                                fontSize: 18.sp,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                          ],
+                        ),
+                      );
+                    }
 
-                            SizedBox(height: 6.h),
+                    final exams = snapshot.data!.docs;
 
-                            Row(
-                              children: [
-                                Icon(
-                                  Icons.timer,
-                                  size: 16.r,
-                                  color: Colors.grey,
+                    return ListView.separated(
+                      itemCount: exams.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+
+                      itemBuilder: (context, index) {
+                        final exam = exams[index];
+
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => ExamDetailsScreen(
+                                  examId: exam.id,
+                                  title: exam["title"],
+                                  time: exam["time"],
                                 ),
-                                SizedBox(width: 5.w),
-                                Text(
-                                  "${exam["time"]} min",
-                                  style: TextStyle(
-                                    fontSize: 13.sp,
-                                    color: Colors.grey,
-                                  ),
+                              ),
+                            );
+                          },
+
+                          child: Container(
+                            padding: EdgeInsets.all(16.r),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(20.r),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
-                          ],
-                        ),
-                      ),
 
-                      /// ADMIN DELETE
-                      if (user.isAdmin == true)
-                        IconButton(
-                          icon: const Icon(
-                            IconlyLight.delete,
-                            color: Colors.red,
+                            child: Row(
+                              children: [
+                                Container(
+                                  padding: EdgeInsets.all(12.r),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.primaryColor.withOpacity(
+                                      0.1,
+                                    ),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Icon(
+                                    Icons.assignment,
+                                    color: AppColors.primaryColor,
+                                  ),
+                                ),
+
+                                SizedBox(width: 12.w),
+
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        exam["title"],
+                                        style: TextStyle(
+                                          fontSize: 17.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                      SizedBox(height: 6.h),
+                                      Row(
+                                        children: [
+                                          Icon(
+                                            Icons.timer,
+                                            size: 16.r,
+                                            color: Colors.grey,
+                                          ),
+                                          SizedBox(width: 5.w),
+                                          Text(
+                                            "${exam["time"]} min",
+                                            style: TextStyle(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ],
+                                  ),
+                                ),
+
+                                if (user.isAdmin == true)
+                                  IconButton(
+                                    onPressed: () =>
+                                        showDeleteDialog(context, exam.id),
+                                    icon: const Icon(
+                                      IconlyLight.delete,
+                                      color: Colors.red,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
-                          onPressed: () {
-                            showDeleteDialog(context, exam.id);
-                          },
-                        ),
-                    ],
-                  ),
+                        );
+                      },
+                    );
+                  },
                 ),
-              );
-            },
-          );
-        },
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

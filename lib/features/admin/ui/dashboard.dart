@@ -5,6 +5,7 @@ import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/admin/ui/add_exam_screen.dart';
 import 'package:platformexamapp/features/admin/ui/add_post_screen.dart';
 import 'package:platformexamapp/features/admin/ui/states_screen.dart';
+import 'package:platformexamapp/features/admin/ui/top_user_interact.dart';
 import 'package:platformexamapp/features/admin/ui/users_screen.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/home/ui/widgets/custom_container.dart';
@@ -24,9 +25,20 @@ class AdminDashboardScreen extends StatelessWidget {
               padding: EdgeInsets.all(16.w),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () => Navigator.pop(context),
-                    icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
                   ),
                   SizedBox(width: 10.w),
                   Text(
@@ -59,7 +71,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   children: [
                     CustomContainer(
                       title: "Add Exam",
-                      icon: Icons.add_box,
+                      icon: IconlyLight.plus,
                       color: Colors.green,
                       onTap: () {
                         Navigator.push(
@@ -84,7 +96,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
                     CustomContainer(
                       title: "Stats",
-                      icon: Icons.bar_chart,
+                      icon: IconlyLight.chart,
                       color: Colors.purple,
                       onTap: () {
                         Navigator.push(
@@ -103,6 +115,17 @@ class AdminDashboardScreen extends StatelessWidget {
                         Navigator.push(
                           context,
                           MaterialPageRoute(builder: (c) => AddPostScreen()),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "Top Interactions",
+                      icon: IconlyBold.heart,
+                      color: Colors.red,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (c) => TopUsersScreen()),
                         );
                       },
                     ),

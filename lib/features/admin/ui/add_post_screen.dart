@@ -14,18 +14,26 @@ class AddPostScreen extends StatefulWidget {
 
 class _AddPostScreenState extends State<AddPostScreen> {
   final _postController = TextEditingController();
-  final _formKey = GlobalKey<FormState>();
-
   bool isLoading = false;
 
-  @override
-  void dispose() {
-    _postController.dispose();
-    super.dispose();
+  /// ================= VALIDATION =================
+  bool validate() {
+    if (_postController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Post cannot be empty"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return false;
+    }
+    return true;
   }
 
+  /// ================= ADD POST =================
   Future<void> addPost() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!validate()) return;
 
     setState(() => isLoading = true);
 
@@ -41,14 +49,18 @@ class _AddPostScreenState extends State<AddPostScreen> {
       if (!mounted) return;
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Post added successfully ✅")),
+        const SnackBar(
+          content: Text("Post added successfully"),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
       );
 
       Navigator.pop(context);
     } catch (e) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text("Error: $e")));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+      );
     }
 
     setState(() => isLoading = false);
@@ -57,64 +69,133 @@ class _AddPostScreenState extends State<AddPostScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios),
-        ),
-        title: Text(
-          "Create a post",
-          style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-      ),
-
-      backgroundColor: AppColors.whiteColor,
+      backgroundColor: AppColors.primaryColor,
 
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: EdgeInsets.all(16.r),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              children: [
-                SizedBox(height: 10.h),
-
-                /// 🖼️ image
-                Image.asset(
-                  'assets/images/background.png',
-                  width: 120.w,
-                  height: 120.h,
+        child: Column(
+          children: [
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryColor,
+                    AppColors.primaryColor.withOpacity(0.85),
+                  ],
                 ),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
 
-                SizedBox(height: 30.h),
+                  SizedBox(width: 12.w),
 
-                /// ✍️ input
-                CustomTextFormField(
-                  hintText: "Write something for church...",
-                  keyboardType: TextInputType.text,
-                  controller: _postController,
-                  maxLines: 6,
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return "Post cannot be empty";
-                    }
-                    return null;
-                  },
-                ),
-
-                SizedBox(height: 40.h),
-
-                /// 🚀 button
-                AppButton(
-                  text: isLoading ? "Posting..." : "Add Post",
-                  onPressed: isLoading ? null : addPost,
-                ),
-              ],
+                  Text(
+                    "Create Post",
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
+
+            /// ⚪ BODY
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25.r),
+                    topRight: Radius.circular(25.r),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      SizedBox(height: 10.h),
+                      Container(
+                        padding: EdgeInsets.all(16.r),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16.r),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black12,
+                              blurRadius: 8,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          children: [
+                            Image.asset(
+                              'assets/images/background.png',
+                              height: 120.h,
+                            ),
+
+                            SizedBox(height: 10.h),
+
+                            Text(
+                              "Share something 🙏",
+                              style: TextStyle(
+                                fontSize: 20.sp,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+
+                            SizedBox(height: 5.h),
+
+                            Text(
+                              "Write a post for the church community",
+                              textAlign: TextAlign.center,
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      SizedBox(height: 20.h),
+
+                      CustomTextFormField(
+                        hintText: "Write something for church...",
+                        controller: _postController,
+                        maxLines: 6,
+                      ),
+
+                      SizedBox(height: 30.h),
+
+                      AppButton(
+                        text: isLoading ? "Posting..." : "Add Post",
+                        onPressed: isLoading ? null : addPost,
+                      ),
+
+                      SizedBox(height: 20.h),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

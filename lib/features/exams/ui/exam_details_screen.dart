@@ -23,7 +23,8 @@ class ExamDetailsScreen extends StatefulWidget {
   State<ExamDetailsScreen> createState() => _ExamDetailsScreenState();
 }
 
-class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
+class _ExamDetailsScreenState extends State<ExamDetailsScreen>
+    with WidgetsBindingObserver {
   int remainingSeconds = 0;
   Timer? timer;
 
@@ -39,23 +40,58 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     initExam();
   }
 
-  // ---------------- INIT ----------------
+  // ================= LIFECYCLE CONTROL =================
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
 
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.detached) {
+      // 🔥 المستخدم خرج من التطبيق
+      FirebaseFirestore.instance
+          .collection("examAttempts")
+          .doc("${uid}_${widget.examId}")
+          .set({
+            "userId": uid,
+            "examId": widget.examId,
+            "abandoned": true,
+            "timestamp": FieldValue.serverTimestamp(),
+          }, SetOptions(merge: true));
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      checkIfAbandoned();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    timer?.cancel();
+    super.dispose();
+  }
+
+  // ================= INIT =================
   Future<void> initExam() async {
-    await checkIfUserAlreadyTookExam();
-    await loadQuestions();
+    final blocked = await checkIfUserAlreadyTookExam();
 
-    if (!mounted) return;
+    if (blocked) return;
+
+    await loadQuestions();
 
     if (questions.isNotEmpty) {
       startTimer(widget.time);
     }
+
+    setState(() => isLoaded = true);
   }
 
-  Future<void> checkIfUserAlreadyTookExam() async {
+  Future<bool> checkIfUserAlreadyTookExam() async {
     final uid = FirebaseAuth.instance.currentUser!.uid;
 
     final doc = await FirebaseFirestore.instance
@@ -67,9 +103,32 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         showAlreadyTakenDialog();
       });
+      return true;
+    }
+
+    return false;
+  }
+
+  Future<void> checkIfAbandoned() async {
+    final uid = FirebaseAuth.instance.currentUser!.uid;
+
+    final doc = await FirebaseFirestore.instance
+        .collection("examAttempts")
+        .doc("${uid}_${widget.examId}")
+        .get();
+
+    final data = doc.data();
+
+    if (data != null && data["abandoned"] == true && mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        (route) => false,
+      );
     }
   }
 
+  // ================= LOAD QUESTIONS =================
   Future<void> loadQuestions() async {
     final snap = await FirebaseFirestore.instance
         .collection("exams")
@@ -78,14 +137,9 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
         .get();
 
     questions = snap.docs;
-
-    setState(() {
-      isLoaded = true;
-    });
   }
 
-  // ---------------- TIMER ----------------
-
+  // ================= TIMER =================
   void startTimer(int minutes) {
     remainingSeconds = minutes * 60;
 
@@ -102,26 +156,25 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
   }
 
   String formatTime(int seconds) {
-    final min = seconds ~/ 60;
-    final sec = seconds % 60;
-    return "$min:${sec.toString().padLeft(2, '0')}";
+    final m = seconds ~/ 60;
+    final s = seconds % 60;
+    return "$m:${s.toString().padLeft(2, '0')}";
   }
 
-  // ---------------- ANSWERS ----------------
-
+  // ================= ANSWERS =================
   void selectAnswer(int index) {
     setState(() {
       selectedAnswers[currentIndex] = index;
     });
   }
 
-  void nextQuestion() {
+  void next() {
     if (currentIndex < questions.length - 1) {
       setState(() => currentIndex++);
     }
   }
 
-  void previousQuestion() {
+  void prev() {
     if (currentIndex > 0) {
       setState(() => currentIndex--);
     }
@@ -131,15 +184,13 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
     score = 0;
 
     for (int i = 0; i < questions.length; i++) {
-      final correct = questions[i]["correctAnswer"];
-      if (selectedAnswers[i] == correct) {
+      if (selectedAnswers[i] == questions[i]["correctAnswer"]) {
         score++;
       }
     }
   }
 
-  // ---------------- SUBMIT ----------------
-
+  // ================= SUBMIT =================
   Future<void> submitExam() async {
     if (isSubmitting) return;
 
@@ -157,186 +208,139 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
           "userId": uid,
           "examId": widget.examId,
           "score": score,
-          "timestamp": FieldValue.serverTimestamp(),
           "done": true,
+          "abandoned": false,
+          "timestamp": FieldValue.serverTimestamp(),
         });
-
-    if (!mounted) return;
 
     showResultDialog();
   }
 
-  @override
-  void dispose() {
-    timer?.cancel();
-    super.dispose();
-  }
-
-  // ---------------- UI ----------------
-
+  // ================= UI =================
   @override
   Widget build(BuildContext context) {
     if (!isLoaded) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    if (questions.isEmpty) {
-      return Scaffold(
-        backgroundColor: AppColors.whiteColor,
+    final q = questions[currentIndex];
+    final options = (q["options"] ?? []) as List;
+
+    return WillPopScope(
+      onWillPop: () async => false,
+      child: Scaffold(
+        backgroundColor: Colors.white,
+
         appBar: AppBar(
-          backgroundColor: AppColors.whiteColor,
+          backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
-          leading: IconButton(
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (c) => HomeScreen()),
-              );
-            },
-            icon: Icon(Icons.arrow_back_ios),
-          ),
-          title: Text(widget.title),
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(Icons.assignment_late, size: 80.r, color: Colors.grey),
-              SizedBox(height: 20.h),
-              Text(
-                "No Exam Available",
-                style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 10.h),
-              Text(
-                "This exam has no questions yet",
-                style: TextStyle(color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final question = questions[currentIndex];
-    final options = (question["options"] ?? []) as List;
-
-    return Scaffold(
-      backgroundColor: Colors.white,
-
-      appBar: AppBar(
-        backgroundColor: AppColors.whiteColor,
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios),
-        ),
-        title: Text(widget.title),
-        actions: [
-          Padding(
-            padding: EdgeInsets.all(12.r),
-            child: Center(
+          title: Text(widget.title, style: TextStyle(fontSize: 18.sp)),
+          centerTitle: true,
+          actions: [
+            Padding(
+              padding: EdgeInsets.all(12.r),
               child: Text(
                 formatTime(remainingSeconds),
-                style: TextStyle(fontSize: 25.sp),
-              ),
-            ),
-          ),
-        ],
-      ),
-
-      body: Padding(
-        padding: EdgeInsets.all(16.r),
-        child: Column(
-          crossAxisAlignment: .start,
-          children: [
-            LinearProgressIndicator(
-              color: AppColors.primaryColor,
-              value: (currentIndex + 1) / questions.length,
-            ),
-            Image.asset(
-              "assets/images/background.png",
-              width: 80.w,
-              height: 80.h,
-            ),
-            const SizedBox(height: 20),
-
-            Center(
-              child: Text(
-                "Question ${currentIndex + 1} / ${questions.length}",
                 style: TextStyle(fontSize: 18.sp),
               ),
             ),
+          ],
+        ),
 
-            SizedBox(height: 10.h),
-
-            Center(
-              child: Text(
-                question["question"] ?? "",
-                style: TextStyle(fontSize: 20.sp),
+        body: Padding(
+          padding: EdgeInsets.all(16.r),
+          child: Column(
+            children: [
+              LinearProgressIndicator(
+                color: AppColors.primaryColor,
+                value: (currentIndex + 1) / questions.length,
               ),
-            ),
 
-            SizedBox(height: 20.h),
+              SizedBox(height: 20.h),
+              Row(
+                mainAxisAlignment: .start,
+                children: [
+                  Image.asset(
+                    "assets/images/background.png",
+                    width: 70.w,
+                    height: 70.h,
+                  ),
+                ],
+              ),
 
-            Expanded(
-              child: ListView.builder(
-                itemCount: options.length,
-                itemBuilder: (context, index) {
-                  final isSelected = selectedAnswers[currentIndex] == index;
+              Text(
+                "Question ${currentIndex + 1}/${questions.length}",
+                style: TextStyle(fontSize: 18.sp),
+              ),
 
-                  return GestureDetector(
-                    onTap: () => selectAnswer(index),
-                    child: Container(
-                      margin: EdgeInsets.only(bottom: 12.h),
-                      padding: EdgeInsets.all(16.r),
-                      decoration: BoxDecoration(
-                        color: isSelected
-                            ? Colors.green.withOpacity(0.2)
-                            : Colors.white,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: isSelected
-                              ? Colors.green
-                              : Colors.grey.shade300,
+              SizedBox(height: 20.h),
+
+              Text(
+                q["question"],
+                style: TextStyle(fontSize: 18.sp),
+                textAlign: TextAlign.center,
+              ),
+
+              SizedBox(height: 20.h),
+
+              Expanded(
+                child: ListView.builder(
+                  itemCount: options.length,
+                  itemBuilder: (c, i) {
+                    final selected = selectedAnswers[currentIndex] == i;
+
+                    return GestureDetector(
+                      onTap: () => selectAnswer(i),
+                      child: Container(
+                        margin: EdgeInsets.only(bottom: 10.h),
+                        padding: EdgeInsets.all(14.r),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? Colors.green.withOpacity(0.2)
+                              : Colors.white,
+                          border: Border.all(
+                            color: selected ? Colors.green : Colors.grey,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          options[i].toString(),
+                          style: TextStyle(fontSize: 15.sp),
                         ),
                       ),
-                      child: Text(options[index].toString()),
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
-            ),
 
-            Row(
-              children: [
-                Expanded(
-                  child: AppButton(
-                    onPressed: currentIndex > 0 ? previousQuestion : null,
-                    text: "Previous",
+              Row(
+                children: [
+                  Expanded(
+                    child: AppButton(text: "Previous", onPressed: prev),
                   ),
-                ),
-                SizedBox(width: 10.w),
-                Expanded(
-                  child: AppButton(
-                    onPressed: currentIndex == questions.length - 1
-                        ? submitExam
-                        : nextQuestion,
-                    text: currentIndex == questions.length - 1
-                        ? "Submit"
-                        : "Next",
+
+                  SizedBox(width: 10.w),
+
+                  Expanded(
+                    child: AppButton(
+                      text: currentIndex == questions.length - 1
+                          ? "Submit"
+                          : "Next",
+                      onPressed: currentIndex == questions.length - 1
+                          ? submitExam
+                          : next,
+                    ),
                   ),
-                ),
-              ],
-            ),
-          ],
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 
+  // ================= DIALOGS =================
   void showAlreadyTakenDialog() {
     showDialog(
       context: context,
@@ -383,6 +387,7 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
                       style: TextStyle(
                         fontSize: 15.sp,
                         color: AppColors.whiteColor,
+                        fontWeight: .bold,
                       ),
                     ),
                   ),
@@ -442,6 +447,7 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen> {
                       style: TextStyle(
                         fontSize: 15.sp,
                         color: AppColors.whiteColor,
+                        fontWeight: .bold,
                       ),
                     ),
                   ),

@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 
 class CustomPoduim extends StatelessWidget {
   const CustomPoduim({
@@ -24,7 +25,10 @@ class CustomPoduim extends StatelessWidget {
             CircleAvatar(
               radius: rank == 1 ? 34 : 28,
               backgroundColor: color,
-              child: Text("$rank", style: const TextStyle(color: Colors.white)),
+              child: Text(
+                "$rank",
+                style: const TextStyle(color: Colors.white, fontWeight: .bold),
+              ),
             ),
 
             SizedBox(height: 8),
@@ -35,7 +39,7 @@ class CustomPoduim extends StatelessWidget {
 
             Text(
               "${user["totalScore"]}",
-              style: const TextStyle(color: Colors.green),
+              style: TextStyle(color: Colors.green),
             ),
 
             SizedBox(height: 10),

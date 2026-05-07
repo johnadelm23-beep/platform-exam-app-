@@ -23,87 +23,248 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
   int correctIndex = 0;
 
+  /// ================= ADD QUESTION WITH VALIDATION =================
   Future<void> addQuestion() async {
+    final question = questionController.text.trim();
+    final op1 = option1.text.trim();
+    final op2 = option2.text.trim();
+    final op3 = option3.text.trim();
+    final op4 = option4.text.trim();
+
+    /// 🚫 Validation
+    if (question.isEmpty ||
+        op1.isEmpty ||
+        op2.isEmpty ||
+        op3.isEmpty ||
+        op4.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text("Please fill all fields"),
+          backgroundColor: Colors.red,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    /// 🚫 Safety check (optional)
+    if (correctIndex < 0 || correctIndex > 3) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Please select correct answer"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     await FirebaseFirestore.instance
         .collection("exams")
         .doc(widget.examId)
         .collection("questions")
         .add({
-          "question": questionController.text,
-          "options": [option1.text, option2.text, option3.text, option4.text],
+          "question": question,
+          "options": [op1, op2, op3, op4],
           "correctAnswer": correctIndex,
         });
 
+    /// ✅ Clear fields
     questionController.clear();
     option1.clear();
     option2.clear();
     option3.clear();
     option4.clear();
 
-    setState(() {
-      correctIndex = 0;
-    });
+    setState(() => correctIndex = 0);
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: const Text("✅ Question added successfully"),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
+  /// ================= OPTION TILE =================
+  Widget optionTile(TextEditingController controller, int index) {
+    final isSelected = correctIndex == index;
+
+    return GestureDetector(
+      onTap: () => setState(() => correctIndex = index),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        margin: EdgeInsets.only(bottom: 10.h),
+        padding: EdgeInsets.all(14.r),
+        decoration: BoxDecoration(
+          color: isSelected ? Colors.green.withOpacity(0.15) : Colors.white,
+          borderRadius: BorderRadius.circular(14.r),
+          border: Border.all(
+            color: isSelected ? Colors.green : Colors.grey.shade300,
+            width: 2,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              isSelected ? Icons.check_circle : Icons.circle_outlined,
+              color: isSelected ? Colors.green : Colors.grey,
+            ),
+            SizedBox(width: 10.w),
+            Expanded(
+              child: Text(
+                controller.text.isEmpty
+                    ? "Option ${index + 1}"
+                    : controller.text,
+                style: TextStyle(
+                  fontSize: 15.sp,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// ================= UI =================
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.whiteColor,
-      appBar: AppBar(
-        title: const Text("Add Questions"),
-        automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios),
-        ),
-      ),
-      body: SingleChildScrollView(
-        padding: EdgeInsets.all(16.r),
+      backgroundColor: AppColors.primaryColor,
+
+      body: SafeArea(
         child: Column(
-          spacing: 10,
           children: [
-            CustomTextFormField(
-              hintText: "add question",
-              controller: questionController,
-              maxLines: 3,
+            /// 🔵 HEADER (same as Home UI)
+            Container(
+              width: double.infinity,
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    AppColors.primaryColor,
+                    AppColors.primaryColor.withOpacity(0.85),
+                  ],
+                ),
+              ),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: Container(
+                      padding: EdgeInsets.all(10.r),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.arrow_back_ios,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                  ),
+
+                  SizedBox(width: 12.w),
+
+                  Text(
+                    "Add Question",
+                    style: TextStyle(
+                      fontSize: 22.sp,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            SizedBox(height: 15.h),
 
-            CustomTextFormField(hintText: "Option 1", controller: option1),
-            CustomTextFormField(hintText: "Option 2", controller: option2),
-            CustomTextFormField(hintText: "Option 3", controller: option3),
-            CustomTextFormField(hintText: "Option 4", controller: option4),
-            SizedBox(height: 15.r),
+            /// ⚪ BODY
+            Expanded(
+              child: Container(
+                width: double.infinity,
+                padding: EdgeInsets.all(16.r),
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade100,
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(25.r),
+                    topRight: Radius.circular(25.r),
+                  ),
+                ),
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Question",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-            DropdownButton<int>(
-              focusColor: Colors.white,
-              value: correctIndex,
-              items: const [
-                DropdownMenuItem(value: 0, child: Text("Correct: Option 1")),
-                DropdownMenuItem(value: 1, child: Text("Correct: Option 2")),
-                DropdownMenuItem(value: 2, child: Text("Correct: Option 3")),
-                DropdownMenuItem(value: 3, child: Text("Correct: Option 4")),
-              ],
-              onChanged: (value) {
-                setState(() {
-                  correctIndex = value!;
-                });
-              },
-            ),
+                      SizedBox(height: 10.h),
 
-            SizedBox(height: 20.h),
+                      CustomTextFormField(
+                        hintText: "Write your question...",
+                        controller: questionController,
+                        maxLines: 3,
+                      ),
 
-            AppButton(onPressed: addQuestion, text: "Add Question"),
+                      SizedBox(height: 20.h),
 
-            SizedBox(height: 10.h),
+                      /// 🎯 OPTIONS
+                      Text(
+                        "Options (Tap correct one)",
+                        style: TextStyle(
+                          fontSize: 18.sp,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
 
-            AppButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              text: "Finish",
+                      SizedBox(height: 10.h),
+
+                      CustomTextFormField(
+                        hintText: "Option 1",
+                        controller: option1,
+                      ),
+                      optionTile(option1, 0),
+
+                      CustomTextFormField(
+                        hintText: "Option 2",
+                        controller: option2,
+                      ),
+                      optionTile(option2, 1),
+
+                      CustomTextFormField(
+                        hintText: "Option 3",
+                        controller: option3,
+                      ),
+                      optionTile(option3, 2),
+
+                      CustomTextFormField(
+                        hintText: "Option 4",
+                        controller: option4,
+                      ),
+                      optionTile(option4, 3),
+
+                      SizedBox(height: 20.h),
+
+                      /// 🚀 BUTTONS
+                      AppButton(onPressed: addQuestion, text: "Add Question"),
+
+                      SizedBox(height: 10.h),
+
+                      AppButton(
+                        onPressed: () => Navigator.pop(context),
+                        text: "Finish",
+                      ),
+                    ],
+                  ),
+                ),
+              ),
             ),
           ],
         ),

@@ -54,7 +54,7 @@ class BodyContainer extends StatelessWidget {
                     );
                   },
                   title: "Exams",
-                  icon: Icons.book,
+                  icon: IconlyLight.document,
                   color: Colors.green,
                 ),
 
@@ -75,7 +75,7 @@ class BodyContainer extends StatelessWidget {
 
                 CustomContainer(
                   title: "Results",
-                  icon: Icons.bar_chart,
+                  icon: IconlyLight.chart,
                   color: Colors.blue,
                   onTap: () {
                     Navigator.push(

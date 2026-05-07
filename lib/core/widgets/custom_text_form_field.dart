@@ -11,12 +11,14 @@ class CustomTextFormField extends StatefulWidget {
     this.validator,
     this.hintText,
     this.controller,
+    this.onChanged,
   });
   final int maxLines;
   final bool obscureText;
   final TextInputType? keyboardType;
   final String? Function(String?)? validator;
   final String? hintText;
+  final void Function(String)? onChanged;
   final TextEditingController? controller;
 
   @override
@@ -28,6 +30,7 @@ class _CustomTextFormFieldState extends State<CustomTextFormField> {
   @override
   Widget build(BuildContext context) {
     return TextFormField(
+      onChanged: widget.onChanged,
       style: TextStyle(fontSize: 15.sp),
       autovalidateMode: .onUserInteraction,
       controller: widget.controller,
