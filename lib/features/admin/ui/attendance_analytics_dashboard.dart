@@ -3,7 +3,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/services/offline_sync_service.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
@@ -89,7 +89,7 @@ class _AttendanceAnalyticsDashboardState
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(IconlyLight.delete, color: Colors.white),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
             tooltip: "Reset Attendance Data",
             onPressed: () => _confirmResetAttendance(context),
           ),
@@ -202,8 +202,8 @@ class _AttendanceAnalyticsDashboardState
                             leading: CircleAvatar(
                               backgroundColor: AppColors.primaryColor
                                   .withOpacity(0.1),
-                              child: const Icon(
-                                IconlyLight.calendar,
+                              child: const HugeIcon(
+                                icon: HugeIcons.strokeRoundedCalendar01,
                                 color: AppColors.primaryColor,
                               ),
                             ),
@@ -233,7 +233,7 @@ class _AttendanceAnalyticsDashboardState
                               "total_users".tr(),
                               "$totalUsers",
                               Colors.blue,
-                              IconlyLight.user,
+                              HugeIcons.strokeRoundedUser02,
                             ),
                             _buildStatCard(
                               "present_today".tr(),
@@ -251,7 +251,7 @@ class _AttendanceAnalyticsDashboardState
                               "avg_atten".tr(),
                               "${avgAttendance.toStringAsFixed(1)}%",
                               Colors.purple,
-                              IconlyLight.activity,
+                              HugeIcons.strokeRoundedActivity01,
                             ),
                           ],
                         ),
@@ -306,7 +306,7 @@ class _AttendanceAnalyticsDashboardState
     );
   }
 
-  Widget _buildStatCard(String title, String val, Color color, IconData icon) {
+  Widget _buildStatCard(String title, String val, Color color, dynamic icon) {
     return Card(
       elevation: 1,
       color: Colors.white,
@@ -321,7 +321,11 @@ class _AttendanceAnalyticsDashboardState
                 color: color.withOpacity(0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 24.r),
+              child: icon is IconData
+                  ? Icon(icon as IconData, color: color, size: 24.r)
+                  : icon is List<List<dynamic>>
+                      ? HugeIcon(icon: icon as List<List<dynamic>>, color: color, size: 24.r)
+                      : Icon(Icons.star, color: color, size: 24.r),
             ),
             SizedBox(width: 10.w),
             Expanded(

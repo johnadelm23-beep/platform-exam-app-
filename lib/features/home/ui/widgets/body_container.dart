@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
 import 'package:platformexamapp/features/admin/ui/dashboard.dart';
@@ -110,7 +110,7 @@ class BodyContainer extends StatelessWidget {
                                 );
                               },
                               title: "exams".tr(),
-                              icon: IconlyLight.document,
+                              icon: HugeIcons.strokeRoundedFile01,
                               color: Colors.green,
                             ),
 
@@ -149,7 +149,7 @@ class BodyContainer extends StatelessWidget {
                         );
                       },
                       title: "dashboard".tr(),
-                      icon: IconlyLight.setting,
+                      icon: HugeIcons.strokeRoundedSettings01,
                       color: Colors.indigo,
                     );
                   }
@@ -157,7 +157,7 @@ class BodyContainer extends StatelessWidget {
                   if (item == "results") {
                     return CustomContainer(
                       title: "results".tr(),
-                      icon: IconlyLight.chart,
+                      icon: HugeIcons.strokeRoundedChart01,
                       color: Colors.blue,
                       onTap: () {
                         Navigator.push(
@@ -171,7 +171,7 @@ class BodyContainer extends StatelessWidget {
                   if (item == "profile") {
                     return CustomContainer(
                       title: "profile".tr(),
-                      icon: IconlyLight.profile,
+                      icon: HugeIcons.strokeRoundedUser02,
                       color: Colors.red,
                       onTap: () {
                         Navigator.push(
@@ -184,7 +184,7 @@ class BodyContainer extends StatelessWidget {
 
                   return CustomContainer(
                     title: "todays_material".tr(),
-                    icon: IconlyLight.bookmark,
+                    icon: HugeIcons.strokeRoundedFileBookmark,
                     color: Colors.purple,
                     onTap: () {
                       Navigator.push(

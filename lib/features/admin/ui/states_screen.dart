@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -55,7 +55,11 @@ class ScoresStatisticsScreen extends StatelessWidget {
   }) {
     AppDialog.show(
       context: context,
-      icon: IconlyLight.delete,
+      iconWidget: HugeIcon(
+        icon: HugeIcons.strokeRoundedDelete01,
+        color: Colors.red,
+        size: 36.r,
+      ),
       iconColor: Colors.red,
       title: "Delete Attempt",
       description: "Are you sure you want to delete this attempt?",
@@ -262,8 +266,8 @@ class ScoresStatisticsScreen extends StatelessWidget {
 
                                       /// 🗑 DELETE
                                       IconButton(
-                                        icon: const Icon(
-                                          IconlyLight.delete,
+                                        icon: const HugeIcon(
+                                          icon: HugeIcons.strokeRoundedDelete01,
                                           color: Colors.red,
                                         ),
                                         onPressed: () {

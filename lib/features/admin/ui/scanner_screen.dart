@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -237,7 +237,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                       ? NetworkImage(user.profileImage!)
                       : null,
                   child: user.profileImage == null || user.profileImage!.isEmpty
-                      ? Icon(IconlyLight.user, size: 40.r, color: AppColors.primaryColor)
+                      ? HugeIcon(icon: HugeIcons.strokeRoundedUser02, size: 40.r, color: AppColors.primaryColor)
                       : null,
                 ),
                 SizedBox(height: 10.h),
@@ -267,7 +267,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(IconlyLight.calendar, color: AppColors.primaryColor),
+                      const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, color: AppColors.primaryColor),
                       SizedBox(width: 10.w),
                       Expanded(
                         child: Column(
@@ -387,18 +387,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         final userRef = FirebaseFirestore.instance.collection("users").doc(userId);
         final userSnap = await userRef.get();
         
-        int currentStreak = 1;
-        int longestStreak = 1;
-
-        if (userSnap.exists) {
-          final userData = userSnap.data() as Map<String, dynamic>;
-          currentStreak = (userData["currentStreak"] ?? 0) + 1;
-          longestStreak = (userData["longestStreak"] ?? 0) as int;
-        }
-
-        if (currentStreak > longestStreak) {
-          longestStreak = currentStreak;
-        }
+        final streakResult = OfflineSyncService.calculateStreakUpdate(
+          userDataMap: userSnap.exists ? userSnap.data() as Map<String, dynamic> : null,
+          now: DateTime.now(),
+        );
+        final currentStreak = streakResult["currentStreak"]!;
+        final highestStreak = streakResult["highestStreak"]!;
 
         final seasonId = await OfflineSyncService.getActiveSeasonId();
         final batch = FirebaseFirestore.instance.batch();
@@ -416,7 +410,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
         final Map<String, dynamic> userUpdates = {
           "totalAttendance": FieldValue.increment(1),
           "currentStreak": currentStreak,
-          "longestStreak": longestStreak,
+          "longestStreak": highestStreak,
+          "highestStreak": highestStreak,
           "lastAttendanceDate": FieldValue.serverTimestamp(),
         };
 
@@ -647,7 +642,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(IconlyLight.search, color: AppColors.primaryColor),
+                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: AppColors.primaryColor),
                     onPressed: () {
                       final val = _searchController.text.trim();
                       if (val.isNotEmpty) {

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/cubit/cubit/auth_cubit.dart';
@@ -97,7 +97,11 @@ class _HomeScreenState extends State<HomeScreen> {
                         onPressed: () {
                           AppDialog.show(
                             context: context,
-                            icon: IconlyLight.logout,
+                            iconWidget: HugeIcon(
+                              icon: HugeIcons.strokeRoundedLogout01,
+                              color: Colors.red,
+                              size: 36.r,
+                            ),
                             iconColor: Colors.red,
                             title: "logout".tr(),
                             description: "logout_confirmation".tr(),
@@ -122,8 +126,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             onCancel: () => Navigator.pop(context),
                           );
                         },
-                        icon: Icon(
-                          IconlyLight.logout,
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedLogout01,
                           color: Colors.white,
                           size: 24.r,
                         ),

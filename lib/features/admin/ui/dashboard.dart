@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
@@ -80,7 +80,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   children: [
                     CustomContainer(
                       title: "attendance_scanner".tr(),
-                      icon: IconlyLight.scan,
+                      icon: HugeIcons.strokeRoundedQrCode,
                       color: Colors.indigo,
                       onTap: () {
                         Navigator.push(
@@ -93,7 +93,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "events_manager".tr(),
-                      icon: IconlyLight.calendar,
+                      icon: HugeIcons.strokeRoundedCalendar01,
                       color: Colors.orange,
                       onTap: () {
                         Navigator.push(
@@ -106,7 +106,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "attendance_stats".tr(),
-                      icon: IconlyLight.graph,
+                      icon: HugeIcons.strokeRoundedChart01,
                       color: Colors.pink,
                       onTap: () {
                         Navigator.push(
@@ -119,7 +119,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "add_exam".tr(),
-                      icon: IconlyLight.plus,
+                      icon: HugeIcons.strokeRoundedAdd01,
                       color: Colors.green,
                       onTap: () {
                         Navigator.push(
@@ -132,7 +132,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "users".tr(),
-                      icon: IconlyLight.user,
+                      icon: HugeIcons.strokeRoundedUser,
                       color: Colors.blue,
                       onTap: () {
                         Navigator.push(
@@ -144,7 +144,7 @@ class AdminDashboardScreen extends StatelessWidget {
 
                     CustomContainer(
                       title: "stats".tr(),
-                      icon: IconlyLight.chart,
+                      icon: HugeIcons.strokeRoundedAnalytics01,
                       color: Colors.purple,
                       onTap: () {
                         Navigator.push(
@@ -157,7 +157,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "add_post".tr(),
-                      icon: IconlyLight.bookmark,
+                      icon: HugeIcons.strokeRoundedBookmark01,
                       color: Colors.amber,
                       onTap: () {
                         Navigator.push(
@@ -168,7 +168,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "top_interactions".tr(),
-                      icon: IconlyBold.heart,
+                      icon: HugeIcons.strokeRoundedFavourite,
                       color: Colors.red,
                       onTap: () {
                         Navigator.push(
@@ -179,7 +179,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "daily_content_manager".tr(),
-                      icon: IconlyLight.bookmark,
+                      icon: HugeIcons.strokeRoundedFileBookmark,
                       color: Colors.teal,
                       onTap: () {
                         Navigator.push(
@@ -192,7 +192,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "content_history".tr(),
-                      icon: IconlyLight.document,
+                      icon: HugeIcons.strokeRoundedFile01,
                       color: Colors.brown,
                       onTap: () {
                         Navigator.push(
@@ -205,7 +205,7 @@ class AdminDashboardScreen extends StatelessWidget {
                     ),
                     CustomContainer(
                       title: "seasons_manager".tr(),
-                      icon: IconlyLight.category,
+                      icon: HugeIcons.strokeRoundedGrid,
                       color: Colors.blueGrey,
                       onTap: () {
                         Navigator.push(

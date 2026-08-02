@@ -7,7 +7,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:mime/mime.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
@@ -706,7 +706,11 @@ class _DailyContentManagementScreenState
 
     AppDialog.show(
       context: context,
-      icon: IconlyLight.bookmark,
+      iconWidget: HugeIcon(
+        icon: HugeIcons.strokeRoundedFileBookmark,
+        color: AppColors.primaryColor,
+        size: 36.r,
+      ),
       iconColor: AppColors.primaryColor,
       title: data["title"] ?? "Preview Content",
       description: data["subtitle"] ?? "No subtitle provided",
@@ -821,7 +825,7 @@ class _DailyContentManagementScreenState
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: "Search content...",
-                      prefixIcon: const Icon(IconlyLight.search),
+                      prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, size: 20.r),
                       fillColor: Colors.white,
                       filled: true,
                       border: OutlineInputBorder(
@@ -919,8 +923,8 @@ class _DailyContentManagementScreenState
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(
-                            IconlyLight.bookmark,
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedFileBookmark,
                             size: 50.r,
                             color: Colors.grey[300],
                           ),
@@ -1010,8 +1014,8 @@ class _DailyContentManagementScreenState
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               IconButton(
-                                icon: const Icon(
-                                  IconlyLight.show,
+                                icon: const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedEye,
                                   color: Colors.blue,
                                 ),
                                 onPressed: () => _showPreviewDialog(data),

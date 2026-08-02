@@ -39,7 +39,6 @@ dependencies:
   firebase_auth: ^6.4.0
   flutter_screenutil: ^5.9.3
   cloud_firestore: ^6.3.0
-  iconly: ^1.0.1
   flutter_svg: ^2.2.4
   google_sign_in: ^5.4.4
   lottie: ^3.3.3
@@ -59,6 +58,7 @@ dependencies:
   http_parser: ^4.1.2
   url_launcher: ^6.3.2
   easy_localization: ^3.0.8
+  hugeicons: ^1.1.7
 
 dev_dependencies:
   flutter_test:

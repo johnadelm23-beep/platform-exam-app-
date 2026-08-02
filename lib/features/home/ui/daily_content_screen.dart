@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
@@ -164,7 +164,7 @@ class DailyContentScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(IconlyLight.activity, size: 60.r, color: Colors.grey[400]),
+            HugeIcon(icon: HugeIcons.strokeRoundedActivity01, size: 60.r, color: Colors.grey[400]),
             SizedBox(height: 16.h),
             Text(
               "no_active_meeting".tr(),
@@ -198,7 +198,7 @@ class DailyContentScreen extends StatelessWidget {
               color: Colors.red[50],
               shape: BoxShape.circle,
             ),
-            child: Icon(IconlyBold.lock, size: 70.r, color: Colors.red[400]),
+            child: HugeIcon(icon: HugeIcons.strokeRoundedLock, size: 70.r, color: Colors.red[400]),
           ),
           SizedBox(height: 24.h),
           Text(
@@ -247,7 +247,7 @@ class DailyContentScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(IconlyLight.bookmark, size: 50.r, color: Colors.orange[300]),
+            HugeIcon(icon: HugeIcons.strokeRoundedFileBookmark, size: 50.r, color: Colors.orange[300]),
             SizedBox(height: 15.h),
             Text(
               "no_materials_added_yet".tr(),
@@ -386,7 +386,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // Bible Reading
           if (bibleReading.isNotEmpty) ...[
-            _buildSectionHeader("bible_reading".tr(), IconlyLight.document),
+            _buildSectionHeader("bible_reading".tr(), HugeIcons.strokeRoundedFile01),
             Container(
               padding: EdgeInsets.all(12.r),
               width: double.infinity,
@@ -409,7 +409,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // Memory Verse
           if (verse.isNotEmpty) ...[
-            _buildSectionHeader("memory_verse".tr(), IconlyLight.heart),
+            _buildSectionHeader("memory_verse".tr(), HugeIcons.strokeRoundedFavourite),
             Container(
               padding: EdgeInsets.all(12.r),
               width: double.infinity,
@@ -434,7 +434,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // Homework
           if (homework.isNotEmpty) ...[
-            _buildSectionHeader("homework_task".tr(), IconlyLight.bookmark),
+            _buildSectionHeader("homework_task".tr(), HugeIcons.strokeRoundedFileBookmark),
             Container(
               padding: EdgeInsets.all(12.r),
               width: double.infinity,
@@ -457,7 +457,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // Notes
           if (notes.isNotEmpty) ...[
-            _buildSectionHeader("teacher_notes".tr(), IconlyLight.edit),
+            _buildSectionHeader("teacher_notes".tr(), HugeIcons.strokeRoundedEdit01),
             Container(
               padding: EdgeInsets.all(12.r),
               width: double.infinity,
@@ -480,7 +480,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // Video Links
           if (videoLinks.isNotEmpty) ...[
-            _buildSectionHeader("videos".tr(), IconlyLight.video),
+            _buildSectionHeader("videos".tr(), HugeIcons.strokeRoundedVideo01),
             ...videoLinks.map((vid) {
               return Card(
                 elevation: 0,
@@ -490,7 +490,7 @@ class DailyContentScreen extends StatelessWidget {
                   side: BorderSide(color: Colors.grey[200]!),
                 ),
                 child: ListTile(
-                  leading: const Icon(IconlyLight.video, color: Colors.purple),
+                  leading: const HugeIcon(icon: HugeIcons.strokeRoundedVideo01, color: Colors.purple),
                   title: Text(
                     vid.length > 30 ? "${vid.substring(0, 30)}..." : vid,
                     style: TextStyle(
@@ -510,7 +510,7 @@ class DailyContentScreen extends StatelessWidget {
 
           // External links
           if (externalLinks.isNotEmpty) ...[
-            _buildSectionHeader("external_links".tr(), IconlyLight.category),
+            _buildSectionHeader("external_links".tr(), HugeIcons.strokeRoundedGrid),
             ...externalLinks.map((link) {
               return Card(
                 elevation: 0,
@@ -520,8 +520,8 @@ class DailyContentScreen extends StatelessWidget {
                   side: BorderSide(color: Colors.grey[200]!),
                 ),
                 child: ListTile(
-                  leading: const Icon(
-                    IconlyLight.message,
+                  leading: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedComment01,
                     color: AppColors.primaryColor,
                   ),
                   title: Text(
@@ -545,12 +545,12 @@ class DailyContentScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionHeader(String title, IconData icon) {
+  Widget _buildSectionHeader(String title, dynamic icon) {
     return Padding(
       padding: EdgeInsets.only(bottom: 8.h),
       child: Row(
         children: [
-          Icon(icon, color: AppColors.primaryColor, size: 20.r),
+          HugeIcon(icon: icon, color: AppColors.primaryColor, size: 20.r),
           SizedBox(width: 8.w),
           Text(
             title,

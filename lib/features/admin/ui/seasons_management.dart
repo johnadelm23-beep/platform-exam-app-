@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
 class SeasonsManagementScreen extends StatefulWidget {
@@ -203,7 +203,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: "Season Name",
-                    prefixIcon: const Icon(IconlyLight.document),
+                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedFile01, size: 20.r),
                     border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty ? "Season name is required" : null,
@@ -214,7 +214,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _selectDate(context, true),
-                        icon: const Icon(IconlyLight.calendar),
+                        icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, size: 16.r),
                         label: Text(
                           "Start: ${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}",
                           style: TextStyle(fontSize: 12.sp),
@@ -229,7 +229,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _selectDate(context, false),
-                        icon: const Icon(IconlyLight.calendar),
+                        icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, size: 16.r),
                         label: Text(
                           "End: ${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}",
                           style: TextStyle(fontSize: 12.sp),
@@ -324,7 +324,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(IconlyLight.category, size: 50.r, color: Colors.grey[300]),
+                    HugeIcon(icon: HugeIcons.strokeRoundedGrid, size: 50.r, color: Colors.grey[300]),
                     SizedBox(height: 10.h),
                     const Text("No attendance seasons registered.", style: TextStyle(color: Colors.grey)),
                   ],
@@ -382,7 +382,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                           },
                         ),
                         IconButton(
-                          icon: const Icon(IconlyLight.edit, color: Colors.blue),
+                          icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit01, color: Colors.blue),
                           onPressed: () => _showAddEditBottomSheet(editId: doc.id, initialData: data),
                         ),
                       ],

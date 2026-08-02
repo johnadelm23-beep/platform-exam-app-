@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -63,6 +64,55 @@ class OfflineSyncService {
     }
   }
 
+  /// 🔹 Calculates updated streak values (currentStreak, highestStreak)
+  /// Rules:
+  /// - Same calendar day: currentStreak stays unchanged
+  /// - Yesterday (1 day difference): currentStreak + 1
+  /// - Missed day (>1 day difference or null): currentStreak = 1
+  /// - highestStreak = max(highestStreak, currentStreak)
+  static Map<String, int> calculateStreakUpdate({
+    required Map<String, dynamic>? userDataMap,
+    required DateTime now,
+  }) {
+    int oldCurrentStreak = (userDataMap?["currentStreak"] ?? 0) as int;
+    int oldHighestStreak = (userDataMap?["highestStreak"] ?? userDataMap?["longestStreak"] ?? 0) as int;
+
+    DateTime? lastDate;
+    final ts = userDataMap?["lastAttendanceDate"];
+    if (ts is Timestamp) {
+      lastDate = ts.toDate();
+    } else if (ts is DateTime) {
+      lastDate = ts;
+    }
+
+    int newCurrentStreak;
+    if (lastDate == null) {
+      newCurrentStreak = 1;
+    } else {
+      final lastDay = DateTime(lastDate.year, lastDate.month, lastDate.day);
+      final today = DateTime(now.year, now.month, now.day);
+      final diffInDays = today.difference(lastDay).inDays;
+
+      if (diffInDays == 0) {
+        // Same day scan: do not increment streak
+        newCurrentStreak = oldCurrentStreak > 0 ? oldCurrentStreak : 1;
+      } else if (diffInDays == 1) {
+        // Attended yesterday: continue streak
+        newCurrentStreak = oldCurrentStreak + 1;
+      } else {
+        // Missed 1 or more days: reset streak to 1
+        newCurrentStreak = 1;
+      }
+    }
+
+    final newHighestStreak = math.max(oldHighestStreak, newCurrentStreak);
+
+    return {
+      "currentStreak": newCurrentStreak,
+      "highestStreak": newHighestStreak,
+    };
+  }
+
   /// 🔹 Sync queued attendance items to Firestore
   static Future<void> syncQueue() async {
     try {
@@ -99,18 +149,12 @@ class OfflineSyncService {
           final userRef = firestore.collection("users").doc(userId);
           final userSnap = await userRef.get();
 
-          int currentStreak = 1;
-          int longestStreak = 1;
-
-          if (userSnap.exists) {
-            final userData = userSnap.data() as Map<String, dynamic>;
-            currentStreak = (userData["currentStreak"] ?? 0) + 1;
-            longestStreak = (userData["longestStreak"] ?? 0) as int;
-          }
-
-          if (currentStreak > longestStreak) {
-            longestStreak = currentStreak;
-          }
+          final streakResult = calculateStreakUpdate(
+            userDataMap: userSnap.exists ? userSnap.data() as Map<String, dynamic> : null,
+            now: DateTime.now(),
+          );
+          final currentStreak = streakResult["currentStreak"]!;
+          final highestStreak = streakResult["highestStreak"]!;
 
           final batch = firestore.batch();
 
@@ -127,7 +171,8 @@ class OfflineSyncService {
           final Map<String, dynamic> userUpdates = {
             "totalAttendance": FieldValue.increment(1),
             "currentStreak": currentStreak,
-            "longestStreak": longestStreak,
+            "longestStreak": highestStreak,
+            "highestStreak": highestStreak,
             "lastAttendanceDate": FieldValue.serverTimestamp(),
           };
 
@@ -161,35 +206,62 @@ class OfflineSyncService {
   static Future<void> recalculateAttendancePercentage(String userId) async {
     try {
       final seasonId = await getActiveSeasonId();
-      if (seasonId.isEmpty) return;
-
       final nowStr = DateTime.now().toIso8601String().substring(0, 10);
-      final eventsSnap = await FirebaseFirestore.instance
-          .collection("events")
-          .where("seasonId", isEqualTo: seasonId)
-          .get();
 
-      int totalPastEvents = 0;
+      QuerySnapshot eventsSnap;
+      if (seasonId.isNotEmpty) {
+        eventsSnap = await FirebaseFirestore.instance
+            .collection("events")
+            .where("seasonId", isEqualTo: seasonId)
+            .get();
+      } else {
+        eventsSnap = await FirebaseFirestore.instance.collection("events").get();
+      }
+
+      final pastEventIds = <String>{};
       for (var doc in eventsSnap.docs) {
-        final date = doc.data()["date"] as String? ?? "";
-        if (date.compareTo(nowStr) <= 0) {
-          totalPastEvents++;
+        final data = doc.data() as Map<String, dynamic>;
+        final date = data["date"] as String? ?? "";
+        if (date.isNotEmpty && date.compareTo(nowStr) <= 0) {
+          pastEventIds.add(doc.id);
         }
       }
 
-      final attendanceSnap = await FirebaseFirestore.instance
-          .collection("attendance")
-          .where("userId", isEqualTo: userId)
-          .where("seasonId", isEqualTo: seasonId)
-          .get();
+      if (pastEventIds.isEmpty) {
+        await FirebaseFirestore.instance.collection("users").doc(userId).update({
+          "attendancePercentage": 0.0,
+        });
+        return;
+      }
 
-      final attendedCount = attendanceSnap.docs.length;
-      final percentage = totalPastEvents > 0
-          ? (attendedCount / totalPastEvents) * 100.0
-          : 0.0;
+      QuerySnapshot attendanceSnap;
+      if (seasonId.isNotEmpty) {
+        attendanceSnap = await FirebaseFirestore.instance
+            .collection("attendance")
+            .where("userId", isEqualTo: userId)
+            .where("seasonId", isEqualTo: seasonId)
+            .get();
+      } else {
+        attendanceSnap = await FirebaseFirestore.instance
+            .collection("attendance")
+            .where("userId", isEqualTo: userId)
+            .get();
+      }
+
+      final attendedPastEventIds = <String>{};
+      for (var doc in attendanceSnap.docs) {
+        final data = doc.data() as Map<String, dynamic>;
+        final eventId = data["eventId"] as String? ?? "";
+        if (pastEventIds.contains(eventId)) {
+          attendedPastEventIds.add(eventId);
+        }
+      }
+
+      final rawPercentage = (attendedPastEventIds.length / pastEventIds.length) * 100.0;
+      final roundedPercentage = double.parse(rawPercentage.toStringAsFixed(1));
 
       await FirebaseFirestore.instance.collection("users").doc(userId).update({
-        "attendancePercentage": percentage,
+        "attendancePercentage": roundedPercentage,
       });
     } catch (e) {
       print("Error recalculating percentage: $e");
@@ -215,6 +287,7 @@ class OfflineSyncService {
         "totalAttendance": 0,
         "currentStreak": 0,
         "longestStreak": 0,
+        "highestStreak": 0,
         "fridayAttendanceCount": 0,
         "sundayAttendanceCount": 0,
       });

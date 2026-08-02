@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
@@ -189,8 +189,8 @@ class TopUsersScreen extends StatelessWidget {
                                   ),
 
                                   IconButton(
-                                    icon: const Icon(
-                                      IconlyLight.delete,
+                                    icon: const HugeIcon(
+                                      icon: HugeIcons.strokeRoundedDelete01,
                                       color: Colors.red,
                                     ),
                                     onPressed: () =>

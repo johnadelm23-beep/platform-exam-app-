@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
@@ -88,7 +88,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(IconlyLight.delete, color: Colors.white),
+            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
             tooltip: "Clear Archived",
             onPressed: _clearArchivedContents,
           ),
@@ -121,7 +121,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(IconlyLight.bookmark, size: 50.r, color: Colors.grey[300]),
+                    HugeIcon(icon: HugeIcons.strokeRoundedFileBookmark, size: 50.r, color: Colors.grey[300]),
                     SizedBox(height: 10.h),
                     const Text("No content items found.", style: TextStyle(color: Colors.grey)),
                   ],
@@ -206,7 +206,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    Icon(IconlyLight.user, size: 16.r, color: Colors.grey),
+                                    HugeIcon(icon: HugeIcons.strokeRoundedUser02, size: 16.r, color: Colors.grey),
                                     SizedBox(width: 4.w),
                                     Text(
                                       "By: ${createdBy.length > 8 ? createdBy.substring(0, 8) : createdBy}",
@@ -216,7 +216,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
                                 ),
                                 Row(
                                   children: [
-                                    Icon(IconlyLight.activity, size: 16.r, color: Colors.green),
+                                    HugeIcon(icon: HugeIcons.strokeRoundedActivity01, size: 16.r, color: Colors.green),
                                     SizedBox(width: 4.w),
                                     Text(
                                       "Attendance: $attendanceCount",

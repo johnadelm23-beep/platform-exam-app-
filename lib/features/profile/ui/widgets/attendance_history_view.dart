@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
@@ -20,7 +20,9 @@ class AttendanceHistoryView extends StatelessWidget {
           .snapshots(),
       builder: (context, eventsSnapshot) {
         if (eventsSnapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+          return const Center(
+            child: CircularProgressIndicator(color: AppColors.primaryColor),
+          );
         }
 
         final events = eventsSnapshot.data?.docs ?? [];
@@ -29,9 +31,16 @@ class AttendanceHistoryView extends StatelessWidget {
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(IconlyLight.calendar, size: 50.r, color: Colors.grey[300]),
+                HugeIcon(
+                  icon: HugeIcons.strokeRoundedCalendar01,
+                  size: 50.r,
+                  color: Colors.grey[300],
+                ),
                 SizedBox(height: 10.h),
-                Text("no_attendance_yet".tr(), style: const TextStyle(color: Colors.grey)),
+                Text(
+                  "no_attendance_yet".tr(),
+                  style: const TextStyle(color: Colors.grey),
+                ),
               ],
             ),
           );
@@ -44,7 +53,9 @@ class AttendanceHistoryView extends StatelessWidget {
               .snapshots(),
           builder: (context, attendanceSnapshot) {
             if (attendanceSnapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryColor),
+              );
             }
 
             final attendanceDocs = attendanceSnapshot.data?.docs ?? [];
@@ -52,7 +63,6 @@ class AttendanceHistoryView extends StatelessWidget {
                 .map((doc) => (doc.data() as Map<String, dynamic>)["eventId"] as String)
                 .toSet();
 
-            // Match events with attendance records
             List<Map<String, dynamic>> historyList = [];
             int totalFridays = 0;
             int attendedFridays = 0;
@@ -68,10 +78,9 @@ class AttendanceHistoryView extends StatelessWidget {
               final type = data["type"] ?? "";
               final title = data["title"] ?? "Event";
 
-              // Check if event is in the past or today
               if (eventDate.compareTo(nowStr) <= 0) {
                 final isPresent = attendedEventIds.contains(eventId);
-                
+
                 if (type == "friday_meeting") {
                   totalFridays++;
                   if (isPresent) attendedFridays++;
@@ -89,7 +98,7 @@ class AttendanceHistoryView extends StatelessWidget {
               }
             }
 
-            // Group attendance by month for charts (e.g. Jan=1, Feb=2...)
+            // Monthly attendance mapping for chart
             Map<int, int> monthlyAttendance = {};
             for (var doc in attendanceDocs) {
               final data = doc.data() as Map<String, dynamic>;
@@ -100,84 +109,112 @@ class AttendanceHistoryView extends StatelessWidget {
               }
             }
 
-            return SingleChildScrollView(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 10.h),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  // Streak Metrics Card
-                  _buildStreakMetricsCard(attendedFridays, totalFridays, attendedSundays, totalSundays),
-                  
-                  SizedBox(height: 20.h),
-                  
-                  // Charts Section
-                  Text(
-                    "attendance_statistics".tr(),
-                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10.h),
-                  _buildMonthlyBarChart(monthlyAttendance),
-                  
-                  SizedBox(height: 25.h),
-
-                  // History List
-                  Text(
-                    "meeting_history".tr(),
-                    style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
-                  ),
-                  SizedBox(height: 10.h),
-                  ListView.separated(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: historyList.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                    itemBuilder: (context, index) {
-                      final item = historyList[index];
-                      final isPresent = item["isPresent"] as bool;
-                      final type = item["type"] as String;
-
-                      return Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
-                        child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: isPresent
-                                ? Colors.green.withOpacity(0.1)
-                                : Colors.red.withOpacity(0.1),
-                            child: Icon(
-                              isPresent ? Icons.check_circle : Icons.cancel,
-                              color: isPresent ? Colors.green : Colors.red,
-                            ),
-                          ),
-                          title: Text(
-                            item["title"],
-                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14.sp),
-                          ),
-                          subtitle: Text(
-                            "${item["date"]} • ${type == 'friday_meeting' ? 'friday'.tr() : type == 'sunday_activity' ? 'sunday'.tr() : 'custom'.tr()}",
-                            style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
-                          ),
-                          trailing: Container(
-                            padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
-                            decoration: BoxDecoration(
-                              color: isPresent ? Colors.green[50] : Colors.red[50],
-                              borderRadius: BorderRadius.circular(8.r),
-                            ),
-                            child: Text(
-                              isPresent ? "present".tr() : "absent".tr(),
-                              style: TextStyle(
-                                color: isPresent ? Colors.green[700] : Colors.red[700],
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12.sp,
-                              ),
-                            ),
+            return CustomScrollView(
+              physics: const BouncingScrollPhysics(),
+              slivers: [
+                SliverPadding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
+                  sliver: SliverToBoxAdapter(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildStreakMetricsCard(
+                          attendedFridays,
+                          totalFridays,
+                          attendedSundays,
+                          totalSundays,
+                        ),
+                        SizedBox(height: 20.h),
+                        Text(
+                          "attendance_statistics".tr(),
+                          style: TextStyle(
+                            fontSize: 17.sp,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87,
                           ),
                         ),
-                      );
-                    },
+                        SizedBox(height: 10.h),
+                        _buildMonthlyBarChart(monthlyAttendance),
+                        SizedBox(height: 20.h),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              "meeting_history".tr(),
+                              style: TextStyle(
+                                fontSize: 17.sp,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: 10.w,
+                                vertical: 4.h,
+                              ),
+                              decoration: BoxDecoration(
+                                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(12.r),
+                              ),
+                              child: Text(
+                                "${historyList.length}",
+                                style: TextStyle(
+                                  fontSize: 12.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primaryColor,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        SizedBox(height: 10.h),
+                      ],
+                    ),
                   ),
-                ],
-              ),
+                ),
+
+                // Lazy-loaded History Cards List
+                if (historyList.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.all(30.r),
+                      child: Center(
+                        child: Text(
+                          "no_attendance_yet".tr(),
+                          style: TextStyle(color: Colors.grey[500]),
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverPadding(
+                    padding: EdgeInsets.only(
+                      left: 16.w,
+                      right: 16.w,
+                      bottom: 24.h,
+                    ),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate(
+                        (context, index) {
+                          final item = historyList[index];
+                          final isPresent = item["isPresent"] as bool;
+                          final type = item["type"] as String;
+
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: 10.h),
+                            child: _buildHistoryCard(
+                              title: item["title"],
+                              date: item["date"],
+                              type: type,
+                              isPresent: isPresent,
+                            ),
+                          );
+                        },
+                        childCount: historyList.length,
+                      ),
+                    ),
+                  ),
+              ],
             );
           },
         );
@@ -185,24 +222,147 @@ class AttendanceHistoryView extends StatelessWidget {
     );
   }
 
-  Widget _buildStreakMetricsCard(int presentF, int totalF, int presentS, int totalS) {
-    double fridayPct = totalF > 0 ? (presentF / totalF) * 100 : 0.0;
-    double sundayPct = totalS > 0 ? (presentS / totalS) * 100 : 0.0;
+  Widget _buildHistoryCard({
+    required String title,
+    required String date,
+    required String type,
+    required bool isPresent,
+  }) {
+    List<List<dynamic>> typeIcon;
+    String typeLabel;
+    Color typeColor;
 
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.r)),
-      color: Colors.white,
-      child: Padding(
-        padding: EdgeInsets.all(16.r),
+    if (type == 'friday_meeting') {
+      typeIcon = HugeIcons.strokeRoundedCalendar01;
+      typeLabel = 'friday'.tr();
+      typeColor = AppColors.primaryColor;
+    } else if (type == 'sunday_activity') {
+      typeIcon = HugeIcons.strokeRoundedClock01;
+      typeLabel = 'sunday'.tr();
+      typeColor = Colors.orange;
+    } else {
+      typeIcon = HugeIcons.strokeRoundedTicket01;
+      typeLabel = 'custom'.tr();
+      typeColor = Colors.purple;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(
+          color: Colors.grey.withValues(alpha: 0.15),
+        ),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(16.r),
         child: Column(
           children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                _buildStatMetric("friday_attendance".tr(), "${fridayPct.toStringAsFixed(1)}% ($presentF/$totalF)"),
-                _buildStatMetric("sunday_attendance".tr(), "${sundayPct.toStringAsFixed(1)}% ($presentS/$totalS)"),
-              ],
+            Padding(
+              padding: EdgeInsets.all(14.r),
+              child: Row(
+                children: [
+                  // Type Icon Avatar
+                  Container(
+                    width: 44.r,
+                    height: 44.r,
+                    decoration: BoxDecoration(
+                      color: isPresent
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
+                    child: HugeIcon(
+                      icon: isPresent ? HugeIcons.strokeRoundedCheckmarkBadge01 : HugeIcons.strokeRoundedCancelSquare,
+                      color: isPresent ? Colors.green[600] : Colors.red[500],
+                      size: 22.r,
+                    ),
+                  ),
+                  SizedBox(width: 12.w),
+
+                  // Title & Meta Info
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          title,
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp,
+                            color: Colors.black87,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        SizedBox(height: 4.h),
+                        Row(
+                          children: [
+                            HugeIcon(
+                              icon: typeIcon,
+                              size: 12.r,
+                              color: typeColor,
+                            ),
+                            SizedBox(width: 4.w),
+                            Text(
+                              "$date • $typeLabel",
+                              style: TextStyle(
+                                fontSize: 12.sp,
+                                color: Colors.grey[600],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(width: 8.w),
+
+                  // Attendance Status Pill
+                  Container(
+                    padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 5.h),
+                    decoration: BoxDecoration(
+                      color: isPresent
+                          ? Colors.green.withValues(alpha: 0.1)
+                          : Colors.red.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(20.r),
+                      border: Border.all(
+                        color: isPresent
+                            ? Colors.green.withValues(alpha: 0.3)
+                            : Colors.red.withValues(alpha: 0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isPresent ? Icons.check_circle_rounded : Icons.cancel_rounded,
+                          size: 13.r,
+                          color: isPresent ? Colors.green[700] : Colors.red[700],
+                        ),
+                        SizedBox(width: 4.w),
+                        Text(
+                          isPresent ? "present".tr() : "absent".tr(),
+                          style: TextStyle(
+                            color: isPresent ? Colors.green[800] : Colors.red[800],
+                            fontWeight: FontWeight.bold,
+                            fontSize: 11.sp,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         ),
@@ -210,20 +370,113 @@ class AttendanceHistoryView extends StatelessWidget {
     );
   }
 
-  Widget _buildStatMetric(String label, String value) {
+  Widget _buildStreakMetricsCard(
+    int presentF,
+    int totalF,
+    int presentS,
+    int totalS,
+  ) {
+    double fridayPct = totalF > 0 ? (presentF / totalF) * 100 : 0.0;
+    double sundayPct = totalS > 0 ? (presentS / totalS) * 100 : 0.0;
+
+    return Container(
+      padding: EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildStatMetric(
+              icon: HugeIcons.strokeRoundedCalendar01,
+              label: "friday_attendance".tr(),
+              value: "${fridayPct.toStringAsFixed(1)}%",
+              subtext: "$presentF / $totalF",
+            ),
+          ),
+          Container(
+            height: 35.h,
+            width: 1,
+            color: Colors.grey[200],
+          ),
+          Expanded(
+            child: _buildStatMetric(
+              icon: HugeIcons.strokeRoundedClock01,
+              label: "sunday_attendance".tr(),
+              value: "${sundayPct.toStringAsFixed(1)}%",
+              subtext: "$presentS / $totalS",
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatMetric({
+    required List<List<dynamic>> icon,
+    required String label,
+    required String value,
+    required String subtext,
+  }) {
     return Column(
       children: [
-        Text(label, style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
-        SizedBox(height: 5.h),
-        Text(value, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold, color: AppColors.primaryColor)),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            HugeIcon(icon: icon, size: 14.r, color: AppColors.primaryColor),
+            SizedBox(width: 4.w),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: Colors.grey[600],
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        ),
+        SizedBox(height: 4.h),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16.sp,
+            fontWeight: FontWeight.bold,
+            color: AppColors.primaryColor,
+          ),
+        ),
+        Text(
+          subtext,
+          style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+        ),
       ],
     );
   }
 
   Widget _buildMonthlyBarChart(Map<int, int> data) {
-    final List<String> monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    // Fill monthly data
+    final List<String> monthNames = [
+      "Jan",
+      "Feb",
+      "Mar",
+      "Apr",
+      "May",
+      "Jun",
+      "Jul",
+      "Aug",
+      "Sep",
+      "Oct",
+      "Nov",
+      "Dec"
+    ];
+
     List<BarChartGroupData> barGroups = [];
     for (int i = 1; i <= 12; i++) {
       final val = (data[i] ?? 0).toDouble();
@@ -234,7 +487,7 @@ class AttendanceHistoryView extends StatelessWidget {
             BarChartRodData(
               toY: val,
               color: AppColors.primaryColor,
-              width: 12.r,
+              width: 10.r,
               borderRadius: BorderRadius.circular(4.r),
             ),
           ],
@@ -243,12 +496,19 @@ class AttendanceHistoryView extends StatelessWidget {
     }
 
     return Container(
-      height: 180.h,
-      padding: EdgeInsets.all(10.r),
+      height: 170.h,
+      padding: EdgeInsets.all(12.r),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16.r),
-        border: Border.all(color: Colors.grey[200]!),
+        borderRadius: BorderRadius.circular(20.r),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
       ),
       child: BarChart(
         BarChartData(

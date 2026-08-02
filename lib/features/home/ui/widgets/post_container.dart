@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
@@ -56,7 +56,7 @@ class PostContainer extends StatelessWidget {
                 ),
                 if (user.isAdmin == true)
                   IconButton(
-                    icon: Icon(IconlyLight.delete, color: Colors.red),
+                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.red),
                     onPressed: () => _showDeleteDialog(context),
                   ),
               ],
@@ -80,8 +80,8 @@ class PostContainer extends StatelessWidget {
                   },
                   child: Row(
                     children: [
-                      Icon(
-                        isLiked ? IconlyBold.heart : IconlyBroken.heart,
+                      HugeIcon(
+                        icon: HugeIcons.strokeRoundedFavourite,
                         color: isLiked ? Colors.red : Colors.grey,
                       ),
                       SizedBox(width: 5.w),

@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:iconly/iconly.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/services/offline_sync_service.dart';
 
@@ -234,7 +234,7 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                         controller: _titleController,
                         decoration: InputDecoration(
                           labelText: "event_title".tr(),
-                          prefixIcon: const Icon(IconlyLight.document),
+                          prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedFile01, size: 20.r),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -250,7 +250,7 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                         maxLines: 2,
                         decoration: InputDecoration(
                           labelText: "description".tr(),
-                          prefixIcon: const Icon(IconlyLight.edit),
+                          prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedEdit01, size: 20.r),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -269,8 +269,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                                 await _selectDate(context);
                                 setSheetState(() {});
                               },
-                              icon: const Icon(
-                                IconlyLight.calendar,
+                              icon: const HugeIcon(
+                                icon: HugeIcons.strokeRoundedCalendar01,
                                 color: Colors.black,
                               ),
                               label: Text(
@@ -295,8 +295,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                                 await _selectTime(context);
                                 setSheetState(() {});
                               },
-                              icon: Icon(
-                                IconlyLight.time_circle,
+                              icon: const HugeIcon(
+                                icon: HugeIcons.strokeRoundedClock01,
                                 color: Colors.black,
                               ),
                               label: Text(
@@ -462,8 +462,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      IconlyLight.calendar,
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedCalendar01,
                       size: 60.r,
                       color: Colors.grey[400],
                     ),
@@ -586,8 +586,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                         SizedBox(height: 10.h),
                         Row(
                           children: [
-                            Icon(
-                              IconlyLight.calendar,
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedCalendar01,
                               size: 16.r,
                               color: Colors.grey,
                             ),
@@ -600,8 +600,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                               ),
                             ),
                             SizedBox(width: 15.w),
-                            Icon(
-                              IconlyLight.time_circle,
+                            HugeIcon(
+                              icon: HugeIcons.strokeRoundedClock01,
                               size: 16.r,
                               color: Colors.grey,
                             ),
