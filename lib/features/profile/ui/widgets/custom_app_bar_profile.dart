@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/custom_state_container.dart';
 
@@ -55,9 +56,9 @@ class CustomAppBarProfile extends StatelessWidget {
             runSpacing: 10.h,
             alignment: WrapAlignment.center,
             children: [
-              CustomStateContainer(title: "Score", value: "$totalScore"),
-              CustomStateContainer(title: "Exams", value: "${docs.length}"),
-              CustomStateContainer(title: "Rank", value: "#$rank"),
+              CustomStateContainer(title: "score".tr(), value: "$totalScore"),
+              CustomStateContainer(title: "exams".tr(), value: "${docs.length}"),
+              CustomStateContainer(title: "rank".tr(), value: "#$rank"),
             ],
           ),
         ],

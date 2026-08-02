@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
@@ -8,6 +9,7 @@ import 'package:platformexamapp/features/auth/cubit/cubit/auth_cubit.dart';
 import 'package:platformexamapp/features/auth/ui/login_screen.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_text_rich.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -44,7 +46,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               Row(
                 children: [
                   Text(
-                    "Create your account!👋",
+                    "create_account".tr(),
                     style: TextStyle(fontSize: 30.sp),
                   ),
                 ],
@@ -55,32 +57,31 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 child: Column(
                   spacing: 30,
                   children: [
-                    /// 🔹 NAME
                     CustomTextFormField(
-                      hintText: "Name",
+                      hintText: "name".tr(),
                       keyboardType: TextInputType.name,
                       controller: _nameController,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return "Name is required";
+                          return "name_required".tr();
                         }
                         if (v.trim().length < 3) {
-                          return "Name must be at least 3 characters";
+                          return "name_length".tr();
                         }
                         if (!RegExp(r'^[a-zA-Z ]+$').hasMatch(v)) {
-                          return "Name must contain only letters";
+                          return "name_invalid".tr();
                         }
                         return null;
                       },
                     ),
 
                     CustomTextFormField(
-                      hintText: "Email",
+                      hintText: "email".tr(),
                       keyboardType: TextInputType.emailAddress,
                       controller: _emailController,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) {
-                          return "Email is required";
+                          return "email_required".tr();
                         }
 
                         final emailRegex = RegExp(
@@ -88,7 +89,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         );
 
                         if (!emailRegex.hasMatch(v.trim())) {
-                          return "Enter a valid email";
+                          return "email_invalid".tr();
                         }
 
                         return null;
@@ -96,33 +97,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     CustomTextFormField(
-                      hintText: "Password",
+                      hintText: "password".tr(),
                       keyboardType: TextInputType.visiblePassword,
                       obscureText: true,
                       controller: _passwordController,
                       validator: (v) {
                         if (v == null || v.isEmpty) {
-                          return "Password is required";
+                          return "password_required".tr();
                         }
 
                         if (v.length < 8) {
-                          return "Password must be at least 8 characters";
+                          return "password_length".tr();
                         }
 
                         if (!RegExp(r'[A-Z]').hasMatch(v)) {
-                          return "Must contain at least one uppercase letter";
+                          return "password_uppercase".tr();
                         }
 
                         if (!RegExp(r'[a-z]').hasMatch(v)) {
-                          return "Must contain at least one lowercase letter";
+                          return "password_lowercase".tr();
                         }
 
                         if (!RegExp(r'[0-9]').hasMatch(v)) {
-                          return "Must contain at least one number";
+                          return "password_number".tr();
                         }
 
                         if (!RegExp(r'[!@#$%^&*(),.?":{}|<>]').hasMatch(v)) {
-                          return "Must contain at least one special character";
+                          return "password_special".tr();
                         }
 
                         return null;
@@ -130,16 +131,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     ),
 
                     CustomTextFormField(
-                      hintText: "Confirm Password",
+                      hintText: "confirm_password".tr(),
                       keyboardType: TextInputType.visiblePassword,
                       obscureText: true,
                       controller: _confirmationPasswordController,
                       validator: (v) {
                         if (v == null || v.isEmpty) {
-                          return "Confirm your password";
+                          return "confirm_password_required".tr();
                         }
                         if (v != _passwordController.text) {
-                          return "Passwords do not match";
+                          return "passwords_dont_match".tr();
                         }
                         return null;
                       },
@@ -164,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           Navigator.pop(context);
                           Navigator.pushAndRemoveUntil(
                             context,
-                            MaterialPageRoute(builder: (c) => HomeScreen()),
+                            AppPageRoute(child: const HomeScreen()),
                             (r) => false,
                           );
                         }
@@ -181,7 +182,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         }
                       },
                       child: AppButton(
-                        text: "Register",
+                        text: "register".tr(),
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
                             context.read<AuthCubit>().register(
@@ -204,12 +205,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (c) => LoginScreen()),
+                      AppPageRoute(child: const LoginScreen()),
                     );
                   },
                   child: CustomTextRich(
-                    text1: "Have an account?",
-                    text2: "Sign in",
+                    text1: "have_an_account".tr(),
+                    text2: "sign_in".tr(),
                   ),
                 ),
               ),

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:iconly/iconly.dart';
+import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
@@ -84,14 +85,14 @@ class PostContainer extends StatelessWidget {
                         color: isLiked ? Colors.red : Colors.grey,
                       ),
                       SizedBox(width: 5.w),
-                      Text("Like"),
+                      Text("like".tr()),
                     ],
                   ),
                 ),
 
                 SizedBox(width: 10.w),
 
-                Text("$likeCount likes", style: TextStyle(color: Colors.grey)),
+                Text("likes_count".tr(args: [likeCount.toString()]), style: TextStyle(color: Colors.grey)),
               ],
             ),
           ],
@@ -131,14 +132,14 @@ class PostContainer extends StatelessWidget {
               SizedBox(height: 15.h),
 
               Text(
-                "Delete Post",
+                "delete_post".tr(),
                 style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
               ),
 
               SizedBox(height: 10.h),
 
               Text(
-                "Are you sure you want to delete this post?\nThis action cannot be undone.",
+                "delete_post_confirm".tr(),
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14.sp, color: Colors.black),
               ),
@@ -150,10 +151,10 @@ class PostContainer extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
-                      child: Text(
-                        "Cancel",
-                        style: TextStyle(fontSize: 18.sp, color: Colors.black),
-                      ),
+                        child: Text(
+                          "cancel".tr(),
+                          style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                        ),
                     ),
                   ),
 
@@ -165,13 +166,13 @@ class PostContainer extends StatelessWidget {
                         backgroundColor: Colors.red,
                       ),
                       onPressed: () => _deletePost(context),
-                      child: Text(
-                        "Delete",
-                        style: TextStyle(
-                          fontSize: 18.sp,
-                          color: AppColors.whiteColor,
+                        child: Text(
+                          "delete".tr(),
+                          style: TextStyle(
+                            fontSize: 18.sp,
+                            color: AppColors.whiteColor,
+                          ),
                         ),
-                      ),
                     ),
                   ),
                 ],
@@ -188,9 +189,9 @@ class PostContainer extends StatelessWidget {
     final messenger = ScaffoldMessenger.of(context);
     try {
       messenger.showSnackBar(
-        const SnackBar(
-          content: Text("Deleting post..."),
-          duration: Duration(seconds: 1),
+        SnackBar(
+          content: Text("deleting_post".tr()),
+          duration: const Duration(seconds: 1),
         ),
       );
       await FirebaseFirestore.instance
@@ -199,8 +200,8 @@ class PostContainer extends StatelessWidget {
           .delete();
       if (context.mounted) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Post deleted successfully"),
+          SnackBar(
+            content: Text("post_deleted_success".tr()),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
           ),
@@ -209,8 +210,8 @@ class PostContainer extends StatelessWidget {
     } catch (e) {
       if (context.mounted) {
         messenger.showSnackBar(
-          const SnackBar(
-            content: Text("Failed to delete post"),
+          SnackBar(
+            content: Text("post_deleted_fail".tr()),
             backgroundColor: Colors.red,
           ),
         );

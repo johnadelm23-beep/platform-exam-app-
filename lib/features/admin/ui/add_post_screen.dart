@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -106,7 +107,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                   SizedBox(width: 12.w),
 
                   Text(
-                    "Create Post",
+                    "create_post".tr(),
                     style: TextStyle(
                       fontSize: 22.sp,
                       color: Colors.white,
@@ -156,7 +157,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                             SizedBox(height: 10.h),
 
                             Text(
-                              "Share something 🙏",
+                              "share_some_sthing".tr(),
                               style: TextStyle(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
@@ -166,7 +167,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                             SizedBox(height: 5.h),
 
                             Text(
-                              "Write a post for the church community",
+                              "write_post".tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey),
                             ),
@@ -177,7 +178,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       SizedBox(height: 20.h),
 
                       CustomTextFormField(
-                        hintText: "Write something for church...",
+                        hintText: "Write_field".tr(),
                         controller: _postController,
                         maxLines: 6,
                       ),
@@ -185,7 +186,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
                       SizedBox(height: 30.h),
 
                       AppButton(
-                        text: isLoading ? "Posting..." : "Add Post",
+                        text: isLoading ? "Posting..." : "add_post".tr(),
                         onPressed: isLoading ? null : addPost,
                       ),
 

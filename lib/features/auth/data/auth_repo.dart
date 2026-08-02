@@ -73,12 +73,38 @@ class AuthRepo {
     required String uid,
   }) async {
     try {
+      final counterRef = FirebaseFirestore.instance.collection("metadata").doc("counters");
+      String manualId = "";
+      await FirebaseFirestore.instance.runTransaction((transaction) async {
+        final snap = await transaction.get(counterRef);
+        int currentSeq = 1;
+        if (snap.exists) {
+          currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
+        }
+        transaction.set(counterRef, {"userSequence": currentSeq}, SetOptions(merge: true));
+        manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
+      });
+
       await FirebaseFirestore.instance.collection("users").doc(uid).set({
+        "uid": uid,
         "name": name,
         "password": password,
         "email": email,
+        "isAdmin": false,
+        "profileImage": null,
+        "attendancePercentage": 0.0,
+        "fridayAttendanceCount": 0,
+        "sundayAttendanceCount": 0,
+        "currentStreak": 0,
+        "longestStreak": 0,
+        "totalAttendance": 0,
+        "totalAbsence": 0,
+        "humanReadableId": manualId,
+        "lastAttendanceDate": null,
       });
-    } catch (e) {}
+    } catch (e) {
+      debugPrint("ERROR ADD USER: $e");
+    }
   }
 
   static Future<bool> signInWithGoogle() async {
@@ -132,17 +158,51 @@ class AuthRepo {
 
       if (currentUser == null) return null;
 
-      final user = await FirebaseFirestore.instance
+      final userDocRef = FirebaseFirestore.instance
           .collection("users")
-          .doc(currentUser.uid)
-          .get();
+          .doc(currentUser.uid);
+      final user = await userDocRef.get();
 
       final data = user.data();
 
       if (data?["isBlocked"] == true) return null;
 
-      return UserData.fromJson(data ?? {});
+      // Lazy initialization of attendance fields and human-readable IDs for older/third-party accounts
+      if (data != null && data["humanReadableId"] == null) {
+        final counterRef = FirebaseFirestore.instance.collection("metadata").doc("counters");
+        String manualId = "";
+        await FirebaseFirestore.instance.runTransaction((transaction) async {
+          final snap = await transaction.get(counterRef);
+          int currentSeq = 1;
+          if (snap.exists) {
+            currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
+          }
+          transaction.set(counterRef, {"userSequence": currentSeq}, SetOptions(merge: true));
+          manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
+        });
+
+        final updatedData = {
+          "uid": currentUser.uid,
+          "humanReadableId": manualId,
+          "profileImage": data["profileImage"] ?? currentUser.photoURL,
+          "attendancePercentage": data["attendancePercentage"] ?? 0.0,
+          "fridayAttendanceCount": data["fridayAttendanceCount"] ?? 0,
+          "sundayAttendanceCount": data["sundayAttendanceCount"] ?? 0,
+          "currentStreak": data["currentStreak"] ?? 0,
+          "longestStreak": data["longestStreak"] ?? 0,
+          "totalAttendance": data["totalAttendance"] ?? 0,
+          "totalAbsence": data["totalAbsence"] ?? 0,
+          "lastAttendanceDate": data["lastAttendanceDate"],
+          "isAdmin": data["isAdmin"] ?? false,
+        };
+        await userDocRef.set(updatedData, SetOptions(merge: true));
+        final finalSnap = await userDocRef.get();
+        return UserData.fromJson(finalSnap.data() ?? {}, currentUser.uid);
+      }
+
+      return UserData.fromJson(data ?? {}, currentUser.uid);
     } catch (e) {
+      debugPrint("ERROR GET USER DATA: $e");
       return null;
     }
   }

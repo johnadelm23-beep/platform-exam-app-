@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
@@ -9,6 +10,7 @@ import 'package:platformexamapp/features/auth/ui/register_screen.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_container_sigin_with_google.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_text_rich.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -85,7 +87,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      "Welcome back 👋",
+                      "welcome".tr(),
                       style: TextStyle(
                         fontSize: 24.sp,
                         fontWeight: FontWeight.bold,
@@ -99,16 +101,16 @@ class _LoginScreenState extends State<LoginScreen> {
                       key: _formKey,
                       child: Column(
                         children: [
-                          CustomTextFormField(
-                            hintText: "Email",
+                           CustomTextFormField(
+                            hintText: "email".tr(),
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return "Email is required";
+                                return "email_required".tr();
                               }
                               if (!value.contains("@")) {
-                                return "Enter valid email";
+                                return "email_invalid".tr();
                               }
                               return null;
                             },
@@ -117,13 +119,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           SizedBox(height: 12.h),
 
                           CustomTextFormField(
-                            hintText: "Password",
+                            hintText: "password".tr(),
                             controller: _passwordController,
                             obscureText: true,
                             keyboardType: TextInputType.visiblePassword,
                             validator: (value) {
                               if (value == null || value.isEmpty) {
-                                return "Password is required";
+                                return "password_required".tr();
                               }
                               return null;
                             },
@@ -146,8 +148,8 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 Navigator.pushAndRemoveUntil(
                                   context,
-                                  MaterialPageRoute(
-                                    builder: (_) => const HomeScreen(),
+                                  AppPageRoute(
+                                    child: const HomeScreen(),
                                   ),
                                   (route) => false,
                                 );
@@ -166,7 +168,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: SizedBox(
                               width: double.infinity,
                               child: AppButton(
-                                text: "Login",
+                                text: "login".tr(),
                                 onPressed: () {
                                   if (_formKey.currentState!.validate()) {
                                     context.read<AuthCubit>().login(
@@ -198,14 +200,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
+                          AppPageRoute(
+                            child: const RegisterScreen(),
                           ),
                         );
                       },
                       child: CustomTextRich(
-                        text1: "Dont't have an account? ",
-                        text2: "Sign up",
+                        text1: "dont_have_an_account".tr(),
+                        text2: "sign_up".tr(),
                       ),
                     ),
                   ],

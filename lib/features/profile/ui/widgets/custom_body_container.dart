@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
 class CustomBodyContainer extends StatelessWidget {
@@ -23,7 +24,7 @@ class CustomBodyContainer extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "My Exams",
+            "my_exams".tr(),
             style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
           ),
 

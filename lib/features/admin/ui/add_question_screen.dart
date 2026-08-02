@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -170,7 +171,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                   SizedBox(width: 12.w),
 
                   Text(
-                    "Add Question",
+                    "add_questions".tr(),
                     style: TextStyle(
                       fontSize: 22.sp,
                       color: Colors.white,
@@ -198,7 +199,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "Question",
+                        "question".tr(),
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
@@ -208,7 +209,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       SizedBox(height: 10.h),
 
                       CustomTextFormField(
-                        hintText: "Write your question...",
+                        hintText: "write_your_questions".tr(),
                         controller: questionController,
                         maxLines: 3,
                       ),
@@ -217,7 +218,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
                       /// 🎯 OPTIONS
                       Text(
-                        "Options (Tap correct one)",
+                        "options_tap".tr(),
                         style: TextStyle(
                           fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
@@ -227,25 +228,25 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       SizedBox(height: 10.h),
 
                       CustomTextFormField(
-                        hintText: "Option 1",
+                        hintText: "option_1".tr(),
                         controller: option1,
                       ),
                       optionTile(option1, 0),
 
                       CustomTextFormField(
-                        hintText: "Option 2",
+                        hintText: "option_2".tr(),
                         controller: option2,
                       ),
                       optionTile(option2, 1),
 
                       CustomTextFormField(
-                        hintText: "Option 3",
+                        hintText: "option_3".tr(),
                         controller: option3,
                       ),
                       optionTile(option3, 2),
 
                       CustomTextFormField(
-                        hintText: "Option 4",
+                        hintText: "option_4".tr(),
                         controller: option4,
                       ),
                       optionTile(option4, 3),
@@ -253,13 +254,16 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       SizedBox(height: 20.h),
 
                       /// 🚀 BUTTONS
-                      AppButton(onPressed: addQuestion, text: "Add Question"),
+                      AppButton(
+                        onPressed: addQuestion,
+                        text: "add_question".tr(),
+                      ),
 
                       SizedBox(height: 10.h),
 
                       AppButton(
                         onPressed: () => Navigator.pop(context),
-                        text: "Finish",
+                        text: "finish".tr(),
                       ),
                     ],
                   ),

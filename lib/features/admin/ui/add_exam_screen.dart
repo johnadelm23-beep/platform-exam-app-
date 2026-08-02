@@ -1,10 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
 import 'package:platformexamapp/features/admin/ui/add_question_screen.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 
 class AddExamScreen extends StatefulWidget {
   const AddExamScreen({super.key});
@@ -70,9 +72,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
 
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (_) => AddQuestionScreen(examId: examRef.id),
-        ),
+        AppPageRoute(child: AddQuestionScreen(examId: examRef.id)),
       );
     } catch (e) {
       _showError("Something went wrong");
@@ -123,7 +123,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
                   SizedBox(width: 12.w),
 
                   Text(
-                    "Create Exam",
+                    "create_exam".tr(),
                     style: TextStyle(
                       fontSize: 22.sp,
                       color: Colors.white,
@@ -173,7 +173,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
                             SizedBox(height: 10.h),
 
                             Text(
-                              "Create Your Exam ",
+                              "create_your_exam".tr(),
                               style: TextStyle(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
@@ -183,7 +183,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
                             SizedBox(height: 5.h),
 
                             Text(
-                              "Add title and duration before questions",
+                              "add_title_and_duration".tr(),
                               textAlign: TextAlign.center,
                               style: TextStyle(color: Colors.grey),
                             ),
@@ -194,14 +194,14 @@ class _AddExamScreenState extends State<AddExamScreen> {
                       SizedBox(height: 20.h),
 
                       CustomTextFormField(
-                        hintText: "Exam Title",
+                        hintText: "exam_title".tr(),
                         controller: titleController,
                       ),
 
                       SizedBox(height: 10.h),
 
                       CustomTextFormField(
-                        hintText: "Time (minutes)",
+                        hintText: "Time".tr(),
                         controller: timeController,
                         keyboardType: TextInputType.number,
                       ),
@@ -211,7 +211,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
                       /// 🚀 BUTTON
                       AppButton(
                         onPressed: isLoading ? null : createExam,
-                        text: isLoading ? "Creating..." : "Next Add Questions",
+                        text: isLoading ? "Creating..." : "Next_add_Q".tr(),
                       ),
 
                       SizedBox(height: 20.h),

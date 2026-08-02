@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:lottie/lottie.dart';
 import 'package:iconly/iconly.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
+import 'package:platformexamapp/core/widgets/app_dialog.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 
 class ExamsScreen extends StatelessWidget {
   const ExamsScreen({super.key, required this.user});
@@ -27,7 +30,7 @@ class ExamsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      "Avaliable Exams",
+                      "available_exams".tr(),
                       style: TextStyle(
                         fontSize: 26.sp,
                         color: Colors.white,
@@ -85,8 +88,8 @@ class ExamsScreen extends StatelessWidget {
                           onTap: () {
                             Navigator.push(
                               context,
-                              MaterialPageRoute(
-                                builder: (_) => ExamDetailsScreen(
+                              AppPageRoute(
+                                child: ExamDetailsScreen(
                                   examId: exam.id,
                                   title: exam["title"],
                                   time: exam["time"],
@@ -119,15 +122,25 @@ class ExamsScreen extends StatelessWidget {
                                       IconlyLight.delete,
                                       color: Colors.red,
                                     ),
-                                    onPressed: () async {
-                                      await deleteExam(exam.id);
-                                      if (!context.mounted) return;
-                                      ScaffoldMessenger.of(
-                                        context,
-                                      ).showSnackBar(
-                                        const SnackBar(
-                                          content: Text("Deleted"),
-                                        ),
+                                    onPressed: () {
+                                      AppDialog.show(
+                                        context: context,
+                                        icon: Icons.delete_forever,
+                                        iconColor: Colors.red,
+                                        title: "delete_exam".tr(),
+                                        description: "delete_exam_desc".tr(),
+                                        confirmText: "delete".tr(),
+                                        confirmButtonColor: Colors.red,
+                                        cancelText: "cancel".tr(),
+                                        onConfirm: () async {
+                                          Navigator.pop(context);
+                                          await deleteExam(exam.id);
+                                          if (!context.mounted) return;
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            SnackBar(content: Text("exam_deleted_success".tr())),
+                                          );
+                                        },
+                                        onCancel: () => Navigator.pop(context),
                                       );
                                     },
                                   ),

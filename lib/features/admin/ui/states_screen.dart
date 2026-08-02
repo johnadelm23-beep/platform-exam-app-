@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:iconly/iconly.dart';
 import 'package:lottie/lottie.dart';
+import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
 class ScoresStatisticsScreen extends StatelessWidget {
@@ -52,82 +53,18 @@ class ScoresStatisticsScreen extends StatelessWidget {
     required BuildContext context,
     required VoidCallback onDelete,
   }) {
-    showDialog(
+    AppDialog.show(
       context: context,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: Colors.white,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20.r),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(IconlyLight.delete, color: Colors.red, size: 40.r),
-
-                SizedBox(height: 15.h),
-
-                Text(
-                  "Delete Attempt",
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-
-                SizedBox(height: 10.h),
-
-                Text(
-                  "Are you sure you want to delete this attempt?",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-
-                SizedBox(height: 20.h),
-
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          "Cancel",
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            color: Colors.black,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    SizedBox(width: 10.w),
-
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        onPressed: () {
-                          Navigator.pop(context);
-                          onDelete();
-                        },
-                        child: Text(
-                          "Delete",
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 18.sp,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
+      icon: IconlyLight.delete,
+      iconColor: Colors.red,
+      title: "Delete Attempt",
+      description: "Are you sure you want to delete this attempt?",
+      confirmText: "Delete",
+      confirmButtonColor: Colors.red,
+      cancelText: "Cancel",
+      onConfirm: () {
+        Navigator.pop(context);
+        onDelete();
       },
     );
   }

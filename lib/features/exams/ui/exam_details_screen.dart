@@ -3,8 +3,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
+import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
 
 class ExamDetailsScreen extends StatefulWidget {
@@ -52,7 +55,6 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive ||
         state == AppLifecycleState.detached) {
-      // 🔥 المستخدم خرج من التطبيق
       FirebaseFirestore.instance
           .collection("examAttempts")
           .doc("${uid}_${widget.examId}")
@@ -122,7 +124,7 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
     if (data != null && data["abandoned"] == true && mounted) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const HomeScreen()),
+        AppPageRoute(child: const HomeScreen()),
         (route) => false,
       );
     }
@@ -230,7 +232,6 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
       onWillPop: () async => false,
       child: Scaffold(
         backgroundColor: Colors.white,
-
         appBar: AppBar(
           backgroundColor: Colors.white,
           automaticallyImplyLeading: false,
@@ -246,7 +247,6 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
             ),
           ],
         ),
-
         body: Padding(
           padding: EdgeInsets.all(16.r),
           child: Column(
@@ -255,10 +255,9 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                 color: AppColors.primaryColor,
                 value: (currentIndex + 1) / questions.length,
               ),
-
               SizedBox(height: 20.h),
               Row(
-                mainAxisAlignment: .start,
+                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   Image.asset(
                     "assets/images/background.png",
@@ -267,22 +266,17 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                   ),
                 ],
               ),
-
               Text(
-                "Question ${currentIndex + 1}/${questions.length}",
+                "question_index".tr(args: [(currentIndex + 1).toString(), questions.length.toString()]),
                 style: TextStyle(fontSize: 18.sp),
               ),
-
               SizedBox(height: 20.h),
-
               Text(
                 q["question"],
                 style: TextStyle(fontSize: 18.sp),
                 textAlign: TextAlign.center,
               ),
-
               SizedBox(height: 20.h),
-
               Expanded(
                 child: ListView.builder(
                   itemCount: options.length,
@@ -312,20 +306,17 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                   },
                 ),
               ),
-
               Row(
                 children: [
                   Expanded(
-                    child: AppButton(text: "Previous", onPressed: prev),
+                    child: AppButton(text: "previous".tr(), onPressed: prev),
                   ),
-
                   SizedBox(width: 10.w),
-
                   Expanded(
                     child: AppButton(
                       text: currentIndex == questions.length - 1
-                          ? "Submit"
-                          : "Next",
+                          ? "submit".tr()
+                          : "next".tr(),
                       onPressed: currentIndex == questions.length - 1
                           ? submitExam
                           : next,
@@ -342,119 +333,38 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
 
   // ================= DIALOGS =================
   void showAlreadyTakenDialog() {
-    showDialog(
+    AppDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          backgroundColor: AppColors.whiteColor,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20.r),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.lock, color: Colors.red, size: 50.r),
-                SizedBox(height: 15.h),
-                Text(
-                  "Not Allowed",
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "You already took this exam.",
-                  textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey),
-                ),
-                SizedBox(height: 20.h),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                        (route) => false,
-                      );
-                    },
-                    child: Text(
-                      "OK",
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        color: AppColors.whiteColor,
-                        fontWeight: .bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      icon: Icons.lock,
+      iconColor: Colors.red,
+      title: "not_allowed".tr(),
+      description: "already_took_exam".tr(),
+      confirmText: "ok".tr(),
+      confirmButtonColor: Colors.red,
+      onConfirm: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          AppPageRoute(child: const HomeScreen()),
+          (route) => false,
         );
       },
     );
   }
 
   void showResultDialog() {
-    showDialog(
+    AppDialog.show(
       context: context,
-      barrierDismissible: false,
-      builder: (context) {
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20.r),
-          ),
-          child: Padding(
-            padding: EdgeInsets.all(20.r),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.emoji_events, color: Colors.amber, size: 60.r),
-                SizedBox(height: 15.h),
-                Text(
-                  "Exam Finished 🎉",
-                  style: TextStyle(
-                    fontSize: 20.sp,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                SizedBox(height: 10.h),
-                Text(
-                  "Your Score: $score / ${questions.length}",
-                  style: TextStyle(fontSize: 16.sp),
-                ),
-                SizedBox(height: 20.h),
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                    ),
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const HomeScreen()),
-                        (route) => false,
-                      );
-                    },
-                    child: Text(
-                      "Back to Home",
-                      style: TextStyle(
-                        fontSize: 15.sp,
-                        color: AppColors.whiteColor,
-                        fontWeight: .bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+      icon: Icons.emoji_events,
+      iconColor: Colors.amber,
+      title: "exam_finished".tr(),
+      description: "your_score".tr(args: [score.toString(), questions.length.toString()]),
+      confirmText: "back_to_home".tr(),
+      confirmButtonColor: Colors.green,
+      onConfirm: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          AppPageRoute(child: const HomeScreen()),
+          (route) => false,
         );
       },
     );

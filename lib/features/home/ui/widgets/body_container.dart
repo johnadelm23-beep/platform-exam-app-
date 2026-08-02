@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:iconly/iconly.dart';
-import 'package:lottie/lottie.dart';
+import 'package:easy_localization/easy_localization.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 import 'package:platformexamapp/features/admin/ui/dashboard.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_list_screen.dart';
@@ -10,6 +11,7 @@ import 'package:platformexamapp/features/home/ui/widgets/custom_container.dart';
 import 'package:platformexamapp/features/home/ui/widgets/post_container.dart';
 import 'package:platformexamapp/features/profile/ui/profile_screen.dart';
 import 'package:platformexamapp/features/states/ui/states_screen.dart';
+import 'package:platformexamapp/features/home/ui/daily_content_screen.dart';
 
 class BodyContainer extends StatelessWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
@@ -45,6 +47,9 @@ class BodyContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final int itemsCount = user.isAdmin == true ? 5 : 4;
+    final double gridHeight = (itemsCount / 2).ceil() * 130.h;
+
     return Container(
       padding: EdgeInsets.all(16.r),
       width: double.infinity,
@@ -55,161 +60,179 @@ class BodyContainer extends StatelessWidget {
           topRight: Radius.circular(30.r),
         ),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            "Ready!",
-            style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.bold),
-          ),
+      child: SingleChildScrollView(
+        physics: const BouncingScrollPhysics(),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "ready".tr(),
+              style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.bold),
+            ),
 
-          SizedBox(height: 10.h),
+            SizedBox(height: 10.h),
 
-          SizedBox(
-            height: 260.h,
-            child: GridView.builder(
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: user.isAdmin == true ? 4 : 3,
-              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 12,
-                mainAxisSpacing: 12,
-                childAspectRatio: 1,
-              ),
-              itemBuilder: (context, index) {
-                final items = [
-                  "exams",
-                  if (user.isAdmin == true) "dashboard",
-                  "results",
-                  "profile",
-                ];
+            SizedBox(
+              height: gridHeight,
+              child: GridView.builder(
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: itemsCount,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  childAspectRatio: 1.25,
+                ),
+                itemBuilder: (context, index) {
+                  final items = [
+                    "exams",
+                    if (user.isAdmin == true) "dashboard",
+                    "results",
+                    "profile",
+                    "today_content",
+                  ];
 
-                final item = items[index];
+                  final item = items[index];
 
-                if (item == "exams") {
-                  return StreamBuilder<int>(
-                    stream: getUnattemptedExamsCount(),
-                    builder: (context, snapshot) {
-                      final newCount = snapshot.data ?? 0;
+                  if (item == "exams") {
+                    return StreamBuilder<int>(
+                      stream: getUnattemptedExamsCount(),
+                      builder: (context, snapshot) {
+                        final newCount = snapshot.data ?? 0;
 
-                      return Stack(
-                        children: [
-                          CustomContainer(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (c) => ExamsScreen(user: user),
-                                ),
-                              );
-                            },
-                            title: "Exams",
-                            icon: IconlyLight.document,
-                            color: Colors.green,
-                          ),
+                        return Stack(
+                          children: [
+                            CustomContainer(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  AppPageRoute(child: ExamsScreen(user: user)),
+                                );
+                              },
+                              title: "exams".tr(),
+                              icon: IconlyLight.document,
+                              color: Colors.green,
+                            ),
 
-                          if (newCount > 0)
-                            Positioned(
-                              right: 5,
-                              top: 5,
-                              child: Container(
-                                padding: EdgeInsets.all(6.r),
-                                decoration: const BoxDecoration(
-                                  color: Colors.red,
-                                  shape: BoxShape.circle,
-                                ),
-                                child: Text(
-                                  "$newCount",
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 12.sp,
-                                    fontWeight: FontWeight.bold,
+                            if (newCount > 0)
+                              Positioned(
+                                right: 5,
+                                top: 5,
+                                child: Container(
+                                  padding: EdgeInsets.all(6.r),
+                                  decoration: const BoxDecoration(
+                                    color: Colors.red,
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: Text(
+                                    "$newCount",
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12.sp,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
-                        ],
-                      );
-                    },
-                  );
-                }
-
-                if (item == "dashboard") {
-                  return CustomContainer(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (c) => AdminDashboardScreen(user: user),
-                        ),
-                      );
-                    },
-                    title: "Dashboard",
-                    icon: IconlyLight.setting,
-                    color: Colors.indigo,
-                  );
-                }
-
-                if (item == "results") {
-                  return CustomContainer(
-                    title: "Results",
-                    icon: IconlyLight.chart,
-                    color: Colors.blue,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (c) => LeaderboardScreen()),
-                      );
-                    },
-                  );
-                }
-
-                return CustomContainer(
-                  title: "Profile",
-                  icon: IconlyLight.profile,
-                  color: Colors.red,
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (c) => ProfileScreen()),
+                          ],
+                        );
+                      },
                     );
-                  },
-                );
-              },
+                  }
+
+                  if (item == "dashboard") {
+                    return CustomContainer(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(child: AdminDashboardScreen(user: user)),
+                        );
+                      },
+                      title: "dashboard".tr(),
+                      icon: IconlyLight.setting,
+                      color: Colors.indigo,
+                    );
+                  }
+
+                  if (item == "results") {
+                    return CustomContainer(
+                      title: "results".tr(),
+                      icon: IconlyLight.chart,
+                      color: Colors.blue,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(child: LeaderboardScreen()),
+                        );
+                      },
+                    );
+                  }
+
+                  if (item == "profile") {
+                    return CustomContainer(
+                      title: "profile".tr(),
+                      icon: IconlyLight.profile,
+                      color: Colors.red,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(child: const ProfileScreen()),
+                        );
+                      },
+                    );
+                  }
+
+                  return CustomContainer(
+                    title: "todays_material".tr(),
+                    icon: IconlyLight.bookmark,
+                    color: Colors.purple,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        AppPageRoute(child: const DailyContentScreen()),
+                      );
+                    },
+                  );
+                },
+              ),
             ),
-          ),
 
-          const Divider(),
+            const Divider(),
 
-          SizedBox(height: 5.h),
+            SizedBox(height: 5.h),
 
-          Text(
-            "Egtma3na Posts 😊",
-            style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-          ),
+            Text(
+              "egtma3na_posts".tr(),
+              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+            ),
 
-          SizedBox(height: 10.h),
+            SizedBox(height: 10.h),
 
-          /// POSTS
-          Expanded(
-            child: StreamBuilder<QuerySnapshot>(
+            /// POSTS
+            StreamBuilder<QuerySnapshot>(
               stream: FirebaseFirestore.instance
                   .collection("posts")
                   .orderBy("createdAt", descending: true)
                   .snapshots(),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
+                if (!snapshot.hasData) {
                   return const Center(child: CircularProgressIndicator());
                 }
 
-                final posts = snapshot.data?.docs ?? [];
+                final posts = snapshot.data!.docs;
 
                 if (posts.isEmpty) {
                   return Center(
-                    child: Lottie.asset("assets/lottie/not found.json"),
+                    child: Text(
+                      "no_posts_found".tr(),
+                      style: const TextStyle(color: Colors.grey),
+                    ),
                   );
                 }
+
                 return ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
                   itemCount: posts.length,
                   separatorBuilder: (_, __) => SizedBox(height: 10.h),
                   itemBuilder: (context, index) {
@@ -235,8 +258,8 @@ class BodyContainer extends StatelessWidget {
                 );
               },
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

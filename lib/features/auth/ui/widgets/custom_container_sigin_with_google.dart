@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:easy_localization/easy_localization.dart';
 
 class CustomContainerSiginWithGoogle extends StatelessWidget {
   const CustomContainerSiginWithGoogle({super.key, this.onTap});
@@ -17,11 +18,11 @@ class CustomContainerSiginWithGoogle extends StatelessWidget {
           color: Colors.grey.shade200,
         ),
         child: Row(
-          mainAxisAlignment: .center,
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Center(
               child: Text(
-                "Sign in with Google",
+                "sign_in_with_google".tr(),
                 style: TextStyle(fontSize: 20.sp),
               ),
             ),

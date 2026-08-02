@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:lottie/lottie.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/states/ui/widgets/custom_bod_container.dart';
 
@@ -76,9 +77,9 @@ class LeaderboardScreen extends StatelessWidget {
           icon: Icon(Icons.arrow_back_ios, color: AppColors.whiteColor),
         ),
         centerTitle: true,
-        title: const Text(
-          "Top players 🏆",
-          style: TextStyle(color: Colors.white),
+        title: Text(
+          "top_players".tr(),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(

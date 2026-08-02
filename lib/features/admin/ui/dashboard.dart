@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:iconly/iconly.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 import 'package:platformexamapp/features/admin/ui/add_exam_screen.dart';
 import 'package:platformexamapp/features/admin/ui/add_post_screen.dart';
 import 'package:platformexamapp/features/admin/ui/states_screen.dart';
@@ -10,14 +12,21 @@ import 'package:platformexamapp/features/admin/ui/users_screen.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/home/ui/widgets/custom_container.dart';
 
+import 'package:platformexamapp/features/admin/ui/scanner_screen.dart';
+import 'package:platformexamapp/features/admin/ui/events_screen.dart';
+import 'package:platformexamapp/features/admin/ui/attendance_analytics_dashboard.dart';
+import 'package:platformexamapp/features/admin/ui/daily_content_management.dart';
+import 'package:platformexamapp/features/admin/ui/daily_content_history.dart';
+import 'package:platformexamapp/features/admin/ui/seasons_management.dart';
+
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key, required this.user});
   final UserData user;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.primaryColor,
-
       body: SafeArea(
         child: Column(
           children: [
@@ -42,7 +51,7 @@ class AdminDashboardScreen extends StatelessWidget {
                   ),
                   SizedBox(width: 10.w),
                   Text(
-                    "Welcome, ${user.name}😎",
+                    "welcome_name".tr(args: [user.name ?? "Admin"]),
                     style: TextStyle(
                       fontSize: 24.sp,
                       color: Colors.white,
@@ -70,62 +79,140 @@ class AdminDashboardScreen extends StatelessWidget {
                   mainAxisSpacing: 12,
                   children: [
                     CustomContainer(
-                      title: "Add Exam",
+                      title: "attendance_scanner".tr(),
+                      icon: IconlyLight.scan,
+                      color: Colors.indigo,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const ScannerScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "events_manager".tr(),
+                      icon: IconlyLight.calendar,
+                      color: Colors.orange,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const EventsManagementScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "attendance_stats".tr(),
+                      icon: IconlyLight.graph,
+                      color: Colors.pink,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const AttendanceAnalyticsDashboard(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "add_exam".tr(),
                       icon: IconlyLight.plus,
                       color: Colors.green,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (_) => const AddExamScreen(),
+                          AppPageRoute(
+                            child: const AddExamScreen(),
                           ),
                         );
                       },
                     ),
                     CustomContainer(
-                      title: "Users",
+                      title: "users".tr(),
                       icon: IconlyLight.user,
                       color: Colors.blue,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (c) => UsersScreen()),
+                          AppPageRoute(child: UsersScreen()),
                         );
                       },
                     ),
 
                     CustomContainer(
-                      title: "Stats",
+                      title: "stats".tr(),
                       icon: IconlyLight.chart,
                       color: Colors.purple,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(
-                            builder: (c) => ScoresStatisticsScreen(),
+                          AppPageRoute(
+                            child: ScoresStatisticsScreen(),
                           ),
                         );
                       },
                     ),
                     CustomContainer(
-                      title: "Add post",
+                      title: "add_post".tr(),
                       icon: IconlyLight.bookmark,
                       color: Colors.amber,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (c) => AddPostScreen()),
+                          AppPageRoute(child: AddPostScreen()),
                         );
                       },
                     ),
                     CustomContainer(
-                      title: "Top Interactions",
+                      title: "top_interactions".tr(),
                       icon: IconlyBold.heart,
                       color: Colors.red,
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (c) => TopUsersScreen()),
+                          AppPageRoute(child: TopUsersScreen()),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "daily_content_manager".tr(),
+                      icon: IconlyLight.bookmark,
+                      color: Colors.teal,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const DailyContentManagementScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "content_history".tr(),
+                      icon: IconlyLight.document,
+                      color: Colors.brown,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const DailyContentHistoryScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
+                      title: "seasons_manager".tr(),
+                      icon: IconlyLight.category,
+                      color: Colors.blueGrey,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const SeasonsManagementScreen(),
+                          ),
                         );
                       },
                     ),
