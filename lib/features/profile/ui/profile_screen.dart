@@ -14,9 +14,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/attendance_history_view.dart';
-import 'package:platformexamapp/features/profile/ui/widgets/custom_body_container.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/profile_qr_dialog.dart';
-import 'package:platformexamapp/features/profile/ui/widgets/segmented_tab_bar.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -27,28 +25,6 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
-  late PageController _pageController;
-  int _selectedTabIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController(initialPage: 0);
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  Stream<QuerySnapshot> getUserAttempts() {
-    final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
-    return FirebaseFirestore.instance
-        .collection("examAttempts")
-        .where("userId", isEqualTo: uid)
-        .snapshots();
-  }
 
   Future<void> _shareQR(UserData user) async {
     try {
@@ -527,24 +503,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               SizedBox(height: 12.h),
 
-              // Premium Segmented Tab Bar
-              SegmentedTabBar(
-                selectedIndex: _selectedTabIndex,
-                onTabChanged: (index) {
-                  setState(() {
-                    _selectedTabIndex = index;
-                  });
-                  _pageController.animateToPage(
-                    index,
-                    duration: const Duration(milliseconds: 250),
-                    curve: Curves.easeInOut,
-                  );
-                },
-              ),
-
-              SizedBox(height: 10.h),
-
-              // Bottom Sheet Container containing PageView
+              // Attendance Body View
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
@@ -554,39 +513,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       topRight: Radius.circular(28.r),
                     ),
                   ),
-                  child: PageView(
-                    controller: _pageController,
-                    onPageChanged: (index) {
-                      setState(() {
-                        _selectedTabIndex = index;
-                      });
-                    },
-                    children: [
-                      // Tab 1: Attendance History
-                      AttendanceHistoryView(uid: uid),
-
-                      // Tab 2: Exam Stats
-                      StreamBuilder<QuerySnapshot>(
-                        stream: getUserAttempts(),
-                        builder: (context, examSnapshot) {
-                          if (examSnapshot.connectionState == ConnectionState.waiting) {
-                            return const Center(
-                              child: CircularProgressIndicator(color: AppColors.primaryColor),
-                            );
-                          }
-                          final docs = examSnapshot.data?.docs ?? [];
-                          if (docs.isEmpty) {
-                            return Center(
-                              child: Lottie.asset(
-                                "assets/lottie/not found.json",
-                              ),
-                            );
-                          }
-                          return CustomBodyContainer(docs: docs);
-                        },
-                      ),
-                    ],
-                  ),
+                  child: AttendanceHistoryView(uid: uid),
                 ),
               ),
             ],

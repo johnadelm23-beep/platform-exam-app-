@@ -33,8 +33,8 @@ class SegmentedTabBar extends StatelessWidget {
               // Animated Sliding Pill Indicator
               AnimatedAlign(
                 alignment: selectedIndex == 0
-                    ? Alignment.centerLeft
-                    : Alignment.centerRight,
+                    ? AlignmentDirectional.centerStart
+                    : AlignmentDirectional.centerEnd,
                 duration: const Duration(milliseconds: 250),
                 curve: Curves.easeInOutCubic,
                 child: Container(

@@ -683,6 +683,10 @@ class _DailyContentManagementScreenState
                             editDocId == null
                                 ? "Create Content"
                                 : "Update Content",
+                            style: TextStyle(
+                              fontWeight: .bold,
+                              fontSize: 24.sp,
+                            ),
                           ),
                         ),
                       ),
@@ -825,7 +829,10 @@ class _DailyContentManagementScreenState
                   child: TextField(
                     decoration: InputDecoration(
                       hintText: "Search content...",
-                      prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedSearch01, size: 20.r),
+                      prefixIcon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedSearch01,
+                        size: 20.r,
+                      ),
                       fillColor: Colors.white,
                       filled: true,
                       border: OutlineInputBorder(

@@ -8,7 +8,8 @@ class SeasonsManagementScreen extends StatefulWidget {
   const SeasonsManagementScreen({super.key});
 
   @override
-  State<SeasonsManagementScreen> createState() => _SeasonsManagementScreenState();
+  State<SeasonsManagementScreen> createState() =>
+      _SeasonsManagementScreenState();
 }
 
 class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
@@ -59,8 +60,10 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final startStr = "${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}";
-    final endStr = "${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}";
+    final startStr =
+        "${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}";
+    final endStr =
+        "${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}";
 
     try {
       if (_isActive) {
@@ -89,7 +92,10 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
         data["createdAt"] = FieldValue.serverTimestamp();
         await docRef.set(data);
       } else {
-        await FirebaseFirestore.instance.collection("seasons").doc(editId).update(data);
+        await FirebaseFirestore.instance
+            .collection("seasons")
+            .doc(editId)
+            .update(data);
       }
 
       _nameController.clear();
@@ -100,12 +106,22 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(editId == null ? "Season created successfully!" : "Season updated successfully!"), backgroundColor: Colors.green),
+          SnackBar(
+            content: Text(
+              editId == null
+                  ? "Season created successfully!"
+                  : "Season updated successfully!",
+            ),
+            backgroundColor: Colors.green,
+          ),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error saving season: $e"), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text("Error saving season: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
@@ -136,20 +152,31 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Season status updated successfully!"), backgroundColor: Colors.green),
+        const SnackBar(
+          content: Text("Season status updated successfully!"),
+          backgroundColor: Colors.green,
+        ),
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error updating season status: $e"), backgroundColor: Colors.red),
+        SnackBar(
+          content: Text("Error updating season status: $e"),
+          backgroundColor: Colors.red,
+        ),
       );
     }
   }
 
-  void _showAddEditBottomSheet({String? editId, Map<String, dynamic>? initialData}) {
+  void _showAddEditBottomSheet({
+    String? editId,
+    Map<String, dynamic>? initialData,
+  }) {
     if (initialData != null) {
       _nameController.text = initialData["name"] ?? "";
-      _startDate = DateTime.tryParse(initialData["startDate"] ?? "") ?? DateTime.now();
-      _endDate = DateTime.tryParse(initialData["endDate"] ?? "") ?? DateTime.now();
+      _startDate =
+          DateTime.tryParse(initialData["startDate"] ?? "") ?? DateTime.now();
+      _endDate =
+          DateTime.tryParse(initialData["endDate"] ?? "") ?? DateTime.now();
       _isActive = initialData["status"] == "active";
     } else {
       _nameController.clear();
@@ -196,17 +223,28 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 SizedBox(height: 15.h),
                 Text(
                   editId == null ? "Create New Season" : "Edit Season Details",
-                  style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold, color: AppColors.primaryColor),
+                  style: TextStyle(
+                    fontSize: 20.sp,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.primaryColor,
+                  ),
                 ),
                 SizedBox(height: 15.h),
                 TextFormField(
                   controller: _nameController,
                   decoration: InputDecoration(
                     labelText: "Season Name",
-                    prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedFile01, size: 20.r),
-                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12.r)),
+                    prefixIcon: HugeIcon(
+                      icon: HugeIcons.strokeRoundedFile01,
+                      size: 20.r,
+                    ),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                   ),
-                  validator: (value) => value == null || value.trim().isEmpty ? "Season name is required" : null,
+                  validator: (value) => value == null || value.trim().isEmpty
+                      ? "Season name is required"
+                      : null,
                 ),
                 SizedBox(height: 12.h),
                 Row(
@@ -214,14 +252,19 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _selectDate(context, true),
-                        icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, size: 16.r),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedCalendar01,
+                          size: 16.r,
+                        ),
                         label: Text(
                           "Start: ${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}",
                           style: TextStyle(fontSize: 12.sp),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
                       ),
                     ),
@@ -229,14 +272,19 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _selectDate(context, false),
-                        icon: HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, size: 16.r),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedCalendar01,
+                          size: 16.r,
+                        ),
                         label: Text(
                           "End: ${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}",
                           style: TextStyle(fontSize: 12.sp),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                          ),
                         ),
                       ),
                     ),
@@ -246,8 +294,13 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 StatefulBuilder(
                   builder: (context, setStateSheet) {
                     return SwitchListTile(
-                      title: const Text("Set as Active Season"),
-                      subtitle: const Text("This deactivates all other seasons"),
+                      title: Text(
+                        "Set as Active Season",
+                        style: TextStyle(fontSize: 18.sp),
+                      ),
+                      subtitle: const Text(
+                        "This deactivates all other seasons",
+                      ),
                       value: _isActive,
                       activeColor: AppColors.primaryColor,
                       onChanged: (val) {
@@ -267,9 +320,14 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primaryColor,
                       foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12.r)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12.r),
+                      ),
                     ),
-                    child: const Text("Save Season"),
+                    child: Text(
+                      "Save Season",
+                      style: TextStyle(fontWeight: .bold, fontSize: 25.sp),
+                    ),
                   ),
                 ),
               ],
@@ -291,7 +349,10 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
-        title: const Text("Seasons Management", style: TextStyle(color: Colors.white)),
+        title: const Text(
+          "Seasons Management",
+          style: TextStyle(color: Colors.white),
+        ),
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
@@ -312,10 +373,15 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
           ),
         ),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance.collection("seasons").orderBy("createdAt", descending: true).snapshots(),
+          stream: FirebaseFirestore.instance
+              .collection("seasons")
+              .orderBy("createdAt", descending: true)
+              .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator(color: AppColors.primaryColor));
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.primaryColor),
+              );
             }
 
             final docs = snapshot.data?.docs ?? [];
@@ -324,9 +390,16 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    HugeIcon(icon: HugeIcons.strokeRoundedGrid, size: 50.r, color: Colors.grey[300]),
+                    HugeIcon(
+                      icon: HugeIcons.strokeRoundedGrid,
+                      size: 50.r,
+                      color: Colors.grey[300],
+                    ),
                     SizedBox(height: 10.h),
-                    const Text("No attendance seasons registered.", style: TextStyle(color: Colors.grey)),
+                    const Text(
+                      "No attendance seasons registered.",
+                      style: TextStyle(color: Colors.grey),
+                    ),
                   ],
                 ),
               );
@@ -346,23 +419,35 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
 
                 return Card(
                   elevation: 1,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15.r)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(15.r),
+                  ),
                   child: ListTile(
                     title: Row(
                       children: [
                         Expanded(
-                          child: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          child: Text(
+                            name,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                         ),
                         Container(
-                          padding: EdgeInsets.symmetric(horizontal: 8.w, vertical: 4.h),
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 8.w,
+                            vertical: 4.h,
+                          ),
                           decoration: BoxDecoration(
-                            color: isActive ? Colors.green[50] : Colors.grey[200],
+                            color: isActive
+                                ? Colors.green[50]
+                                : Colors.grey[200],
                             borderRadius: BorderRadius.circular(8.r),
                           ),
                           child: Text(
                             isActive ? "Active" : "Inactive",
                             style: TextStyle(
-                              color: isActive ? Colors.green[700] : Colors.grey[700],
+                              color: isActive
+                                  ? Colors.green[700]
+                                  : Colors.grey[700],
                               fontWeight: FontWeight.bold,
                               fontSize: 11.sp,
                             ),
@@ -370,7 +455,13 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                         ),
                       ],
                     ),
-                    subtitle: Text("Period: $start to $end", style: TextStyle(fontSize: 12.sp, color: Colors.grey[600])),
+                    subtitle: Text(
+                      "Period: $start to $end",
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -382,8 +473,14 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                           },
                         ),
                         IconButton(
-                          icon: const HugeIcon(icon: HugeIcons.strokeRoundedEdit01, color: Colors.blue),
-                          onPressed: () => _showAddEditBottomSheet(editId: doc.id, initialData: data),
+                          icon: const HugeIcon(
+                            icon: HugeIcons.strokeRoundedEdit01,
+                            color: Colors.blue,
+                          ),
+                          onPressed: () => _showAddEditBottomSheet(
+                            editId: doc.id,
+                            initialData: data,
+                          ),
                         ),
                       ],
                     ),

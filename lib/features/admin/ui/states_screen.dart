@@ -116,9 +116,9 @@ class ScoresStatisticsScreen extends StatelessWidget {
                   Text(
                     "Top Grades 🏆",
                     style: TextStyle(
-                      fontSize: 22.sp,
+                      fontSize: 25.sp,
                       color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                      fontWeight: .bold,
                     ),
                   ),
                 ],
