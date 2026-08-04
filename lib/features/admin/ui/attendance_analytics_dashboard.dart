@@ -272,8 +272,9 @@ class _AttendanceAnalyticsDashboardState
                         _buildHeatmapGrid(heatmapData),
                         SizedBox(height: 25.h),
 
-                        // Top 10 Users List
-                        _buildSectionHeader("top_10_atten".tr()),
+                        // Top Users List (All Members)
+                        _buildSectionHeader("All Members Attendance Ranking"),
+
                         _buildUsersListView(topUsers),
                         SizedBox(height: 25.h),
 
@@ -742,15 +743,16 @@ class _AttendanceAnalyticsDashboardState
             a.attendancePercentage ?? 0.0,
           ),
         );
-      result["topUsers"] = topSorted.take(10).toList();
-
       final lowestSorted = List<UserData>.from(usersList)
         ..sort(
           (a, b) => (a.attendancePercentage ?? 0.0).compareTo(
             b.attendancePercentage ?? 0.0,
           ),
         );
-      result["lowestUsers"] = lowestSorted.take(10).toList();
+      result["topUsers"] = topSorted;
+      result["lowestUsers"] = lowestSorted;
+
+
 
       // 6. Graphs & Heatmap Data from attendance records in this season
       Map<int, int> weeklyData = {}; // dayOfWeek (1-7) -> count

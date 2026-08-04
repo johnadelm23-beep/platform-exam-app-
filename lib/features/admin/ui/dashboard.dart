@@ -18,8 +18,10 @@ import 'package:platformexamapp/features/admin/ui/attendance_analytics_dashboard
 import 'package:platformexamapp/features/admin/ui/daily_content_management.dart';
 import 'package:platformexamapp/features/admin/ui/daily_content_history.dart';
 import 'package:platformexamapp/features/admin/ui/seasons_management.dart';
+import 'package:platformexamapp/features/admin/ui/admin_follow_up_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
+
   const AdminDashboardScreen({super.key, required this.user});
   final UserData user;
 
@@ -79,7 +81,21 @@ class AdminDashboardScreen extends StatelessWidget {
                   mainAxisSpacing: 12,
                   children: [
                     CustomContainer(
+                      title: "Follow Up",
+                      icon: HugeIcons.strokeRoundedCustomerSupport,
+                      color: Colors.deepOrange,
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(
+                            child: const AdminFollowUpScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    CustomContainer(
                       title: "attendance_scanner".tr(),
+
                       icon: HugeIcons.strokeRoundedQrCode,
                       color: Colors.indigo,
                       onTap: () {

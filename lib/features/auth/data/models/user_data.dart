@@ -22,6 +22,27 @@ class UserData {
 
   DateTime? lastAttendanceDate;
 
+  // Personal Information
+  String? phone;
+  String? fatherPhone;
+  String? motherPhone;
+  String? address;
+  String? school;
+  String? university;
+  String? work;
+  String? group;
+
+  // Follow Up Information
+  String? followUpStatus; // "Excellent", "Regular", "Needs Follow-up", "Urgent"
+  bool? needVisit;
+  DateTime? lastContact;
+  DateTime? lastCallDate;
+  DateTime? lastVisitDate;
+  String? notes;
+  String? servantNotes;
+  int? callsCount;
+  int? visitsCount;
+
   UserData({
     this.uid,
     this.name,
@@ -39,6 +60,23 @@ class UserData {
     this.totalAbsence,
     this.humanReadableId,
     this.lastAttendanceDate,
+    this.phone,
+    this.fatherPhone,
+    this.motherPhone,
+    this.address,
+    this.school,
+    this.university,
+    this.work,
+    this.group,
+    this.followUpStatus,
+    this.needVisit,
+    this.lastContact,
+    this.lastCallDate,
+    this.lastVisitDate,
+    this.notes,
+    this.servantNotes,
+    this.callsCount,
+    this.visitsCount,
   });
 
   /// Getter for highest streak taking highestStreak or longestStreak fallback
@@ -88,13 +126,40 @@ class UserData {
     totalAbsence = json["totalAbsence"] ?? 0;
     humanReadableId = json["humanReadableId"];
 
-    // Handle Firestore Timestamp safely
-    final ts = json["lastAttendanceDate"];
-    if (ts is Timestamp) {
-      lastAttendanceDate = ts.toDate();
-    } else {
-      lastAttendanceDate = null;
+    // Personal info parsing
+    phone = json["phone"] ?? json["phoneNumber"];
+    fatherPhone = json["fatherPhone"];
+    motherPhone = json["motherPhone"];
+    address = json["address"];
+    school = json["school"];
+    university = json["university"];
+    work = json["work"];
+    group = json["group"] ?? "General";
+
+    // Follow Up parsing
+    followUpStatus = json["followUpStatus"] ?? "Regular";
+    needVisit = json["needVisit"] ?? false;
+    notes = json["notes"];
+    servantNotes = json["servantNotes"];
+    callsCount = json["callsCount"] ?? json["callsCompleted"] ?? 0;
+    visitsCount = json["visitsCount"] ?? json["visitsCompleted"] ?? 0;
+
+    // Dates parsing
+    lastAttendanceDate = _parseDate(json["lastAttendanceDate"]);
+    lastContact = _parseDate(json["lastContact"]);
+    lastCallDate = _parseDate(json["lastCallDate"]);
+    lastVisitDate = _parseDate(json["lastVisitDate"]);
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    } else if (value is String && value.isNotEmpty) {
+      return DateTime.tryParse(value);
+    } else if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value);
     }
+    return null;
   }
 
   Map<String, dynamic> toJson() {
@@ -118,6 +183,24 @@ class UserData {
       "lastAttendanceDate": lastAttendanceDate == null
           ? null
           : Timestamp.fromDate(lastAttendanceDate!),
+      "phone": phone,
+      "fatherPhone": fatherPhone,
+      "motherPhone": motherPhone,
+      "address": address,
+      "school": school,
+      "university": university,
+      "work": work,
+      "group": group,
+      "followUpStatus": followUpStatus ?? "Regular",
+      "needVisit": needVisit ?? false,
+      "notes": notes,
+      "servantNotes": servantNotes,
+      "callsCount": callsCount ?? 0,
+      "visitsCount": visitsCount ?? 0,
+      "lastContact": lastContact == null ? null : Timestamp.fromDate(lastContact!),
+      "lastCallDate": lastCallDate == null ? null : Timestamp.fromDate(lastCallDate!),
+      "lastVisitDate": lastVisitDate == null ? null : Timestamp.fromDate(lastVisitDate!),
     };
   }
+
 }
