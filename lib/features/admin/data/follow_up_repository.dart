@@ -21,7 +21,7 @@ class FollowUpRepository implements IFollowUpRepository {
   })  : _firestore = firestore ?? FirebaseFirestore.instance,
         _auth = auth ?? FirebaseAuth.instance;
 
-  /// Helper check for Admin authority
+  /// Helper check for Admin authority (Main Admin or Sub Admin)
   Future<bool> isCurrentUserAdmin() async {
     final currentUser = _auth.currentUser;
     if (currentUser == null) return false;
@@ -30,7 +30,7 @@ class FollowUpRepository implements IFollowUpRepository {
       final doc = await _firestore.collection('users').doc(currentUser.uid).get();
       if (doc.exists) {
         final data = doc.data();
-        return data?['isAdmin'] == true;
+        return data?['isAdmin'] == true || data?['subAdmin'] == true || data?['isSubAdmin'] == true;
       }
     } catch (e) {
       debugPrint('Error verifying admin status: $e');

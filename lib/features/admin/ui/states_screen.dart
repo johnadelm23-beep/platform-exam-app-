@@ -6,8 +6,11 @@ import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
+import 'package:platformexamapp/features/auth/data/models/user_data.dart';
+
 class ScoresStatisticsScreen extends StatelessWidget {
-  const ScoresStatisticsScreen({super.key});
+  const ScoresStatisticsScreen({super.key, this.user});
+  final UserData? user;
 
   static final Map<String, String> examCache = {};
 
@@ -196,6 +199,8 @@ class ScoresStatisticsScreen extends StatelessWidget {
                                   child: Row(
                                     children: [
                                       /// 🔢 RANK
+                                      
+                                      
                                       Container(
                                         width: 45.w,
                                         height: 45.h,
@@ -264,24 +269,25 @@ class ScoresStatisticsScreen extends StatelessWidget {
 
                                       SizedBox(width: 10.w),
 
-                                      /// 🗑 DELETE
-                                      IconButton(
-                                        icon: const HugeIcon(
-                                          icon: HugeIcons.strokeRoundedDelete01,
-                                          color: Colors.red,
+                                      /// 🗑 DELETE (Main Admin Only)
+                                      if (user?.isAdminVal == true)
+                                        IconButton(
+                                          icon: const HugeIcon(
+                                            icon: HugeIcons.strokeRoundedDelete01,
+                                            color: Colors.red,
+                                          ),
+                                          onPressed: () {
+                                            showDeleteDialog(
+                                              context: context,
+                                              onDelete: () async {
+                                                await deleteAttempt(
+                                                  context,
+                                                  doc.id,
+                                                );
+                                              },
+                                            );
+                                          },
                                         ),
-                                        onPressed: () {
-                                          showDeleteDialog(
-                                            context: context,
-                                            onDelete: () async {
-                                              await deleteAttempt(
-                                                context,
-                                                doc.id,
-                                              );
-                                            },
-                                          );
-                                        },
-                                      ),
                                     ],
                                   ),
                                 );

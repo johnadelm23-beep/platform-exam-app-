@@ -5,8 +5,11 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
+import 'package:platformexamapp/features/auth/data/models/user_data.dart';
+
 class TopUsersScreen extends StatelessWidget {
-  const TopUsersScreen({super.key});
+  const TopUsersScreen({super.key, this.user});
+  final UserData? user;
 
   /// ================= STREAM POSTS =================
   Stream<List<Map<String, dynamic>>> getTopUsersStream() {
@@ -188,14 +191,15 @@ class TopUsersScreen extends StatelessWidget {
                                     ),
                                   ),
 
-                                  IconButton(
-                                    icon: const HugeIcon(
-                                      icon: HugeIcons.strokeRoundedDelete01,
-                                      color: Colors.red,
+                                  if (user?.isAdminVal == true)
+                                    IconButton(
+                                      icon: const HugeIcon(
+                                        icon: HugeIcons.strokeRoundedDelete01,
+                                        color: Colors.red,
+                                      ),
+                                      onPressed: () =>
+                                          deleteUserLikes(uid, context),
                                     ),
-                                    onPressed: () =>
-                                        deleteUserLikes(uid, context),
-                                  ),
                                 ],
                               ),
                             );

@@ -6,6 +6,7 @@ class UserData {
   String? email;
   String? password;
   bool? isAdmin;
+  bool? isSubAdmin;
   String? profileImage;
 
   double? attendancePercentage;
@@ -49,6 +50,7 @@ class UserData {
     this.email,
     this.password,
     this.isAdmin,
+    this.isSubAdmin,
     this.profileImage,
     this.attendancePercentage,
     this.fridayAttendanceCount,
@@ -79,6 +81,38 @@ class UserData {
     this.visitsCount,
   });
 
+  /// Role getters and permission checks
+  bool get isAdminVal => isAdmin == true;
+  
+  bool get subAdmin => (isAdmin == true) ? false : (isSubAdmin == true);
+  set subAdmin(bool? val) => isSubAdmin = val;
+  bool get isSubAdminVal => subAdmin;
+
+  bool get canAccessScanner => isAdminVal || subAdmin;
+  bool get canAccessAttendanceScanner => canAccessScanner;
+  bool get canAccessFollowUp => isAdminVal || subAdmin;
+  bool get canAccessUsers => isAdminVal || subAdmin;
+  bool get canAccessAttendanceState => isAdminVal || subAdmin;
+  bool get canAccessGradeStates => isAdminVal || subAdmin;
+  bool get canAccessContentHistory => isAdminVal || subAdmin;
+  bool get canAccessTopInteractions => isAdminVal || subAdmin;
+
+  bool get canAccessDashboard =>
+      canAccessScanner ||
+      canAccessFollowUp ||
+      canAccessUsers ||
+      canAccessAttendanceState ||
+      canAccessGradeStates ||
+      canAccessContentHistory ||
+      canAccessTopInteractions;
+
+  bool get canCreateContent => isAdminVal;
+  bool get canCreatePost => isAdminVal;
+  bool get canCreateExam => isAdminVal;
+  bool get canManageEvents => isAdminVal;
+  bool get canManageSeasons => isAdminVal;
+  bool get canManageAdminOnlyFeatures => isAdminVal;
+
   /// Getter for highest streak taking highestStreak or longestStreak fallback
   int get highestStreakVal => highestStreak ?? longestStreak ?? 0;
 
@@ -100,12 +134,18 @@ class UserData {
     }
   }
 
+  factory UserData.fromMap(Map<String, dynamic> map, [String? docId]) {
+    return UserData.fromJson(map, docId);
+  }
+
   UserData.fromJson(Map<String, dynamic> json, [String? docId]) {
     uid = docId ?? json["uid"];
     name = json["name"];
     email = json["email"];
     password = json["password"];
-    isAdmin = json["isAdmin"] ?? false;
+    isAdmin = json["isAdmin"] == true;
+    final isSub = (json["subAdmin"] == true) || (json["isSubAdmin"] == true);
+    isSubAdmin = (isAdmin == true) ? false : isSub;
     profileImage = json["profileImage"];
 
     final attendance = json["attendancePercentage"];
@@ -162,14 +202,19 @@ class UserData {
     return null;
   }
 
+  Map<String, dynamic> toMap() => toJson();
+
   Map<String, dynamic> toJson() {
     final highest = highestStreakVal;
+    final bool subAdminValue = (isAdmin == true) ? false : (subAdmin == true);
     return {
       "uid": uid,
       "name": name,
       "email": email,
       "password": password,
-      "isAdmin": isAdmin ?? false,
+      "isAdmin": isAdmin == true,
+      "subAdmin": subAdminValue,
+      "isSubAdmin": subAdminValue,
       "profileImage": profileImage,
       "attendancePercentage": attendancePercentage ?? 0.0,
       "fridayAttendanceCount": fridayAttendanceCount ?? 0,
@@ -203,4 +248,77 @@ class UserData {
     };
   }
 
+  UserData copyWith({
+    String? uid,
+    String? name,
+    String? email,
+    String? password,
+    bool? isAdmin,
+    bool? isSubAdmin,
+    String? profileImage,
+    double? attendancePercentage,
+    int? fridayAttendanceCount,
+    int? sundayAttendanceCount,
+    int? currentStreak,
+    int? longestStreak,
+    int? highestStreak,
+    int? totalAttendance,
+    int? totalAbsence,
+    String? humanReadableId,
+    DateTime? lastAttendanceDate,
+    String? phone,
+    String? fatherPhone,
+    String? motherPhone,
+    String? address,
+    String? school,
+    String? university,
+    String? work,
+    String? group,
+    String? followUpStatus,
+    bool? needVisit,
+    DateTime? lastContact,
+    DateTime? lastCallDate,
+    DateTime? lastVisitDate,
+    String? notes,
+    String? servantNotes,
+    int? callsCount,
+    int? visitsCount,
+  }) {
+    return UserData(
+      uid: uid ?? this.uid,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      password: password ?? this.password,
+      isAdmin: isAdmin ?? this.isAdmin,
+      isSubAdmin: isSubAdmin ?? this.isSubAdmin,
+      profileImage: profileImage ?? this.profileImage,
+      attendancePercentage: attendancePercentage ?? this.attendancePercentage,
+      fridayAttendanceCount: fridayAttendanceCount ?? this.fridayAttendanceCount,
+      sundayAttendanceCount: sundayAttendanceCount ?? this.sundayAttendanceCount,
+      currentStreak: currentStreak ?? this.currentStreak,
+      longestStreak: longestStreak ?? this.longestStreak,
+      highestStreak: highestStreak ?? this.highestStreak,
+      totalAttendance: totalAttendance ?? this.totalAttendance,
+      totalAbsence: totalAbsence ?? this.totalAbsence,
+      humanReadableId: humanReadableId ?? this.humanReadableId,
+      lastAttendanceDate: lastAttendanceDate ?? this.lastAttendanceDate,
+      phone: phone ?? this.phone,
+      fatherPhone: fatherPhone ?? this.fatherPhone,
+      motherPhone: motherPhone ?? this.motherPhone,
+      address: address ?? this.address,
+      school: school ?? this.school,
+      university: university ?? this.university,
+      work: work ?? this.work,
+      group: group ?? this.group,
+      followUpStatus: followUpStatus ?? this.followUpStatus,
+      needVisit: needVisit ?? this.needVisit,
+      lastContact: lastContact ?? this.lastContact,
+      lastCallDate: lastCallDate ?? this.lastCallDate,
+      lastVisitDate: lastVisitDate ?? this.lastVisitDate,
+      notes: notes ?? this.notes,
+      servantNotes: servantNotes ?? this.servantNotes,
+      callsCount: callsCount ?? this.callsCount,
+      visitsCount: visitsCount ?? this.visitsCount,
+    );
+  }
 }

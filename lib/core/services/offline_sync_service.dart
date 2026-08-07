@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:math' as math;
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class OfflineSyncService {
@@ -270,6 +271,13 @@ class OfflineSyncService {
 
   /// 🔹 Reset all attendance data (Clears collection and updates users to default zero parameters)
   static Future<void> resetAttendanceData() async {
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    if (userDoc.data()?["isAdmin"] != true) {
+      throw Exception("Permission denied: Only Main Admin can reset attendance data.");
+    }
+
     final firestore = FirebaseFirestore.instance;
 
     final attendanceSnap = await firestore.collection("attendance").get();

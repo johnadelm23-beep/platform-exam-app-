@@ -47,7 +47,8 @@ class BodyContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final int itemsCount = user.isAdmin == true ? 5 : 4;
+    final bool hasDashboardAccess = user.canAccessDashboard;
+    final int itemsCount = hasDashboardAccess ? 5 : 4;
     final double gridHeight = (itemsCount / 2).ceil() * 130.h;
 
     return Container(
@@ -86,7 +87,7 @@ class BodyContainer extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final items = [
                     "exams",
-                    if (user.isAdmin == true) "dashboard",
+                    if (hasDashboardAccess) "dashboard",
                     "results",
                     "profile",
                     "today_content",

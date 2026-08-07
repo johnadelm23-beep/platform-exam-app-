@@ -138,7 +138,18 @@ class _DailyContentManagementScreenState
   Future<void> _saveContent({String? editDocId}) async {
     if (!_formKey.currentState!.validate()) return;
 
-    final String adminId = FirebaseAuth.instance.currentUser?.uid ?? "system";
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    if (userDoc.data()?["isAdmin"] != true) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Permission denied: Main Admin only."), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    final String adminId = currentUser.uid;
     final data = {
       "eventId": _selectedEventId ?? "",
       "title": _titleController.text.trim(),

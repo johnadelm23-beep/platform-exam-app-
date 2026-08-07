@@ -27,6 +27,18 @@ class AdminDashboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!user.canAccessDashboard) {
+      return Scaffold(
+        appBar: AppBar(
+          title: const Text("Access Denied"),
+          backgroundColor: AppColors.primaryColor,
+        ),
+        body: const Center(
+          child: Text("You do not have permission to access the Dashboard."),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: AppColors.primaryColor,
       body: SafeArea(
@@ -80,158 +92,168 @@ class AdminDashboardScreen extends StatelessWidget {
                   crossAxisSpacing: 12,
                   mainAxisSpacing: 12,
                   children: [
-                    CustomContainer(
-                      title: "Follow Up",
-                      icon: HugeIcons.strokeRoundedCustomerSupport,
-                      color: Colors.deepOrange,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const AdminFollowUpScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "attendance_scanner".tr(),
-
-                      icon: HugeIcons.strokeRoundedQrCode,
-                      color: Colors.indigo,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const ScannerScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "events_manager".tr(),
-                      icon: HugeIcons.strokeRoundedCalendar01,
-                      color: Colors.orange,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const EventsManagementScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "attendance_stats".tr(),
-                      icon: HugeIcons.strokeRoundedChart01,
-                      color: Colors.pink,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const AttendanceAnalyticsDashboard(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "add_exam".tr(),
-                      icon: HugeIcons.strokeRoundedAdd01,
-                      color: Colors.green,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const AddExamScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "users".tr(),
-                      icon: HugeIcons.strokeRoundedUser,
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: UsersScreen()),
-                        );
-                      },
-                    ),
-
-                    CustomContainer(
-                      title: "stats".tr(),
-                      icon: HugeIcons.strokeRoundedAnalytics01,
-                      color: Colors.purple,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: ScoresStatisticsScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "add_post".tr(),
-                      icon: HugeIcons.strokeRoundedBookmark01,
-                      color: Colors.amber,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: AddPostScreen()),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "top_interactions".tr(),
-                      icon: HugeIcons.strokeRoundedFavourite,
-                      color: Colors.red,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: TopUsersScreen()),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "daily_content_manager".tr(),
-                      icon: HugeIcons.strokeRoundedFileBookmark,
-                      color: Colors.teal,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const DailyContentManagementScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "content_history".tr(),
-                      icon: HugeIcons.strokeRoundedFile01,
-                      color: Colors.brown,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const DailyContentHistoryScreen(),
-                          ),
-                        );
-                      },
-                    ),
-                    CustomContainer(
-                      title: "seasons_manager".tr(),
-                      icon: HugeIcons.strokeRoundedGrid,
-                      color: Colors.blueGrey,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(
-                            child: const SeasonsManagementScreen(),
-                          ),
-                        );
-                      },
-                    ),
+                    if (user.canAccessFollowUp)
+                      CustomContainer(
+                        title: "Follow Up",
+                        icon: HugeIcons.strokeRoundedCustomerSupport,
+                        color: Colors.deepOrange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const AdminFollowUpScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canAccessScanner)
+                      CustomContainer(
+                        title: "attendance_scanner".tr(),
+                        icon: HugeIcons.strokeRoundedQrCode,
+                        color: Colors.indigo,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const ScannerScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canManageEvents)
+                      CustomContainer(
+                        title: "events_manager".tr(),
+                        icon: HugeIcons.strokeRoundedCalendar01,
+                        color: Colors.orange,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const EventsManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canAccessAttendanceState)
+                      CustomContainer(
+                        title: "attendance_stats".tr(),
+                        icon: HugeIcons.strokeRoundedChart01,
+                        color: Colors.pink,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: AttendanceAnalyticsDashboard(user: user),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canCreateExam)
+                      CustomContainer(
+                        title: "add_exam".tr(),
+                        icon: HugeIcons.strokeRoundedAdd01,
+                        color: Colors.green,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const AddExamScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canAccessUsers)
+                      CustomContainer(
+                        title: "users".tr(),
+                        icon: HugeIcons.strokeRoundedUser,
+                        color: Colors.blue,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(child: const UsersScreen()),
+                          );
+                        },
+                      ),
+                    if (user.canAccessGradeStates)
+                      CustomContainer(
+                        title: "stats".tr(),
+                        icon: HugeIcons.strokeRoundedAnalytics01,
+                        color: Colors.purple,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: ScoresStatisticsScreen(user: user),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canCreatePost)
+                      CustomContainer(
+                        title: "add_post".tr(),
+                        icon: HugeIcons.strokeRoundedBookmark01,
+                        color: Colors.amber,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(child: const AddPostScreen()),
+                          );
+                        },
+                      ),
+                    if (user.canAccessTopInteractions)
+                      CustomContainer(
+                        title: "top_interactions".tr(),
+                        icon: HugeIcons.strokeRoundedFavourite,
+                        color: Colors.red,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(child: TopUsersScreen(user: user)),
+                          );
+                        },
+                      ),
+                    if (user.canCreateContent)
+                      CustomContainer(
+                        title: "daily_content_manager".tr(),
+                        icon: HugeIcons.strokeRoundedFileBookmark,
+                        color: Colors.teal,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const DailyContentManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canAccessContentHistory)
+                      CustomContainer(
+                        title: "content_history".tr(),
+                        icon: HugeIcons.strokeRoundedFile01,
+                        color: Colors.brown,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: DailyContentHistoryScreen(user: user),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canManageSeasons)
+                      CustomContainer(
+                        title: "seasons_manager".tr(),
+                        icon: HugeIcons.strokeRoundedGrid,
+                        color: Colors.blueGrey,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: const SeasonsManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
                   ],
                 ),
               ),

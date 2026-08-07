@@ -11,7 +11,8 @@ import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 
 class AttendanceAnalyticsDashboard extends StatefulWidget {
-  const AttendanceAnalyticsDashboard({super.key});
+  const AttendanceAnalyticsDashboard({super.key, this.user});
+  final UserData? user;
 
   @override
   State<AttendanceAnalyticsDashboard> createState() =>
@@ -23,6 +24,7 @@ class _AttendanceAnalyticsDashboardState
   String? _selectedSeasonId;
 
   void _confirmResetAttendance(BuildContext context) {
+    if (widget.user?.isAdmin != true) return;
     AppDialog.show(
       context: context,
       icon: Icons.warning_amber_rounded,
@@ -88,11 +90,12 @@ class _AttendanceAnalyticsDashboardState
         ),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
-            tooltip: "Reset Attendance Data",
-            onPressed: () => _confirmResetAttendance(context),
-          ),
+          if (widget.user?.isAdmin == true)
+            IconButton(
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
+              tooltip: "Reset Attendance Data",
+              onPressed: () => _confirmResetAttendance(context),
+            ),
         ],
       ),
       body: Container(

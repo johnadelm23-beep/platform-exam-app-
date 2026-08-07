@@ -91,6 +91,7 @@ class AuthRepo {
         "password": password,
         "email": email,
         "isAdmin": false,
+        "isSubAdmin": false,
         "profileImage": null,
         "attendancePercentage": 0.0,
         "fridayAttendanceCount": 0,
@@ -181,6 +182,10 @@ class AuthRepo {
           manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
         });
 
+        final bool isAdminVal = data["isAdmin"] == true;
+        final bool isSubVal = (data["subAdmin"] == true) || (data["isSubAdmin"] == true);
+        final bool finalSubVal = isAdminVal ? false : isSubVal;
+
         final updatedData = {
           "uid": currentUser.uid,
           "humanReadableId": manualId,
@@ -193,7 +198,9 @@ class AuthRepo {
           "totalAttendance": data["totalAttendance"] ?? 0,
           "totalAbsence": data["totalAbsence"] ?? 0,
           "lastAttendanceDate": data["lastAttendanceDate"],
-          "isAdmin": data["isAdmin"] ?? false,
+          "isAdmin": isAdminVal,
+          "subAdmin": finalSubVal,
+          "isSubAdmin": finalSubVal,
         };
         await userDocRef.set(updatedData, SetOptions(merge: true));
         final finalSnap = await userDocRef.get();

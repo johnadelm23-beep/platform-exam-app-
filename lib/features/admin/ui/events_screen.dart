@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
@@ -81,6 +82,17 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
 
   Future<void> _createNewEvent() async {
     if (!_formKey.currentState!.validate()) return;
+
+    final currentUser = FirebaseAuth.instance.currentUser;
+    if (currentUser == null) return;
+    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    if (userDoc.data()?["isAdmin"] != true) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Permission denied: Main Admin only."), backgroundColor: Colors.red),
+      );
+      return;
+    }
 
     final title = _titleController.text.trim();
     final description = _descController.text.trim();

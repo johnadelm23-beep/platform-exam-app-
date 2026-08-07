@@ -4,9 +4,11 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class DailyContentHistoryScreen extends StatefulWidget {
-  const DailyContentHistoryScreen({super.key});
+  const DailyContentHistoryScreen({super.key, this.user});
+  final UserData? user;
 
   @override
   State<DailyContentHistoryScreen> createState() => _DailyContentHistoryScreenState();
@@ -27,6 +29,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
   }
 
   void _clearArchivedContents() {
+    if (widget.user?.isAdmin != true) return;
     AppDialog.show(
       context: context,
       icon: Icons.delete_forever,
@@ -87,11 +90,12 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
         title: const Text("Daily Content History", style: TextStyle(color: Colors.white)),
         centerTitle: true,
         actions: [
-          IconButton(
-            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
-            tooltip: "Clear Archived",
-            onPressed: _clearArchivedContents,
-          ),
+          if (widget.user?.isAdmin == true)
+            IconButton(
+              icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.white),
+              tooltip: "Clear Archived",
+              onPressed: _clearArchivedContents,
+            ),
         ],
       ),
       body: Container(

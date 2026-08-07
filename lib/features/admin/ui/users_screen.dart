@@ -101,6 +101,9 @@ class UsersScreen extends StatelessWidget {
                         final name = user["name"] ?? "No Name";
                         final email = user["email"] ?? "No Email";
                         final isAdmin = user["isAdmin"] == true;
+                        final isSubAdmin = !isAdmin && (user["subAdmin"] == true || user["isSubAdmin"] == true);
+                        final String roleText = isAdmin ? "Admin" : isSubAdmin ? "Sub Admin" : "User";
+                        final Color roleColor = isAdmin ? Colors.red : isSubAdmin ? Colors.orange : Colors.green;
 
                         return Container(
                           padding: EdgeInsets.all(14.r),
@@ -126,7 +129,9 @@ class UsersScreen extends StatelessWidget {
                                   gradient: LinearGradient(
                                     colors: isAdmin
                                         ? [Colors.red, Colors.redAccent]
-                                        : [Colors.blue, Colors.blueAccent],
+                                        : isSubAdmin
+                                            ? [Colors.orange, Colors.orangeAccent]
+                                            : [Colors.blue, Colors.blueAccent],
                                   ),
                                 ),
                                 child: Center(
@@ -177,15 +182,13 @@ class UsersScreen extends StatelessWidget {
                                   vertical: 6.h,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: isAdmin
-                                      ? Colors.red.withOpacity(0.15)
-                                      : Colors.green.withOpacity(0.15),
+                                  color: roleColor.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(8.r),
                                 ),
                                 child: Text(
-                                  isAdmin ? "Admin" : "User",
+                                  roleText,
                                   style: TextStyle(
-                                    color: isAdmin ? Colors.red : Colors.green,
+                                    color: roleColor,
                                     fontWeight: FontWeight.bold,
                                     fontSize: 12.sp,
                                   ),
