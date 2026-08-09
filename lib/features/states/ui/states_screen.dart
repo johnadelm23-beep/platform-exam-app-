@@ -4,12 +4,25 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:easy_localization/easy_localization.dart';
-import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/theme/app_colors.dart' show AppColors;
 import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/states/ui/widgets/custom_bod_container.dart';
 
-class LeaderboardScreen extends StatelessWidget {
+class LeaderboardScreen extends StatefulWidget {
   const LeaderboardScreen({super.key});
+
+  @override
+  State<LeaderboardScreen> createState() => _LeaderboardScreenState();
+}
+
+class _LeaderboardScreenState extends State<LeaderboardScreen> {
+  late final Stream<List<Map<String, dynamic>>> _leaderboardStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _leaderboardStream = getLeaderboardStream();
+  }
 
   Stream<List<Map<String, dynamic>>> getLeaderboardStream() {
     return FirebaseFirestore.instance
@@ -92,7 +105,7 @@ class LeaderboardScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: getLeaderboardStream(),
+        stream: _leaderboardStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const LoadingState();

@@ -17,11 +17,21 @@ class SeasonsManagementScreen extends StatefulWidget {
 }
 
 class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
+  late final Stream<QuerySnapshot> _seasonsStream;
   final _formKey = GlobalKey<FormState>();
   final _nameController = TextEditingController();
   DateTime _startDate = DateTime.now();
   DateTime _endDate = DateTime.now().add(const Duration(days: 90));
   bool _isActive = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _seasonsStream = FirebaseFirestore.instance
+        .collection("seasons")
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+  }
 
   @override
   void dispose() {
@@ -469,10 +479,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
           border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection("seasons")
-              .orderBy("createdAt", descending: true)
-              .snapshots(),
+          stream: _seasonsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(

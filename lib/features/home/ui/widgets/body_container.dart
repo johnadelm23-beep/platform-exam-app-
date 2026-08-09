@@ -18,11 +18,30 @@ import 'package:platformexamapp/features/profile/ui/profile_screen.dart';
 import 'package:platformexamapp/features/states/ui/states_screen.dart';
 import 'package:platformexamapp/features/home/ui/daily_content_screen.dart';
 
-class BodyContainer extends StatelessWidget {
+class BodyContainer extends StatefulWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
 
   final String uid;
   final UserData user;
+
+  @override
+  State<BodyContainer> createState() => _BodyContainerState();
+}
+
+class _BodyContainerState extends State<BodyContainer> {
+  late final Stream<int> _unattemptedExamsStream;
+  late final Stream<QuerySnapshot> _postsStream;
+  static final RegExp _arabicRegex = RegExp(r'[\u0600-\u06FF]');
+
+  @override
+  void initState() {
+    super.initState();
+    _unattemptedExamsStream = getUnattemptedExamsCount();
+    _postsStream = FirebaseFirestore.instance
+        .collection("posts")
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+  }
 
   /// 🔥 عدد الامتحانات اللي المستخدم لسه ما امتحنهاش
   Stream<int> getUnattemptedExamsCount() {
@@ -33,7 +52,7 @@ class BodyContainer extends StatelessWidget {
 
       final attempts = await FirebaseFirestore.instance
           .collection("examAttempts")
-          .where("userId", isEqualTo: uid)
+          .where("userId", isEqualTo: widget.uid)
           .get();
 
       final attemptedExamIds = attempts.docs.map((e) => e["examId"]).toSet();
@@ -58,7 +77,7 @@ class BodyContainer extends StatelessWidget {
         : AppColors.lightSurface;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
-    final bool hasDashboardAccess = user.canAccessDashboard;
+    final bool hasDashboardAccess = widget.user.canAccessDashboard;
     final gridItems = [
       "exams",
       if (hasDashboardAccess) "dashboard",
@@ -113,7 +132,7 @@ class BodyContainer extends StatelessWidget {
 
                       if (item == "exams") {
                         return StreamBuilder<int>(
-                          stream: getUnattemptedExamsCount(),
+                          stream: _unattemptedExamsStream,
                           builder: (context, snapshot) {
                             final newCount = snapshot.data ?? 0;
 
@@ -125,7 +144,7 @@ class BodyContainer extends StatelessWidget {
                                     Navigator.push(
                                       context,
                                       AppPageRoute(
-                                        child: ExamsScreen(user: user),
+                                        child: ExamsScreen(user: widget.user),
                                       ),
                                     );
                                   },
@@ -172,7 +191,7 @@ class BodyContainer extends StatelessWidget {
                             Navigator.push(
                               context,
                               AppPageRoute(
-                                child: AdminDashboardScreen(user: user),
+                                child: AdminDashboardScreen(user: widget.user),
                               ),
                             );
                           },
@@ -235,10 +254,7 @@ class BodyContainer extends StatelessWidget {
 
                 /// POSTS
                 StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("posts")
-                      .orderBy("createdAt", descending: true)
-                      .snapshots(),
+                  stream: _postsStream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const LoadingState();
@@ -263,19 +279,17 @@ class BodyContainer extends StatelessWidget {
                         final data = post.data() as Map<String, dynamic>;
                         final text = data["text"] ?? "";
                         final Map likes = data["likes"] ?? {};
-                        final isLiked = likes.containsKey(uid);
+                        final isLiked = likes.containsKey(widget.uid);
                         final likeCount = likes.length;
 
-                        final isArabic = RegExp(
-                          r'[\u0600-\u06FF]',
-                        ).hasMatch(text);
+                        final isArabic = _arabicRegex.hasMatch(text);
 
                         return PostContainer(
                           isArabic: isArabic,
                           isLiked: isLiked,
                           text: text,
-                          user: user,
-                          uid: uid,
+                          user: widget.user,
+                          uid: widget.uid,
                           likeCount: likeCount,
                           post: post,
                         );

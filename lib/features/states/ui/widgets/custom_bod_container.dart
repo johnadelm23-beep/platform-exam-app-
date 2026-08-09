@@ -1,7 +1,7 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:platformexamapp/core/services/user_cache_service.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/states/ui/widgets/custom_poduim.dart';
@@ -78,7 +78,7 @@ class CustomBodyContainer extends StatelessWidget {
                 final user = others[index];
 
                 return FutureBuilder<String>(
-                  future: getUserName(user["userId"]),
+                  future: UserCacheService.getUserName(user["userId"]),
                   builder: (context, snap) {
                     final name = snap.data ?? "...";
 
@@ -153,14 +153,5 @@ class CustomBodyContainer extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  Future<String> getUserName(String userId) async {
-    final doc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(userId)
-        .get();
-
-    return doc.data()?["name"] ?? "Unknown";
   }
 }

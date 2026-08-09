@@ -23,6 +23,18 @@ class AttendanceAnalyticsDashboard extends StatefulWidget {
 class _AttendanceAnalyticsDashboardState
     extends State<AttendanceAnalyticsDashboard> {
   String? _selectedSeasonId;
+  late Future<Map<String, dynamic>> _statsFuture;
+  late final Stream<QuerySnapshot> _seasonsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _seasonsStream = FirebaseFirestore.instance
+        .collection("seasons")
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+    _statsFuture = _calculateDashboardStats();
+  }
 
   void _confirmResetAttendance(BuildContext context) {
     if (widget.user?.isAdmin != true) return;
@@ -56,7 +68,9 @@ class _AttendanceAnalyticsDashboardState
                 backgroundColor: Colors.green,
               ),
             );
-            setState(() {}); // Reload dashboard
+            setState(() {
+              _statsFuture = _calculateDashboardStats();
+            });
           }
         } catch (e) {
           if (mounted) {
@@ -141,10 +155,7 @@ class _AttendanceAnalyticsDashboardState
             Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 12.h),
               child: StreamBuilder<QuerySnapshot>(
-                stream: FirebaseFirestore.instance
-                    .collection("seasons")
-                    .orderBy("createdAt", descending: true)
-                    .snapshots(),
+                stream: _seasonsStream,
                 builder: (context, seasonSnapshot) {
                   final seasons = seasonSnapshot.data?.docs ?? [];
                   return DropdownButtonFormField<String>(
@@ -200,6 +211,7 @@ class _AttendanceAnalyticsDashboardState
                     onChanged: (val) {
                       setState(() {
                         _selectedSeasonId = val;
+                        _statsFuture = _calculateDashboardStats();
                       });
                     },
                   );
@@ -208,7 +220,7 @@ class _AttendanceAnalyticsDashboardState
             ),
             Expanded(
               child: FutureBuilder<Map<String, dynamic>>(
-                future: _calculateDashboardStats(),
+                future: _statsFuture,
                 builder: (context, snapshot) {
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(

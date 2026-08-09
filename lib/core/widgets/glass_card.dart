@@ -12,6 +12,7 @@ class GlassCard extends StatelessWidget {
   final VoidCallback? onTap;
   final double? width;
   final double? height;
+  final bool enableBlur;
 
   const GlassCard({
     super.key,
@@ -23,6 +24,7 @@ class GlassCard extends StatelessWidget {
     this.onTap,
     this.width,
     this.height,
+    this.enableBlur = false,
   });
 
   @override
@@ -37,33 +39,40 @@ class GlassCard extends StatelessWidget {
         ? const Color(0x66000000)
         : const Color(0x140F1C3F);
 
-    Widget content = ClipRRect(
-      borderRadius: BorderRadius.circular(r),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-        child: Container(
-          width: width,
-          height: height,
-          padding: padding ?? EdgeInsets.all(16.r),
-          decoration: BoxDecoration(
-            color: customBgColor ?? defaultBg,
-            borderRadius: BorderRadius.circular(r),
-            border: Border.all(
-              color: customBorderColor ?? defaultBorder,
-              width: 1,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: shadowColor,
-                blurRadius: 30,
-                offset: const Offset(0, 10),
-              ),
-            ],
+    Widget innerContainer = Container(
+      width: width,
+      height: height,
+      padding: padding ?? EdgeInsets.all(16.r),
+      decoration: BoxDecoration(
+        color: customBgColor ?? defaultBg,
+        borderRadius: BorderRadius.circular(r),
+        border: Border.all(color: customBorderColor ?? defaultBorder, width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: shadowColor,
+            blurRadius: 30,
+            offset: const Offset(0, 10),
           ),
-          child: child,
-        ),
+        ],
       ),
+      child: child,
     );
+
+    Widget content;
+    if (enableBlur) {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+          child: innerContainer,
+        ),
+      );
+    } else {
+      content = ClipRRect(
+        borderRadius: BorderRadius.circular(r),
+        child: innerContainer,
+      );
+    }
 
     if (onTap != null) {
       return InkWell(

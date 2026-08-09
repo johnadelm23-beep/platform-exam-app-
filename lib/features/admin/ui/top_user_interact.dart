@@ -3,15 +3,29 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
+import 'package:platformexamapp/core/services/user_cache_service.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
-class TopUsersScreen extends StatelessWidget {
+class TopUsersScreen extends StatefulWidget {
   const TopUsersScreen({super.key, this.user});
   final UserData? user;
+
+  @override
+  State<TopUsersScreen> createState() => _TopUsersScreenState();
+}
+
+class _TopUsersScreenState extends State<TopUsersScreen> {
+  late final Stream<List<Map<String, dynamic>>> _topUsersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _topUsersStream = getTopUsersStream();
+  }
 
   Stream<List<Map<String, dynamic>>> getTopUsersStream() {
     return FirebaseFirestore.instance.collection("posts").snapshots().map((
@@ -59,15 +73,6 @@ class TopUsersScreen extends StatelessWidget {
         ),
       );
     }
-  }
-
-  Future<Map<String, dynamic>> getUser(String uid) async {
-    final doc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(uid)
-        .get();
-
-    return {"name": doc.data()?["name"] ?? "Unknown"};
   }
 
   @override
@@ -131,15 +136,14 @@ class TopUsersScreen extends StatelessWidget {
                   ),
                   border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
-                child: StreamBuilder(
-                  stream: getTopUsersStream(),
+                child: StreamBuilder<List<Map<String, dynamic>>>(
+                  stream: _topUsersStream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const LoadingState();
                     }
 
-                    final likesList =
-                        snapshot.data as List<Map<String, dynamic>>;
+                    final likesList = snapshot.data ?? [];
 
                     if (likesList.isEmpty) {
                       return EmptyState(
@@ -158,10 +162,10 @@ class TopUsersScreen extends StatelessWidget {
                         final item = likesList[index];
                         final uid = item["uid"];
 
-                        return FutureBuilder(
-                          future: getUser(uid),
+                        return FutureBuilder<String>(
+                          future: UserCacheService.getUserName(uid),
                           builder: (context, snap) {
-                            final name = snap.data?["name"] ?? "Loading...";
+                            final name = snap.data ?? "Loading...";
 
                             return GlassCard(
                               padding: EdgeInsets.all(16.r),
@@ -225,7 +229,7 @@ class TopUsersScreen extends StatelessWidget {
                                     ),
                                   ),
 
-                                  if (user?.isAdminVal == true)
+                                  if (widget.user?.isAdminVal == true)
                                     IconButton(
                                       icon: const HugeIcon(
                                         icon: HugeIcons.strokeRoundedDelete01,

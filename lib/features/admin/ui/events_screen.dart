@@ -18,6 +18,7 @@ class EventsManagementScreen extends StatefulWidget {
 }
 
 class _EventsManagementScreenState extends State<EventsManagementScreen> {
+  late final Stream<QuerySnapshot> _eventsStream;
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _descController = TextEditingController();
@@ -25,6 +26,15 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
   TimeOfDay _selectedTime = TimeOfDay.now();
   String _selectedType = 'friday_meeting'; // default type
   bool _isActive = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _eventsStream = FirebaseFirestore.instance
+        .collection("events")
+        .orderBy("createdAt", descending: true)
+        .snapshots();
+  }
 
   @override
   void dispose() {
@@ -611,10 +621,7 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
           border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection("events")
-              .orderBy("createdAt", descending: true)
-              .snapshots(),
+          stream: _eventsStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(

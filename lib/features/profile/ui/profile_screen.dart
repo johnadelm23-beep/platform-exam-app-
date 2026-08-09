@@ -28,6 +28,29 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final ScreenshotController _screenshotController = ScreenshotController();
+  late final Stream<DocumentSnapshot> _userStream;
+  late final Stream<QuerySnapshot> _seasonStream;
+  late final Stream<QuerySnapshot> _eventStream;
+
+  @override
+  void initState() {
+    super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
+    _userStream = FirebaseFirestore.instance
+        .collection("users")
+        .doc(uid)
+        .snapshots();
+    _seasonStream = FirebaseFirestore.instance
+        .collection("seasons")
+        .where("status", isEqualTo: "active")
+        .limit(1)
+        .snapshots();
+    _eventStream = FirebaseFirestore.instance
+        .collection("events")
+        .where("isActive", isEqualTo: true)
+        .limit(1)
+        .snapshots();
+  }
 
   Future<void> _shareQR(UserData user) async {
     try {
@@ -140,10 +163,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
       ),
       body: StreamBuilder<DocumentSnapshot>(
-        stream: FirebaseFirestore.instance
-            .collection("users")
-            .doc(uid)
-            .snapshots(),
+        stream: _userStream,
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const LoadingState();
@@ -176,11 +196,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: EdgeInsets.all(16.r),
                     borderRadius: 24.r,
                     child: StreamBuilder<QuerySnapshot>(
-                      stream: FirebaseFirestore.instance
-                          .collection("seasons")
-                          .where("status", isEqualTo: "active")
-                          .limit(1)
-                          .snapshots(),
+                      stream: _seasonStream,
                       builder: (context, seasonSnap) {
                         final seasonName =
                             (seasonSnap.data?.docs.isNotEmpty == true)
@@ -189,11 +205,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             : "No Active Season";
 
                         return StreamBuilder<QuerySnapshot>(
-                          stream: FirebaseFirestore.instance
-                              .collection("events")
-                              .where("isActive", isEqualTo: true)
-                              .limit(1)
-                              .snapshots(),
+                          stream: _eventStream,
                           builder: (context, eventSnap) {
                             final activeEventId =
                                 (eventSnap.data?.docs.isNotEmpty == true)

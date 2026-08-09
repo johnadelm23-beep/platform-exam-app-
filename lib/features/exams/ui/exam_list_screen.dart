@@ -5,17 +5,30 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/theme/app_page_route.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
+import 'package:platformexamapp/features/admin/ui/add_exam_screen.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
-import 'package:platformexamapp/core/widgets/app_dialog.dart';
-import 'package:platformexamapp/core/theme/app_page_route.dart';
 
-class ExamsScreen extends StatelessWidget {
+class ExamsScreen extends StatefulWidget {
   const ExamsScreen({super.key, required this.user});
   final UserData user;
+
+  @override
+  State<ExamsScreen> createState() => _ExamsScreenState();
+}
+
+class _ExamsScreenState extends State<ExamsScreen> {
+  late final Stream<QuerySnapshot> _examsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _examsStream = FirebaseFirestore.instance.collection("exams").snapshots();
+  }
 
   Future<void> deleteExam(String examId) async {
     await FirebaseFirestore.instance.collection("exams").doc(examId).delete();
@@ -42,9 +55,9 @@ class ExamsScreen extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      "available_exams".tr(),
+                      "exams".tr(),
                       style: GoogleFonts.cairo(
-                        fontSize: 24.sp,
+                        fontSize: 22.sp,
                         color: textColor,
                         fontWeight: FontWeight.w900,
                       ),
@@ -67,6 +80,30 @@ class ExamsScreen extends StatelessWidget {
                       ),
                     ),
                   ),
+
+                  if (widget.user.isAdmin == true) SizedBox(width: 8.w),
+
+                  if (widget.user.isAdmin == true)
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          AppPageRoute(child: const AddExamScreen()),
+                        );
+                      },
+                      child: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: const BoxDecoration(
+                          color: AppColors.softGold,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.add,
+                          color: Colors.black87,
+                          size: 18.r,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -81,9 +118,7 @@ class ExamsScreen extends StatelessWidget {
                   border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("exams")
-                      .snapshots(),
+                  stream: _examsStream,
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
                       return const LoadingState();
@@ -141,46 +176,13 @@ class ExamsScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                              if (user.isAdmin == true)
+                              if (widget.user.isAdmin == true)
                                 IconButton(
+                                  onPressed: () => deleteExam(exam.id),
                                   icon: const HugeIcon(
                                     icon: HugeIcons.strokeRoundedDelete01,
-                                    color: AppColors.heartRed,
+                                    color: AppColors.softRed,
                                   ),
-                                  onPressed: () {
-                                    AppDialog.show(
-                                      context: context,
-                                      iconWidget: Icon(
-                                        Icons.delete_forever_rounded,
-                                        color: AppColors.heartRed,
-                                        size: 36.r,
-                                      ),
-                                      iconColor: AppColors.heartRed,
-                                      title: "delete_exam".tr(),
-                                      description: "delete_exam_desc".tr(),
-                                      confirmText: "delete".tr(),
-                                      confirmButtonColor: AppColors.heartRed,
-                                      cancelText: "cancel".tr(),
-                                      onConfirm: () async {
-                                        Navigator.pop(context);
-                                        await deleteExam(exam.id);
-                                        if (!context.mounted) return;
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              "exam_deleted_success".tr(),
-                                              style: GoogleFonts.cairo(),
-                                            ),
-                                            backgroundColor:
-                                                AppColors.successGreen,
-                                          ),
-                                        );
-                                      },
-                                      onCancel: () => Navigator.pop(context),
-                                    );
-                                  },
                                 ),
                             ],
                           ),

@@ -2,13 +2,31 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
+import 'package:platformexamapp/features/auth/data/models/user_data.dart';
+import 'package:platformexamapp/features/admin/ui/widgets/admin_privileges_sheet.dart';
 
-class UsersScreen extends StatelessWidget {
-  const UsersScreen({super.key});
+class UsersScreen extends StatefulWidget {
+  const UsersScreen({super.key, this.currentUser});
+
+  final UserData? currentUser;
+
+  @override
+  State<UsersScreen> createState() => _UsersScreenState();
+}
+
+class _UsersScreenState extends State<UsersScreen> {
+  late final Stream<QuerySnapshot> _usersStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _usersStream = FirebaseFirestore.instance.collection("users").snapshots();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -75,9 +93,7 @@ class UsersScreen extends StatelessWidget {
                   border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: FirebaseFirestore.instance
-                      .collection("users")
-                      .snapshots(),
+                  stream: _usersStream,
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
                       return Center(
@@ -106,8 +122,8 @@ class UsersScreen extends StatelessWidget {
                       itemCount: users.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
-                        final user =
-                            users[index].data() as Map<String, dynamic>;
+                        final userDoc = users[index];
+                        final user = userDoc.data() as Map<String, dynamic>;
 
                         final name = user["name"] ?? "No Name";
                         final email = user["email"] ?? "No Email";
@@ -166,14 +182,12 @@ class UsersScreen extends StatelessWidget {
                                     Text(
                                       name,
                                       style: GoogleFonts.cairo(
-                                        fontSize: 16.sp,
-                                        fontWeight: FontWeight.bold,
                                         color: textColor,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 15.sp,
                                       ),
                                     ),
-
                                     SizedBox(height: 2.h),
-
                                     Text(
                                       email,
                                       style: GoogleFonts.cairo(
@@ -193,9 +207,6 @@ class UsersScreen extends StatelessWidget {
                                 decoration: BoxDecoration(
                                   color: roleColor.withOpacity(0.15),
                                   borderRadius: BorderRadius.circular(10.r),
-                                  border: Border.all(
-                                    color: roleColor.withOpacity(0.3),
-                                  ),
                                 ),
                                 child: Text(
                                   roleText,
@@ -206,6 +217,25 @@ class UsersScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
+
+                              if (widget.currentUser?.isAdminVal == true)
+                                IconButton(
+                                  icon: const HugeIcon(
+                                    icon: HugeIcons.strokeRoundedSettings01,
+                                    color: AppColors.softGold,
+                                  ),
+                                  onPressed: () {
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) => AdminPrivilegesSheet(
+                                        targetUserDocId: userDoc.id,
+                                        targetUserData: user,
+                                      ),
+                                    );
+                                  },
+                                ),
                             ],
                           ),
                         );

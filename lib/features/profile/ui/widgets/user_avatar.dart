@@ -43,6 +43,8 @@ class UserAvatar extends StatelessWidget {
                 fit: BoxFit.cover,
                 width: effectiveRadius * 2,
                 height: effectiveRadius * 2,
+                cacheWidth: (effectiveRadius * 2 * 2).toInt(),
+                cacheHeight: (effectiveRadius * 2 * 2).toInt(),
                 loadingBuilder: (context, child, loadingProgress) {
                   if (loadingProgress == null) return child;
                   return Center(

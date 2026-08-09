@@ -19,14 +19,31 @@ class DailyContentHistoryScreen extends StatefulWidget {
 }
 
 class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
+  static final Map<String, int> _attendanceCountCache = {};
+  late final Stream<QuerySnapshot> _contentStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _contentStream = FirebaseFirestore.instance
+        .collection("daily_content")
+        .orderBy("createdDate", descending: true)
+        .snapshots();
+  }
+
   Future<int> _getAttendanceCount(String eventId) async {
     if (eventId.isEmpty) return 0;
+    if (_attendanceCountCache.containsKey(eventId)) {
+      return _attendanceCountCache[eventId]!;
+    }
     try {
       final snap = await FirebaseFirestore.instance
           .collection("attendance")
           .where("eventId", isEqualTo: eventId)
           .get();
-      return snap.docs.length;
+      final count = snap.docs.length;
+      _attendanceCountCache[eventId] = count;
+      return count;
     } catch (_) {
       return 0;
     }
@@ -148,10 +165,7 @@ class _DailyContentHistoryScreenState extends State<DailyContentHistoryScreen> {
           border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: StreamBuilder<QuerySnapshot>(
-          stream: FirebaseFirestore.instance
-              .collection("daily_content")
-              .orderBy("createdDate", descending: true)
-              .snapshots(),
+          stream: _contentStream,
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
