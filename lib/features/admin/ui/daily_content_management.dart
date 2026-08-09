@@ -2,15 +2,18 @@ import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:dio/dio.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mime/mime.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 
 class DailyContentManagementScreen extends StatefulWidget {
   const DailyContentManagementScreen({super.key});
@@ -30,14 +33,12 @@ class _DailyContentManagementScreenState
   final _verseController = TextEditingController();
   final _homeworkController = TextEditingController();
   final _notesController = TextEditingController();
-  final _videoController =
-      TextEditingController(); // Comma-separated video links
-  final _externalController =
-      TextEditingController(); // Comma-separated external links
+  final _videoController = TextEditingController();
+  final _externalController = TextEditingController();
 
   String _searchQuery = "";
   String _filterType = "all"; // all, active, archived
-  final String _sortBy = "newest"; // newest
+  final String _sortBy = "newest";
   String? _selectedEventId;
 
   String? _coverImageUrl;
@@ -149,7 +150,7 @@ class _DailyContentManagementScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Permission denied: Main Admin only."),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
       return;
@@ -220,7 +221,7 @@ class _DailyContentManagementScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error saving content: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -253,7 +254,7 @@ class _DailyContentManagementScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error activating content: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -280,7 +281,7 @@ class _DailyContentManagementScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error archiving content: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -310,7 +311,7 @@ class _DailyContentManagementScreenState
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error duplicating content: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -320,12 +321,12 @@ class _DailyContentManagementScreenState
     AppDialog.show(
       context: context,
       icon: Icons.delete_forever,
-      iconColor: Colors.red,
+      iconColor: AppColors.heartRed,
       title: "Delete Content",
       description:
           "This action cannot be undone. Are you sure you want to delete this content item?",
       confirmText: "Delete",
-      confirmButtonColor: Colors.red,
+      confirmButtonColor: AppColors.heartRed,
       cancelText: "Cancel",
       onConfirm: () async {
         Navigator.pop(context); // Close dialog
@@ -346,7 +347,7 @@ class _DailyContentManagementScreenState
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text("Error deleting content: $e"),
-              backgroundColor: Colors.red,
+              backgroundColor: AppColors.heartRed,
             ),
           );
         }
@@ -364,6 +365,17 @@ class _DailyContentManagementScreenState
     } else {
       _clearControllers();
     }
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkSurface : Colors.white;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final inputBg = isDark
+        ? AppColors.darkGlassSurface
+        : AppColors.lightGlassSurface;
 
     showModalBottomSheet(
       context: context,
@@ -392,6 +404,37 @@ class _DailyContentManagementScreenState
               });
             }
 
+            InputDecoration buildInputDecoration(
+              String labelText, {
+              Widget? prefixIcon,
+            }) {
+              return InputDecoration(
+                labelText: labelText,
+                labelStyle: GoogleFonts.cairo(
+                  color: mutedColor,
+                  fontSize: 13.sp,
+                ),
+                prefixIcon: prefixIcon,
+                fillColor: inputBg,
+                filled: true,
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: const BorderSide(
+                    color: AppColors.softGold,
+                    width: 1.5,
+                  ),
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12.r),
+                  borderSide: BorderSide(color: borderColor),
+                ),
+              );
+            }
+
             return Container(
               padding: EdgeInsets.only(
                 top: 20.r,
@@ -400,15 +443,17 @@ class _DailyContentManagementScreenState
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20.r,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: surfaceColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(30.r),
                   topRight: Radius.circular(30.r),
                 ),
+                border: Border.all(color: borderColor),
               ),
               child: Form(
                 key: _formKey,
                 child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -418,7 +463,9 @@ class _DailyContentManagementScreenState
                           width: 40.w,
                           height: 4.h,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : Colors.grey[300],
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
@@ -428,10 +475,12 @@ class _DailyContentManagementScreenState
                         editDocId == null
                             ? "Create Daily Content"
                             : "Edit Daily Content",
-                        style: TextStyle(
-                          fontSize: 20.sp,
+                        style: GoogleFonts.cairo(
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryColor,
+                          color: isDark
+                              ? AppColors.softGold
+                              : AppColors.primaryColor,
                         ),
                       ),
                       SizedBox(height: 15.h),
@@ -444,17 +493,28 @@ class _DailyContentManagementScreenState
                           final events = snapshot.data?.docs ?? [];
                           return DropdownButtonFormField<String>(
                             value: _selectedEventId,
-                            decoration: InputDecoration(
-                              labelText: "Select Event",
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(12.r),
+                            dropdownColor: surfaceColor,
+                            style: GoogleFonts.cairo(
+                              color: textColor,
+                              fontSize: 14.sp,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            decoration: buildInputDecoration(
+                              "Select Event",
+                              prefixIcon: HugeIcon(
+                                icon: HugeIcons.strokeRoundedCalendar01,
+                                size: 20.r,
+                                color: AppColors.softGold,
                               ),
                             ),
                             items: events.map((e) {
                               final data = e.data() as Map<String, dynamic>;
                               return DropdownMenuItem<String>(
                                 value: e.id,
-                                child: Text(data["title"] ?? "Event"),
+                                child: Text(
+                                  data["title"] ?? "Event",
+                                  style: GoogleFonts.cairo(color: textColor),
+                                ),
                               );
                             }).toList(),
                             onChanged: (val) {
@@ -471,10 +531,13 @@ class _DailyContentManagementScreenState
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _titleController,
-                        decoration: InputDecoration(
-                          labelText: "Content Title",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration(
+                          "Content Title",
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedFile01,
+                            size: 20.r,
+                            color: AppColors.softGold,
                           ),
                         ),
                         validator: (value) =>
@@ -485,73 +548,59 @@ class _DailyContentManagementScreenState
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _subtitleController,
-                        decoration: InputDecoration(
-                          labelText: "Subtitle",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration(
+                          "Subtitle",
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedEdit01,
+                            size: 20.r,
+                            color: AppColors.softGold,
                           ),
                         ),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _descController,
-                        maxLines: 2,
-                        decoration: InputDecoration(
-                          labelText: "Description",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
+                        maxLines: 3,
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration("Description"),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _bibleController,
-                        decoration: InputDecoration(
-                          labelText: "Bible Reading (Text)",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration(
+                          "Bible Reading (Text)",
                         ),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _verseController,
-                        decoration: InputDecoration(
-                          labelText: "Memory Verse",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration("Memory Verse"),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _homeworkController,
-                        decoration: InputDecoration(
-                          labelText: "Homework Task",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration("Homework Task"),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _notesController,
-                        decoration: InputDecoration(
-                          labelText: "Notes",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
+                        maxLines: 2,
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration("Notes"),
                       ),
                       SizedBox(height: 20.h),
 
                       // Cover Image Section
                       Text(
                         "Cover Image",
-                        style: TextStyle(
+                        style: GoogleFonts.cairo(
                           fontWeight: FontWeight.bold,
-                          fontSize: 15.sp,
-                          color: Colors.grey[700],
+                          fontSize: 14.sp,
+                          color: mutedColor,
                         ),
                       ),
                       SizedBox(height: 8.h),
@@ -568,10 +617,10 @@ class _DailyContentManagementScreenState
                                 errorBuilder: (_, __, ___) => Container(
                                   width: double.infinity,
                                   height: 160.h,
-                                  color: Colors.grey[200],
+                                  color: inputBg,
                                   child: const Icon(
                                     Icons.broken_image,
-                                    color: Colors.grey,
+                                    color: AppColors.softGold,
                                   ),
                                 ),
                               ),
@@ -585,13 +634,11 @@ class _DailyContentManagementScreenState
                                     onTap: pickCoverImage,
                                     child: CircleAvatar(
                                       radius: 18.r,
-                                      backgroundColor: Colors.blue.withOpacity(
-                                        0.9,
-                                      ),
+                                      backgroundColor: AppColors.softGold,
                                       child: Icon(
                                         Icons.edit,
                                         size: 18.r,
-                                        color: Colors.white,
+                                        color: Colors.black87,
                                       ),
                                     ),
                                   ),
@@ -602,9 +649,7 @@ class _DailyContentManagementScreenState
                                     ),
                                     child: CircleAvatar(
                                       radius: 18.r,
-                                      backgroundColor: Colors.red.withOpacity(
-                                        0.9,
-                                      ),
+                                      backgroundColor: AppColors.heartRed,
                                       child: Icon(
                                         Icons.close,
                                         size: 18.r,
@@ -622,11 +667,14 @@ class _DailyContentManagementScreenState
                           width: double.infinity,
                           height: 100.h,
                           decoration: BoxDecoration(
-                            border: Border.all(color: Colors.grey[300]!),
+                            color: inputBg,
+                            border: Border.all(color: borderColor),
                             borderRadius: BorderRadius.circular(12.r),
                           ),
                           child: const Center(
-                            child: CircularProgressIndicator(),
+                            child: CircularProgressIndicator(
+                              color: AppColors.softGold,
+                            ),
                           ),
                         )
                       else
@@ -638,19 +686,29 @@ class _DailyContentManagementScreenState
                                 padding: EdgeInsets.only(bottom: 8.h),
                                 child: Text(
                                   "Upload failed: $_uploadError",
-                                  style: const TextStyle(color: Colors.red),
+                                  style: GoogleFonts.cairo(
+                                    color: AppColors.heartRed,
+                                  ),
                                 ),
                               ),
                             SizedBox(
                               width: double.infinity,
                               child: OutlinedButton.icon(
                                 onPressed: pickCoverImage,
-                                icon: const Icon(Icons.add_photo_alternate),
-                                label: const Text(
+                                icon: const HugeIcon(
+                                  icon: HugeIcons.strokeRoundedImage01,
+                                  color: AppColors.softGold,
+                                ),
+                                label: Text(
                                   "Choose Cover Image from Phone",
+                                  style: GoogleFonts.cairo(
+                                    color: textColor,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                                 style: OutlinedButton.styleFrom(
                                   padding: EdgeInsets.symmetric(vertical: 12.h),
+                                  side: BorderSide(color: borderColor),
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(12.r),
                                   ),
@@ -663,20 +721,26 @@ class _DailyContentManagementScreenState
 
                       TextFormField(
                         controller: _videoController,
-                        decoration: InputDecoration(
-                          labelText: "Video URLs (comma-separated)",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration(
+                          "Video URLs (comma-separated)",
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedVideo01,
+                            size: 20.r,
+                            color: AppColors.softGold,
                           ),
                         ),
                       ),
                       SizedBox(height: 12.h),
                       TextFormField(
                         controller: _externalController,
-                        decoration: InputDecoration(
-                          labelText: "External Web Links (comma-separated)",
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                        style: GoogleFonts.cairo(color: textColor),
+                        decoration: buildInputDecoration(
+                          "External Web Links (comma-separated)",
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedGrid,
+                            size: 20.r,
+                            color: AppColors.softGold,
                           ),
                         ),
                       ),
@@ -690,8 +754,8 @@ class _DailyContentManagementScreenState
                               ? null
                               : () => _saveContent(editDocId: editDocId),
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.softGold,
+                            foregroundColor: Colors.black87,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),
@@ -700,9 +764,10 @@ class _DailyContentManagementScreenState
                             editDocId == null
                                 ? "Create Content"
                                 : "Update Content",
-                            style: TextStyle(
-                              fontWeight: .bold,
-                              fontSize: 24.sp,
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.sp,
+                              color: Colors.black87,
                             ),
                           ),
                         ),
@@ -719,6 +784,12 @@ class _DailyContentManagementScreenState
   }
 
   void _showPreviewDialog(Map<String, dynamic> data) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final inputBg = isDark
+        ? AppColors.darkGlassSurface
+        : AppColors.lightGlassSurface;
+
     final previewCover =
         data["coverImage"] ??
         (List<String>.from(data["images"] ?? []).isNotEmpty
@@ -729,17 +800,18 @@ class _DailyContentManagementScreenState
       context: context,
       iconWidget: HugeIcon(
         icon: HugeIcons.strokeRoundedFileBookmark,
-        color: AppColors.primaryColor,
+        color: AppColors.softGold,
         size: 36.r,
       ),
-      iconColor: AppColors.primaryColor,
+      iconColor: AppColors.softGold,
       title: data["title"] ?? "Preview Content",
       description: data["subtitle"] ?? "No subtitle provided",
       confirmText: "Close",
-      confirmButtonColor: Colors.green,
+      confirmButtonColor: AppColors.softGold,
       onConfirm: () => Navigator.pop(context),
       customContent: Flexible(
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -756,10 +828,10 @@ class _DailyContentManagementScreenState
                       errorBuilder: (_, __, ___) => Container(
                         width: double.infinity,
                         height: 120.h,
-                        color: Colors.grey[200],
+                        color: inputBg,
                         child: const Icon(
                           Icons.broken_image,
-                          color: Colors.grey,
+                          color: AppColors.softGold,
                         ),
                       ),
                     ),
@@ -768,34 +840,51 @@ class _DailyContentManagementScreenState
               if (data["description"] != null)
                 Text(
                   data["description"],
-                  style: TextStyle(fontSize: 14.sp, color: Colors.black87),
+                  style: GoogleFonts.cairo(fontSize: 14.sp, color: textColor),
                 ),
-              const Divider(),
+              Divider(
+                color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+              ),
               if (data["bibleReading"] != null &&
                   data["bibleReading"].toString().isNotEmpty) ...[
-                const Text(
+                Text(
                   "Bible Reading:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.softGold,
+                  ),
                 ),
-                Text(data["bibleReading"]),
+                Text(
+                  data["bibleReading"],
+                  style: GoogleFonts.cairo(color: textColor),
+                ),
                 SizedBox(height: 10.h),
               ],
               if (data["verse"] != null &&
                   data["verse"].toString().isNotEmpty) ...[
-                const Text(
+                Text(
                   "Verse:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.softGold,
+                  ),
                 ),
-                Text(data["verse"]),
+                Text(data["verse"], style: GoogleFonts.cairo(color: textColor)),
                 SizedBox(height: 10.h),
               ],
               if (data["homework"] != null &&
                   data["homework"].toString().isNotEmpty) ...[
-                const Text(
+                Text(
                   "Homework:",
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.softGold,
+                  ),
                 ),
-                Text(data["homework"]),
+                Text(
+                  data["homework"],
+                  style: GoogleFonts.cairo(color: textColor),
+                ),
               ],
             ],
           ),
@@ -806,25 +895,50 @@ class _DailyContentManagementScreenState
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final secondaryTextColor = isDark
+        ? const Color(0xFFCBD5E1)
+        : Colors.black87;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final inputBg = isDark
+        ? AppColors.darkGlassSurface
+        : AppColors.lightGlassSurface;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textColor,
+            size: 20.r,
+          ),
         ),
-        title: const Text(
+        title: Text(
           "Daily Content Manager",
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.cairo(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18.sp,
+          ),
         ),
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditBottomSheet(),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryColor,
+        backgroundColor: AppColors.softGold,
+        foregroundColor: Colors.black87,
         child: const Icon(Icons.add),
       ),
       body: Container(
@@ -832,11 +946,12 @@ class _DailyContentManagementScreenState
         padding: EdgeInsets.all(16.r),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: surfaceColor,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
+            topLeft: Radius.circular(32.r),
+            topRight: Radius.circular(32.r),
           ),
+          border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: Column(
           children: [
@@ -844,17 +959,34 @@ class _DailyContentManagementScreenState
               children: [
                 Expanded(
                   child: TextField(
+                    style: GoogleFonts.cairo(color: textColor, fontSize: 14.sp),
                     decoration: InputDecoration(
                       hintText: "Search content...",
+                      hintStyle: GoogleFonts.cairo(
+                        color: mutedColor,
+                        fontSize: 13.sp,
+                      ),
                       prefixIcon: HugeIcon(
                         icon: HugeIcons.strokeRoundedSearch01,
                         size: 20.r,
+                        color: AppColors.softGold,
                       ),
-                      fillColor: Colors.white,
+                      fillColor: inputBg,
                       filled: true,
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: borderColor),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: const BorderSide(
+                          color: AppColors.softGold,
+                          width: 1.5,
+                        ),
+                      ),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(15.r),
-                        borderSide: BorderSide.none,
+                        borderRadius: BorderRadius.circular(16.r),
+                        borderSide: BorderSide(color: borderColor),
                       ),
                     ),
                     onChanged: (val) {
@@ -864,28 +996,52 @@ class _DailyContentManagementScreenState
                     },
                   ),
                 ),
-                SizedBox(width: 8.w),
-                DropdownButton<String>(
-                  value: _filterType,
-                  items: const [
-                    DropdownMenuItem(value: 'all', child: Text('All')),
-                    DropdownMenuItem(value: 'active', child: Text('Active')),
-                    DropdownMenuItem(
-                      value: 'archived',
-                      child: Text('Archived'),
+                SizedBox(width: 10.w),
+                Container(
+                  padding: EdgeInsets.symmetric(horizontal: 12.w),
+                  decoration: BoxDecoration(
+                    color: inputBg,
+                    borderRadius: BorderRadius.circular(16.r),
+                    border: Border.all(color: borderColor),
+                  ),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _filterType,
+                      dropdownColor: surfaceColor,
+                      icon: HugeIcon(
+                        icon: HugeIcons.strokeRoundedFilter,
+                        size: 18.r,
+                        color: AppColors.softGold,
+                      ),
+                      style: GoogleFonts.cairo(
+                        color: textColor,
+                        fontSize: 13.sp,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'all', child: Text('All')),
+                        DropdownMenuItem(
+                          value: 'active',
+                          child: Text('Active'),
+                        ),
+                        DropdownMenuItem(
+                          value: 'archived',
+                          child: Text('Archived'),
+                        ),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _filterType = val;
+                          });
+                        }
+                      },
                     ),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _filterType = val;
-                      });
-                    }
-                  },
+                  ),
                 ),
               ],
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
 
             Expanded(
               child: StreamBuilder<QuerySnapshot>(
@@ -896,7 +1052,7 @@ class _DailyContentManagementScreenState
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
                       child: CircularProgressIndicator(
-                        color: AppColors.primaryColor,
+                        color: AppColors.softGold,
                       ),
                     );
                   }
@@ -943,28 +1099,16 @@ class _DailyContentManagementScreenState
                   }
 
                   if (filteredDocs.isEmpty) {
-                    return Center(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          HugeIcon(
-                            icon: HugeIcons.strokeRoundedFileBookmark,
-                            size: 50.r,
-                            color: Colors.grey[300],
-                          ),
-                          SizedBox(height: 10.h),
-                          const Text(
-                            "No content items found.",
-                            style: TextStyle(color: Colors.grey),
-                          ),
-                        ],
-                      ),
+                    return EmptyState(
+                      title: "No content items found.",
+                      hugeIcon: HugeIcons.strokeRoundedFileBookmark,
                     );
                   }
 
                   return ListView.separated(
+                    physics: const BouncingScrollPhysics(),
                     itemCount: filteredDocs.length,
-                    separatorBuilder: (_, __) => SizedBox(height: 10.h),
+                    separatorBuilder: (_, __) => SizedBox(height: 12.h),
                     itemBuilder: (context, index) {
                       final doc = filteredDocs[index];
                       final data = doc.data() as Map<String, dynamic>;
@@ -973,39 +1117,45 @@ class _DailyContentManagementScreenState
                       final isActive = data["isActive"] ?? false;
                       final isArchived = data["isArchived"] ?? false;
 
-                      return Card(
-                        elevation: 1,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15.r),
-                        ),
-                        child: Material(
-                          color: Colors.transparent,
-                          child: ListTile(
-                            title: Row(
+                      return GlassCard(
+                        padding: EdgeInsets.all(14.r),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
                               children: [
                                 Expanded(
                                   child: Text(
                                     title,
-                                    style: const TextStyle(
+                                    style: GoogleFonts.cairo(
+                                      fontSize: 16.sp,
                                       fontWeight: FontWeight.bold,
+                                      color: textColor,
                                     ),
                                   ),
                                 ),
                                 if (isActive)
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                      horizontal: 6.w,
-                                      vertical: 2.h,
+                                      horizontal: 8.w,
+                                      vertical: 3.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.green[100],
-                                      borderRadius: BorderRadius.circular(5.r),
+                                      color: Colors.green.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      border: Border.all(
+                                        color: Colors.green.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
                                     ),
                                     child: Text(
                                       "Active",
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: Colors.green[800],
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 11.sp,
+                                        color: Colors.green,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
@@ -1013,40 +1163,59 @@ class _DailyContentManagementScreenState
                                 if (isArchived)
                                   Container(
                                     padding: EdgeInsets.symmetric(
-                                      horizontal: 6.w,
-                                      vertical: 2.h,
+                                      horizontal: 8.w,
+                                      vertical: 3.h,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: Colors.grey[300],
-                                      borderRadius: BorderRadius.circular(5.r),
+                                      color: Colors.grey.withValues(
+                                        alpha: 0.15,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8.r),
+                                      border: Border.all(
+                                        color: Colors.grey.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                      ),
                                     ),
                                     child: Text(
                                       "Archived",
-                                      style: TextStyle(
-                                        fontSize: 10.sp,
-                                        color: Colors.grey[700],
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 11.sp,
+                                        color: mutedColor,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
                                   ),
                               ],
                             ),
-                            subtitle: Text(
-                              subtitle.isNotEmpty
-                                  ? subtitle
-                                  : "No subtitle provided",
-                            ),
-                            trailing: Row(
-                              mainAxisSize: MainAxisSize.min,
+                            if (subtitle.isNotEmpty) ...[
+                              SizedBox(height: 4.h),
+                              Text(
+                                subtitle,
+                                style: GoogleFonts.cairo(
+                                  fontSize: 13.sp,
+                                  color: secondaryTextColor,
+                                ),
+                              ),
+                            ],
+                            SizedBox(height: 10.h),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
                               children: [
                                 IconButton(
                                   icon: const HugeIcon(
                                     icon: HugeIcons.strokeRoundedEye,
-                                    color: Colors.blue,
+                                    color: AppColors.softGold,
                                   ),
                                   onPressed: () => _showPreviewDialog(data),
                                 ),
                                 PopupMenuButton<String>(
+                                  color: surfaceColor,
+                                  icon: Icon(
+                                    Icons.more_vert_rounded,
+                                    color: textColor,
+                                    size: 20.r,
+                                  ),
                                   onSelected: (action) {
                                     if (action == "edit") {
                                       _showAddEditBottomSheet(
@@ -1064,37 +1233,57 @@ class _DailyContentManagementScreenState
                                     }
                                   },
                                   itemBuilder: (context) => [
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: "edit",
-                                      child: Text("Edit"),
+                                      child: Text(
+                                        "Edit",
+                                        style: GoogleFonts.cairo(
+                                          color: textColor,
+                                        ),
+                                      ),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: "duplicate",
-                                      child: Text("Duplicate"),
+                                      child: Text(
+                                        "Duplicate",
+                                        style: GoogleFonts.cairo(
+                                          color: textColor,
+                                        ),
+                                      ),
                                     ),
                                     if (!isActive && !isArchived)
-                                      const PopupMenuItem(
+                                      PopupMenuItem(
                                         value: "activate",
-                                        child: Text("Activate"),
+                                        child: Text(
+                                          "Activate",
+                                          style: GoogleFonts.cairo(
+                                            color: textColor,
+                                          ),
+                                        ),
                                       ),
                                     PopupMenuItem(
                                       value: "archive",
                                       child: Text(
                                         isArchived ? "Restore" : "Archive",
+                                        style: GoogleFonts.cairo(
+                                          color: textColor,
+                                        ),
                                       ),
                                     ),
-                                    const PopupMenuItem(
+                                    PopupMenuItem(
                                       value: "delete",
                                       child: Text(
                                         "Delete",
-                                        style: TextStyle(color: Colors.red),
+                                        style: GoogleFonts.cairo(
+                                          color: AppColors.heartRed,
+                                        ),
                                       ),
                                     ),
                                   ],
                                 ),
                               ],
                             ),
-                          ),
+                          ],
                         ),
                       );
                     },
