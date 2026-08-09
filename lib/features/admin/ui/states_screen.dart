@@ -1,11 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
-
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class ScoresStatisticsScreen extends StatelessWidget {
@@ -43,13 +45,15 @@ class ScoresStatisticsScreen extends StatelessWidget {
         .doc(docId)
         .delete();
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text("Deleted successfully"),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Deleted successfully", style: GoogleFonts.cairo()),
+          backgroundColor: AppColors.successGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
   void showDeleteDialog({
@@ -60,14 +64,14 @@ class ScoresStatisticsScreen extends StatelessWidget {
       context: context,
       iconWidget: HugeIcon(
         icon: HugeIcons.strokeRoundedDelete01,
-        color: Colors.red,
+        color: AppColors.heartRed,
         size: 36.r,
       ),
-      iconColor: Colors.red,
+      iconColor: AppColors.heartRed,
       title: "Delete Attempt",
       description: "Are you sure you want to delete this attempt?",
       confirmText: "Delete",
-      confirmButtonColor: Colors.red,
+      confirmButtonColor: AppColors.heartRed,
       cancelText: "Cancel",
       onConfirm: () {
         Navigator.pop(context);
@@ -78,24 +82,24 @@ class ScoresStatisticsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
-            /// 🔵 HEADER (same system)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.primaryColor.withOpacity(0.85),
-                  ],
-                ),
-              ),
+            Padding(
+              padding: EdgeInsets.all(16.r),
               child: Row(
                 children: [
                   GestureDetector(
@@ -103,42 +107,42 @@ class ScoresStatisticsScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
-
                   SizedBox(width: 12.w),
-
                   Text(
                     "Top Grades 🏆",
-                    style: TextStyle(
-                      fontSize: 25.sp,
-                      color: Colors.white,
-                      fontWeight: .bold,
+                    style: GoogleFonts.cairo(
+                      fontSize: 22.sp,
+                      color: textColor,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                 ],
               ),
             ),
 
-            /// ⚪ BODY
             Expanded(
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25.r),
-                    topRight: Radius.circular(25.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -147,22 +151,29 @@ class ScoresStatisticsScreen extends StatelessWidget {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Center(child: Text("Error loading data"));
+                      return Center(
+                        child: Text(
+                          "Error loading data",
+                          style: GoogleFonts.cairo(color: AppColors.heartRed),
+                        ),
+                      );
                     }
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
 
                     final attempts = snapshot.data!.docs;
 
                     if (attempts.isEmpty) {
-                      return Center(
-                        child: Lottie.asset("assets/lottie/Empty.json"),
+                      return EmptyState(
+                        title: "No Scores Recorded",
+                        hugeIcon: HugeIcons.strokeRoundedAnalytics01,
                       );
                     }
 
                     return ListView.separated(
+                      physics: const BouncingScrollPhysics(),
                       itemCount: attempts.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
@@ -183,37 +194,31 @@ class ScoresStatisticsScreen extends StatelessWidget {
                               builder: (context, examSnap) {
                                 final examName = examSnap.data ?? "Loading...";
 
-                                return Container(
+                                return GlassCard(
                                   padding: EdgeInsets.all(14.r),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16.r),
-                                    boxShadow: const [
-                                      BoxShadow(
-                                        color: Colors.black12,
-                                        blurRadius: 8,
-                                        offset: Offset(0, 4),
-                                      ),
-                                    ],
-                                  ),
+                                  borderRadius: 18.r,
                                   child: Row(
                                     children: [
-                                      /// 🔢 RANK
-                                      
-                                      
                                       Container(
-                                        width: 45.w,
-                                        height: 45.h,
-                                        decoration: const BoxDecoration(
+                                        width: 42.r,
+                                        height: 42.r,
+                                        decoration: BoxDecoration(
                                           shape: BoxShape.circle,
-                                          color: Colors.blue,
+                                          color: AppColors.softGold.withOpacity(
+                                            0.15,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.softGold
+                                                .withOpacity(0.4),
+                                          ),
                                         ),
                                         child: Center(
                                           child: Text(
                                             "${index + 1}",
-                                            style: const TextStyle(
-                                              color: Colors.white,
+                                            style: GoogleFonts.cairo(
+                                              color: AppColors.softGold,
                                               fontWeight: FontWeight.bold,
+                                              fontSize: 16.sp,
                                             ),
                                           ),
                                         ),
@@ -221,7 +226,6 @@ class ScoresStatisticsScreen extends StatelessWidget {
 
                                       SizedBox(width: 12.w),
 
-                                      /// 📄 INFO
                                       Expanded(
                                         child: Column(
                                           crossAxisAlignment:
@@ -229,52 +233,57 @@ class ScoresStatisticsScreen extends StatelessWidget {
                                           children: [
                                             Text(
                                               userName,
-                                              style: TextStyle(
+                                              style: GoogleFonts.cairo(
                                                 fontSize: 15.sp,
                                                 fontWeight: FontWeight.bold,
+                                                color: textColor,
                                               ),
                                             ),
-                                            SizedBox(height: 4.h),
+                                            SizedBox(height: 2.h),
                                             Text(
                                               examName,
-                                              style: TextStyle(
-                                                color: Colors.grey,
-                                                fontSize: 13.sp,
+                                              style: GoogleFonts.cairo(
+                                                color: mutedColor,
+                                                fontSize: 12.sp,
                                               ),
                                             ),
                                           ],
                                         ),
                                       ),
 
-                                      /// 🟢 SCORE
                                       Container(
                                         padding: EdgeInsets.symmetric(
                                           horizontal: 10.w,
-                                          vertical: 6.h,
+                                          vertical: 4.h,
                                         ),
                                         decoration: BoxDecoration(
-                                          color: Colors.green.withOpacity(0.15),
+                                          color: AppColors.successGreen
+                                              .withOpacity(0.15),
                                           borderRadius: BorderRadius.circular(
-                                            8.r,
+                                            10.r,
+                                          ),
+                                          border: Border.all(
+                                            color: AppColors.successGreen
+                                                .withOpacity(0.3),
                                           ),
                                         ),
                                         child: Text(
-                                          "$score",
-                                          style: const TextStyle(
-                                            color: Colors.green,
+                                          "$score pts",
+                                          style: GoogleFonts.cairo(
+                                            color: AppColors.successGreen,
                                             fontWeight: FontWeight.bold,
+                                            fontSize: 12.sp,
                                           ),
                                         ),
                                       ),
 
-                                      SizedBox(width: 10.w),
-
-                                      /// 🗑 DELETE (Main Admin Only)
-                                      if (user?.isAdminVal == true)
+                                      if (user?.isAdminVal == true) ...[
+                                        SizedBox(width: 6.w),
                                         IconButton(
                                           icon: const HugeIcon(
-                                            icon: HugeIcons.strokeRoundedDelete01,
-                                            color: Colors.red,
+                                            icon:
+                                                HugeIcons.strokeRoundedDelete01,
+                                            color: AppColors.heartRed,
                                           ),
                                           onPressed: () {
                                             showDeleteDialog(
@@ -288,6 +297,7 @@ class ScoresStatisticsScreen extends StatelessWidget {
                                             );
                                           },
                                         ),
+                                      ],
                                     ],
                                   ),
                                 );

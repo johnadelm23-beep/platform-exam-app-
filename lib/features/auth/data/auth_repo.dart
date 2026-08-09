@@ -73,7 +73,9 @@ class AuthRepo {
     required String uid,
   }) async {
     try {
-      final counterRef = FirebaseFirestore.instance.collection("metadata").doc("counters");
+      final counterRef = FirebaseFirestore.instance
+          .collection("metadata")
+          .doc("counters");
       String manualId = "";
       await FirebaseFirestore.instance.runTransaction((transaction) async {
         final snap = await transaction.get(counterRef);
@@ -81,7 +83,9 @@ class AuthRepo {
         if (snap.exists) {
           currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
         }
-        transaction.set(counterRef, {"userSequence": currentSeq}, SetOptions(merge: true));
+        transaction.set(counterRef, {
+          "userSequence": currentSeq,
+        }, SetOptions(merge: true));
         manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
       });
 
@@ -170,7 +174,9 @@ class AuthRepo {
 
       // Lazy initialization of attendance fields and human-readable IDs for older/third-party accounts
       if (data != null && data["humanReadableId"] == null) {
-        final counterRef = FirebaseFirestore.instance.collection("metadata").doc("counters");
+        final counterRef = FirebaseFirestore.instance
+            .collection("metadata")
+            .doc("counters");
         String manualId = "";
         await FirebaseFirestore.instance.runTransaction((transaction) async {
           final snap = await transaction.get(counterRef);
@@ -178,12 +184,15 @@ class AuthRepo {
           if (snap.exists) {
             currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
           }
-          transaction.set(counterRef, {"userSequence": currentSeq}, SetOptions(merge: true));
+          transaction.set(counterRef, {
+            "userSequence": currentSeq,
+          }, SetOptions(merge: true));
           manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
         });
 
         final bool isAdminVal = data["isAdmin"] == true;
-        final bool isSubVal = (data["subAdmin"] == true) || (data["isSubAdmin"] == true);
+        final bool isSubVal =
+            (data["subAdmin"] == true) || (data["isSubAdmin"] == true);
         final bool finalSubVal = isAdminVal ? false : isSubVal;
 
         final updatedData = {

@@ -1,17 +1,18 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
-import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
-
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class TopUsersScreen extends StatelessWidget {
   const TopUsersScreen({super.key, this.user});
   final UserData? user;
 
-  /// ================= STREAM POSTS =================
   Stream<List<Map<String, dynamic>>> getTopUsersStream() {
     return FirebaseFirestore.instance.collection("posts").snapshots().map((
       snapshot,
@@ -43,7 +44,6 @@ class TopUsersScreen extends StatelessWidget {
     });
   }
 
-  /// ================= DELETE =================
   Future<void> deleteUserLikes(String uid, BuildContext context) async {
     final posts = await FirebaseFirestore.instance.collection("posts").get();
 
@@ -51,12 +51,16 @@ class TopUsersScreen extends StatelessWidget {
       await post.reference.update({"likes.$uid": FieldValue.delete()});
     }
 
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text("Removed successfully")));
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Removed successfully", style: GoogleFonts.cairo()),
+          backgroundColor: AppColors.successGreen,
+        ),
+      );
+    }
   }
 
-  /// ================= USER DATA =================
   Future<Map<String, dynamic>> getUser(String uid) async {
     final doc = await FirebaseFirestore.instance
         .collection("users")
@@ -68,24 +72,30 @@ class TopUsersScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
-            /// HEADER
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+              padding: EdgeInsets.all(16.r),
               child: Row(
                 children: [
                   Expanded(
                     child: Text(
-                      "Top Interactions❤️",
-                      style: TextStyle(
-                        fontSize: 26.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      "Top Interactions ❤️",
+                      style: GoogleFonts.cairo(
+                        fontSize: 22.sp,
+                        color: textColor,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
@@ -94,13 +104,15 @@ class TopUsersScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
@@ -108,38 +120,38 @@ class TopUsersScreen extends StatelessWidget {
               ),
             ),
 
-            /// BODY
             Expanded(
               child: Container(
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.r),
-                    topRight: Radius.circular(30.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
-
                 child: StreamBuilder(
                   stream: getTopUsersStream(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
 
                     final likesList =
                         snapshot.data as List<Map<String, dynamic>>;
 
                     if (likesList.isEmpty) {
-                      return Center(
-                        child: Lottie.asset("assets/lottie/Empty.json"),
+                      return EmptyState(
+                        title: "No Interactions Yet",
+                        hugeIcon: HugeIcons.strokeRoundedFavourite,
                       );
                     }
 
-                    /// SORT
                     likesList.sort((a, b) => b["likes"].compareTo(a["likes"]));
 
                     return ListView.separated(
+                      physics: const BouncingScrollPhysics(),
                       itemCount: likesList.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
@@ -151,22 +163,30 @@ class TopUsersScreen extends StatelessWidget {
                           builder: (context, snap) {
                             final name = snap.data?["name"] ?? "Loading...";
 
-                            return Container(
+                            return GlassCard(
                               padding: EdgeInsets.all(16.r),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(20.r),
-                              ),
-
+                              borderRadius: 20.r,
                               child: Row(
                                 children: [
-                                  CircleAvatar(
-                                    backgroundColor: AppColors.primaryColor,
-                                    child: Text(
-                                      "${index + 1}",
-                                      style: TextStyle(
-                                        fontWeight: .bold,
-                                        color: AppColors.whiteColor,
+                                  Container(
+                                    width: 36.r,
+                                    height: 36.r,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: index == 0
+                                          ? AppColors.softGold
+                                          : AppColors.softGold.withOpacity(0.2),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        "${index + 1}",
+                                        style: GoogleFonts.cairo(
+                                          fontWeight: FontWeight.bold,
+                                          color: index == 0
+                                              ? AppColors.cinematicNavy
+                                              : AppColors.softGold,
+                                          fontSize: 14.sp,
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -176,18 +196,32 @@ class TopUsersScreen extends StatelessWidget {
                                   Expanded(
                                     child: Text(
                                       name,
-                                      style: TextStyle(
-                                        fontSize: 16.sp,
+                                      style: GoogleFonts.cairo(
+                                        fontSize: 15.sp,
                                         fontWeight: FontWeight.bold,
+                                        color: textColor,
                                       ),
                                     ),
                                   ),
 
-                                  Text(
-                                    "❤️ ${item["likes"]}",
-                                    style: const TextStyle(
-                                      color: Colors.green,
-                                      fontWeight: FontWeight.bold,
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 10.w,
+                                      vertical: 4.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.heartRed.withOpacity(
+                                        0.12,
+                                      ),
+                                      borderRadius: BorderRadius.circular(12.r),
+                                    ),
+                                    child: Text(
+                                      "❤️ ${item["likes"]}",
+                                      style: GoogleFonts.cairo(
+                                        color: AppColors.heartRed,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13.sp,
+                                      ),
                                     ),
                                   ),
 
@@ -195,7 +229,7 @@ class TopUsersScreen extends StatelessWidget {
                                     IconButton(
                                       icon: const HugeIcon(
                                         icon: HugeIcons.strokeRoundedDelete01,
-                                        color: Colors.red,
+                                        color: AppColors.heartRed,
                                       ),
                                       onPressed: () =>
                                           deleteUserLikes(uid, context),

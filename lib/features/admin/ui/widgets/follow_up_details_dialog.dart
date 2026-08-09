@@ -12,10 +12,7 @@ import 'package:platformexamapp/features/profile/ui/widgets/user_avatar.dart';
 class FollowUpDetailsDialog extends StatefulWidget {
   final UserData user;
 
-  const FollowUpDetailsDialog({
-    super.key,
-    required this.user,
-  });
+  const FollowUpDetailsDialog({super.key, required this.user});
 
   static Future<void> show(BuildContext context, UserData user) {
     final cubit = context.read<FollowUpCubit>();
@@ -76,7 +73,8 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isCallDate) async {
-    final initialDate = (isCallDate ? _lastCallDate : _lastVisitDate) ?? DateTime.now();
+    final initialDate =
+        (isCallDate ? _lastCallDate : _lastVisitDate) ?? DateTime.now();
     final picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
@@ -106,13 +104,20 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
       'needVisit': _needVisit,
       'notes': _notesController.text.trim(),
       'servantNotes': _servantNotesController.text.trim(),
-      'lastCallDate': _lastCallDate == null ? null : Timestamp.fromDate(_lastCallDate!),
-      'lastVisitDate': _lastVisitDate == null ? null : Timestamp.fromDate(_lastVisitDate!),
+      'lastCallDate': _lastCallDate == null
+          ? null
+          : Timestamp.fromDate(_lastCallDate!),
+      'lastVisitDate': _lastVisitDate == null
+          ? null
+          : Timestamp.fromDate(_lastVisitDate!),
       'lastContact': Timestamp.fromDate(DateTime.now()),
     };
 
     final uid = widget.user.uid ?? '';
-    final success = await context.read<FollowUpCubit>().saveUserFollowUp(uid, updatedData);
+    final success = await context.read<FollowUpCubit>().saveUserFollowUp(
+      uid,
+      updatedData,
+    );
 
     if (mounted) {
       setState(() => _isSaving = false);
@@ -129,7 +134,9 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
             ),
             backgroundColor: Colors.green,
             behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10.r)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10.r),
+            ),
           ),
         );
       }
@@ -220,11 +227,18 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                     ),
                     SizedBox(height: 6.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                        border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        ),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<String>(
@@ -235,15 +249,30 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                             fontWeight: FontWeight.bold,
                             color: isDark ? Colors.white : Colors.black87,
                           ),
-                          dropdownColor: isDark ? const Color(0xFF2E2E2E) : Colors.white,
+                          dropdownColor: isDark
+                              ? const Color(0xFF2E2E2E)
+                              : Colors.white,
                           onChanged: (val) {
-                            if (val != null) setState(() => _followUpStatus = val);
+                            if (val != null)
+                              setState(() => _followUpStatus = val);
                           },
                           items: [
-                            DropdownMenuItem(value: "Excellent", child: Text("status_excellent".tr())),
-                            DropdownMenuItem(value: "Regular", child: Text("status_regular".tr())),
-                            DropdownMenuItem(value: "Needs Follow-up", child: Text("status_needs_follow_up".tr())),
-                            DropdownMenuItem(value: "Urgent", child: Text("status_urgent".tr())),
+                            DropdownMenuItem(
+                              value: "Excellent",
+                              child: Text("status_excellent".tr()),
+                            ),
+                            DropdownMenuItem(
+                              value: "Regular",
+                              child: Text("status_regular".tr()),
+                            ),
+                            DropdownMenuItem(
+                              value: "Needs Follow-up",
+                              child: Text("status_needs_follow_up".tr()),
+                            ),
+                            DropdownMenuItem(
+                              value: "Urgent",
+                              child: Text("status_urgent".tr()),
+                            ),
                           ],
                         ),
                       ),
@@ -253,11 +282,18 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
 
                     // Need Visit Switch
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 14.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
+                        color: isDark
+                            ? const Color(0xFF2A2A2A)
+                            : Colors.grey[100],
                         borderRadius: BorderRadius.circular(14.r),
-                        border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+                        border: Border.all(
+                          color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+                        ),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -283,7 +319,8 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                           Switch(
                             value: _needVisit,
                             activeThumbColor: AppColors.primaryColor,
-                            onChanged: (val) => setState(() => _needVisit = val),
+                            onChanged: (val) =>
+                                setState(() => _needVisit = val),
                           ),
                         ],
                       ),
@@ -348,8 +385,12 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                     child: OutlinedButton(
                       onPressed: () => Navigator.pop(context),
                       style: OutlinedButton.styleFrom(
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
-                        side: BorderSide(color: isDark ? Colors.grey[700]! : Colors.grey[400]!),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
+                        side: BorderSide(
+                          color: isDark ? Colors.grey[700]! : Colors.grey[400]!,
+                        ),
                       ),
                       child: Text(
                         "cancel".tr(),
@@ -370,14 +411,19 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                       onPressed: _isSaving ? null : _saveFollowUpData,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primaryColor,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14.r)),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14.r),
+                        ),
                         elevation: 2,
                       ),
                       child: _isSaving
                           ? SizedBox(
                               width: 20.r,
                               height: 20.r,
-                              child: const CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                              child: const CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2,
+                              ),
                             )
                           : Text(
                               "save".tr(),
@@ -400,7 +446,8 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
 
   String _getNormalizedStatusKey(String current) {
     if (current == "Excellent" || current == "ممتاز") return "Excellent";
-    if (current == "Needs Follow-up" || current == "بحاجة لافتقاد") return "Needs Follow-up";
+    if (current == "Needs Follow-up" || current == "بحاجة لافتقاد")
+      return "Needs Follow-up";
     if (current == "Urgent" || current == "حالة عاجلة") return "Urgent";
     return "Regular";
   }
@@ -419,13 +466,23 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
         controller: controller,
         keyboardType: keyboardType,
         maxLines: maxLines,
-        style: TextStyle(fontSize: 14.sp, color: isDark ? Colors.white : Colors.black87),
+        style: TextStyle(
+          fontSize: 14.sp,
+          color: isDark ? Colors.white : Colors.black87,
+        ),
         decoration: InputDecoration(
           labelText: label,
-          prefixIcon: Icon(icon, size: 20.r, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+          prefixIcon: Icon(
+            icon,
+            size: 20.r,
+            color: isDark ? Colors.grey[400] : Colors.grey[600],
+          ),
           filled: true,
           fillColor: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
-          contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 12.h),
+          contentPadding: EdgeInsets.symmetric(
+            horizontal: 14.w,
+            vertical: 12.h,
+          ),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(14.r),
             borderSide: BorderSide.none,
@@ -435,8 +492,15 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
     );
   }
 
-  Widget _buildDateTile(String label, DateTime? date, VoidCallback onTap, bool isDark) {
-    final dateStr = date == null ? "not_set".tr() : DateFormat("yyyy/MM/dd").format(date);
+  Widget _buildDateTile(
+    String label,
+    DateTime? date,
+    VoidCallback onTap,
+    bool isDark,
+  ) {
+    final dateStr = date == null
+        ? "not_set".tr()
+        : DateFormat("yyyy/MM/dd").format(date);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(14.r),
@@ -445,12 +509,20 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF2A2A2A) : Colors.grey[100],
           borderRadius: BorderRadius.circular(14.r),
-          border: Border.all(color: isDark ? Colors.grey[800]! : Colors.grey[300]!),
+          border: Border.all(
+            color: isDark ? Colors.grey[800]! : Colors.grey[300]!,
+          ),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(label, style: TextStyle(fontSize: 11.sp, color: isDark ? Colors.grey[400] : Colors.grey[600])),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.sp,
+                color: isDark ? Colors.grey[400] : Colors.grey[600],
+              ),
+            ),
             SizedBox(height: 4.h),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -463,7 +535,11 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
                     color: isDark ? Colors.white : Colors.black87,
                   ),
                 ),
-                Icon(Icons.calendar_month_outlined, size: 16.r, color: AppColors.primaryColor),
+                Icon(
+                  Icons.calendar_month_outlined,
+                  size: 16.r,
+                  color: AppColors.primaryColor,
+                ),
               ],
             ),
           ],

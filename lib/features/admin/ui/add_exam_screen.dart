@@ -3,9 +3,11 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/admin/ui/add_question_screen.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
 
@@ -22,7 +24,6 @@ class _AddExamScreenState extends State<AddExamScreen> {
 
   bool isLoading = false;
 
-  /// ================= VALIDATION =================
   bool validate() {
     final title = titleController.text.trim();
     final time = timeController.text.trim();
@@ -49,20 +50,22 @@ class _AddExamScreenState extends State<AddExamScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red,
+        content: Text(msg, style: GoogleFonts.cairo()),
+        backgroundColor: AppColors.heartRed,
         behavior: SnackBarBehavior.floating,
       ),
     );
   }
 
-  /// ================= CREATE EXAM =================
   Future<void> createExam() async {
     if (!validate()) return;
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(currentUser.uid)
+        .get();
     if (userDoc.data()?["isAdmin"] != true) {
       _showError("Permission denied: Main Admin only.");
       return;
@@ -92,24 +95,24 @@ class _AddExamScreenState extends State<AddExamScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    // ignore: deprecated_member_use
-                    AppColors.primaryColor.withOpacity(0.85),
-                  ],
-                ),
-              ),
+            Padding(
+              padding: EdgeInsets.all(16.r),
               child: Row(
                 children: [
                   GestureDetector(
@@ -117,25 +120,24 @@ class _AddExamScreenState extends State<AddExamScreen> {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
-
                   SizedBox(width: 12.w),
-
                   Text(
                     "create_exam".tr(),
-                    style: TextStyle(
+                    style: GoogleFonts.cairo(
                       fontSize: 22.sp,
-                      color: Colors.white,
+                      color: textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -148,53 +150,43 @@ class _AddExamScreenState extends State<AddExamScreen> {
                 width: double.infinity,
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25.r),
-                    topRight: Radius.circular(25.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
                     children: [
                       SizedBox(height: 10.h),
-
-                      Container(
-                        padding: EdgeInsets.all(16.r),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(16.r),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Colors.black12,
-                              blurRadius: 8,
-                              offset: Offset(0, 4),
-                            ),
-                          ],
-                        ),
+                      GlassCard(
+                        padding: EdgeInsets.all(20.r),
+                        borderRadius: 24.r,
                         child: Column(
                           children: [
                             Image.asset(
                               "assets/images/background.png",
-                              height: 120.h,
+                              height: 110.h,
                             ),
-
-                            SizedBox(height: 10.h),
-
+                            SizedBox(height: 12.h),
                             Text(
                               "create_your_exam".tr(),
-                              style: TextStyle(
+                              style: GoogleFonts.cairo(
                                 fontSize: 20.sp,
                                 fontWeight: FontWeight.bold,
+                                color: textColor,
                               ),
                             ),
-
-                            SizedBox(height: 5.h),
-
+                            SizedBox(height: 4.h),
                             Text(
                               "add_title_and_duration".tr(),
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: Colors.grey),
+                              style: GoogleFonts.cairo(
+                                color: mutedColor,
+                                fontSize: 13.sp,
+                              ),
                             ),
                           ],
                         ),
@@ -207,7 +199,7 @@ class _AddExamScreenState extends State<AddExamScreen> {
                         controller: titleController,
                       ),
 
-                      SizedBox(height: 10.h),
+                      SizedBox(height: 12.h),
 
                       CustomTextFormField(
                         hintText: "Time".tr(),
@@ -215,9 +207,8 @@ class _AddExamScreenState extends State<AddExamScreen> {
                         keyboardType: TextInputType.number,
                       ),
 
-                      SizedBox(height: 30.h),
+                      SizedBox(height: 28.h),
 
-                      /// 🚀 BUTTON
                       AppButton(
                         onPressed: isLoading ? null : createExam,
                         text: isLoading ? "Creating..." : "Next_add_Q".tr(),

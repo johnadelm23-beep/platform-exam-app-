@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
@@ -24,7 +25,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
   int correctIndex = 0;
 
-  /// ================= ADD QUESTION WITH VALIDATION =================
   Future<void> addQuestion() async {
     final question = questionController.text.trim();
     final op1 = option1.text.trim();
@@ -32,7 +32,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
     final op3 = option3.text.trim();
     final op4 = option4.text.trim();
 
-    /// 🚫 Validation
     if (question.isEmpty ||
         op1.isEmpty ||
         op2.isEmpty ||
@@ -40,20 +39,22 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         op4.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: const Text("Please fill all fields"),
-          backgroundColor: Colors.red,
+          content: Text("Please fill all fields", style: GoogleFonts.cairo()),
+          backgroundColor: AppColors.heartRed,
           behavior: SnackBarBehavior.floating,
         ),
       );
       return;
     }
 
-    /// 🚫 Safety check (optional)
     if (correctIndex < 0 || correctIndex > 3) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please select correct answer"),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: Text(
+            "Please select correct answer",
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.heartRed,
         ),
       );
       return;
@@ -69,7 +70,6 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
           "correctAnswer": correctIndex,
         });
 
-    /// ✅ Clear fields
     questionController.clear();
     option1.clear();
     option2.clear();
@@ -78,17 +78,23 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
     setState(() => correctIndex = 0);
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: const Text("✅ Question added successfully"),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            "✅ Question added successfully",
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.successGreen,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
   }
 
-  /// ================= OPTION TILE =================
   Widget optionTile(TextEditingController controller, int index) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
     final isSelected = correctIndex == index;
 
     return GestureDetector(
@@ -98,18 +104,29 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         margin: EdgeInsets.only(bottom: 10.h),
         padding: EdgeInsets.all(14.r),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green.withOpacity(0.15) : Colors.white,
+          color: isSelected
+              ? AppColors.softGold.withOpacity(0.18)
+              : isDark
+              ? AppColors.darkGlassSurface
+              : AppColors.lightGlassSurface,
           borderRadius: BorderRadius.circular(14.r),
           border: Border.all(
-            color: isSelected ? Colors.green : Colors.grey.shade300,
-            width: 2,
+            color: isSelected
+                ? AppColors.softGold
+                : isDark
+                ? AppColors.darkBorder
+                : AppColors.lightBorder,
+            width: isSelected ? 2 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              isSelected ? Icons.check_circle : Icons.circle_outlined,
-              color: isSelected ? Colors.green : Colors.grey,
+              isSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+              color: isSelected
+                  ? AppColors.softGold
+                  : AppColors.darkTextCaption,
+              size: 20.r,
             ),
             SizedBox(width: 10.w),
             Expanded(
@@ -117,9 +134,10 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                 controller.text.isEmpty
                     ? "Option ${index + 1}"
                     : controller.text,
-                style: TextStyle(
-                  fontSize: 15.sp,
+                style: GoogleFonts.cairo(
+                  fontSize: 14.sp,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: textColor,
                 ),
               ),
             ),
@@ -129,27 +147,23 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
     );
   }
 
-  /// ================= UI =================
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
-            /// 🔵 HEADER (same as Home UI)
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.primaryColor.withOpacity(0.85),
-                  ],
-                ),
-              ),
+            Padding(
+              padding: EdgeInsets.all(16.r),
               child: Row(
                 children: [
                   GestureDetector(
@@ -157,24 +171,24 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
-
                   SizedBox(width: 12.w),
-
                   Text(
                     "add_questions".tr(),
-                    style: TextStyle(
+                    style: GoogleFonts.cairo(
                       fontSize: 22.sp,
-                      color: Colors.white,
+                      color: textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -182,17 +196,17 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
               ),
             ),
 
-            /// ⚪ BODY
             Expanded(
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25.r),
-                    topRight: Radius.circular(25.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: SingleChildScrollView(
                   child: Column(
@@ -200,13 +214,14 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     children: [
                       Text(
                         "question".tr(),
-                        style: TextStyle(
-                          fontSize: 18.sp,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
+                          color: textColor,
                         ),
                       ),
 
-                      SizedBox(height: 10.h),
+                      SizedBox(height: 8.h),
 
                       CustomTextFormField(
                         hintText: "write_your_questions".tr(),
@@ -216,54 +231,71 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
 
                       SizedBox(height: 20.h),
 
-                      /// 🎯 OPTIONS
                       Text(
                         "options_tap".tr(),
-                        style: TextStyle(
-                          fontSize: 18.sp,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
+                          color: textColor,
                         ),
                       ),
 
-                      SizedBox(height: 10.h),
+                      SizedBox(height: 8.h),
 
                       CustomTextFormField(
                         hintText: "option_1".tr(),
                         controller: option1,
                       ),
+                      SizedBox(height: 4.h),
                       optionTile(option1, 0),
 
                       CustomTextFormField(
                         hintText: "option_2".tr(),
                         controller: option2,
                       ),
+                      SizedBox(height: 4.h),
                       optionTile(option2, 1),
 
                       CustomTextFormField(
                         hintText: "option_3".tr(),
                         controller: option3,
                       ),
+                      SizedBox(height: 4.h),
                       optionTile(option3, 2),
 
                       CustomTextFormField(
                         hintText: "option_4".tr(),
                         controller: option4,
                       ),
+                      SizedBox(height: 4.h),
                       optionTile(option4, 3),
 
                       SizedBox(height: 20.h),
 
-                      /// 🚀 BUTTONS
                       AppButton(
                         onPressed: addQuestion,
                         text: "add_question".tr(),
                       ),
 
-                      SizedBox(height: 10.h),
+                      SizedBox(height: 12.h),
 
-                      AppButton(
+                      OutlinedButton(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: borderColor),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16.r),
+                          ),
+                          minimumSize: Size(double.infinity, 50.h),
+                        ),
                         onPressed: () => Navigator.pop(context),
-                        text: "finish".tr(),
+                        child: Text(
+                          "finish".tr(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 16.sp,
+                            fontWeight: FontWeight.bold,
+                            color: textColor,
+                          ),
+                        ),
                       ),
                     ],
                   ),

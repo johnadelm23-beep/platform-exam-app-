@@ -56,11 +56,7 @@ class CustomBodyContainer extends StatelessWidget {
       return details;
     } catch (e) {
       debugPrint("Error fetching exam details for $examId: $e");
-      return ExamDetailsData(
-        title: "Exam",
-        time: 0,
-        totalQuestions: 0,
-      );
+      return ExamDetailsData(title: "Exam", time: 0, totalQuestions: 0);
     }
   }
 
@@ -79,7 +75,9 @@ class CustomBodyContainer extends StatelessWidget {
 
       final details = await _getExamDetails(examId);
 
-      final totalQuestions = details.totalQuestions > 0 ? details.totalQuestions : (score > 0 ? score : 1);
+      final totalQuestions = details.totalQuestions > 0
+          ? details.totalQuestions
+          : (score > 0 ? score : 1);
       final scorePercentage = (score / totalQuestions) * 100.0;
       final wrongAnswers = (totalQuestions - score).clamp(0, 9999);
 
@@ -87,7 +85,9 @@ class CustomBodyContainer extends StatelessWidget {
       debugPrint("Exam Title: ${details.title}");
       debugPrint("Question Count: $totalQuestions");
       debugPrint("Score: $score");
-      debugPrint("Calculated Percentage: ${scorePercentage.toStringAsFixed(1)}%");
+      debugPrint(
+        "Calculated Percentage: ${scorePercentage.toStringAsFixed(1)}%",
+      );
 
       String gradeLabel;
       Color gradeColor;
@@ -132,7 +132,9 @@ class CustomBodyContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final effectiveUid = uid.isNotEmpty ? uid : (FirebaseAuth.instance.currentUser?.uid ?? "");
+    final effectiveUid = uid.isNotEmpty
+        ? uid
+        : (FirebaseAuth.instance.currentUser?.uid ?? "");
     final isArabic = EasyLocalization.of(context)?.locale.languageCode == 'ar';
 
     return StreamBuilder<QuerySnapshot>(
@@ -180,8 +182,13 @@ class CustomBodyContainer extends StatelessWidget {
             }
 
             final completedCount = items.length;
-            final double totalPct = items.fold(0.0, (total, i) => total + (i["scorePercentage"] as double));
-            final double avgScore = completedCount > 0 ? (totalPct / completedCount) : 0.0;
+            final double totalPct = items.fold(
+              0.0,
+              (total, i) => total + (i["scorePercentage"] as double),
+            );
+            final double avgScore = completedCount > 0
+                ? (totalPct / completedCount)
+                : 0.0;
             final double highestScore = items.fold(0.0, (max, i) {
               final pct = i["scorePercentage"] as double;
               return pct > max ? pct : max;
@@ -191,7 +198,10 @@ class CustomBodyContainer extends StatelessWidget {
               physics: const BouncingScrollPhysics(),
               slivers: [
                 SliverPadding(
-                  padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 16.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16.w,
+                    vertical: 16.h,
+                  ),
                   sliver: SliverToBoxAdapter(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -201,7 +211,9 @@ class CustomBodyContainer extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _buildSummaryMetricCard(
-                                title: isArabic ? "الامتحانات المكتملة" : "Completed Exams",
+                                title: isArabic
+                                    ? "الامتحانات المكتملة"
+                                    : "Completed Exams",
                                 value: "$completedCount",
                                 icon: HugeIcons.strokeRoundedFile01,
                                 color: AppColors.primaryColor,
@@ -210,7 +222,9 @@ class CustomBodyContainer extends StatelessWidget {
                             SizedBox(width: 8.w),
                             Expanded(
                               child: _buildSummaryMetricCard(
-                                title: isArabic ? "متوسط الدرجات" : "Average Score",
+                                title: isArabic
+                                    ? "متوسط الدرجات"
+                                    : "Average Score",
                                 value: "${avgScore.toStringAsFixed(1)}%",
                                 icon: HugeIcons.strokeRoundedChart01,
                                 color: Colors.blue,
@@ -246,7 +260,9 @@ class CustomBodyContainer extends StatelessWidget {
                                 vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                color: AppColors.primaryColor.withValues(
+                                  alpha: 0.1,
+                                ),
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(
@@ -274,16 +290,13 @@ class CustomBodyContainer extends StatelessWidget {
                     bottom: 24.h,
                   ),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final item = items[index];
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: 12.h),
-                          child: _buildExamCard(context, item, isArabic),
-                        );
-                      },
-                      childCount: items.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final item = items[index];
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 12.h),
+                        child: _buildExamCard(context, item, isArabic),
+                      );
+                    }, childCount: items.length),
                   ),
                 ),
               ],
@@ -343,7 +356,11 @@ class CustomBodyContainer extends StatelessWidget {
     );
   }
 
-  Widget _buildExamCard(BuildContext context, Map<String, dynamic> item, bool isArabic) {
+  Widget _buildExamCard(
+    BuildContext context,
+    Map<String, dynamic> item,
+    bool isArabic,
+  ) {
     final Color gradeColor = item["gradeColor"] as Color;
     final String gradeLabel = item["gradeLabel"] as String;
     final double scorePct = item["scorePercentage"] as double;
@@ -383,11 +400,16 @@ class CustomBodyContainer extends StatelessWidget {
                 ),
                 SizedBox(width: 8.w),
                 Container(
-                  padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 10.w,
+                    vertical: 4.h,
+                  ),
                   decoration: BoxDecoration(
                     color: gradeColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(color: gradeColor.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: gradeColor.withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Text(
                     gradeLabel,
@@ -416,7 +438,10 @@ class CustomBodyContainer extends StatelessWidget {
                     SizedBox(width: 4.w),
                     Text(
                       item["submissionDate"] as String,
-                      style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                      style: TextStyle(
+                        fontSize: 12.sp,
+                        color: Colors.grey[600],
+                      ),
                     ),
                   ],
                 ),
@@ -474,10 +499,15 @@ class CustomBodyContainer extends StatelessWidget {
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor.withValues(alpha: 0.08),
+                  backgroundColor: AppColors.primaryColor.withValues(
+                    alpha: 0.08,
+                  ),
                   foregroundColor: AppColors.primaryColor,
                   elevation: 0,
-                  padding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 8.h),
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 14.w,
+                    vertical: 8.h,
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12.r),
                   ),
@@ -504,14 +534,13 @@ class CustomBodyContainer extends StatelessWidget {
                 color: AppColors.primaryColor.withValues(alpha: 0.08),
                 shape: BoxShape.circle,
               ),
-              child: Text(
-                "📚",
-                style: TextStyle(fontSize: 48.sp),
-              ),
+              child: Text("📚", style: TextStyle(fontSize: 48.sp)),
             ),
             SizedBox(height: 16.h),
             Text(
-              isArabic ? "لا توجد امتحانات مكتملة بعد." : "No completed exams yet.",
+              isArabic
+                  ? "لا توجد امتحانات مكتملة بعد."
+                  : "No completed exams yet.",
               style: TextStyle(
                 fontSize: 18.sp,
                 fontWeight: FontWeight.bold,
@@ -524,10 +553,7 @@ class CustomBodyContainer extends StatelessWidget {
               isArabic
                   ? "خوض امتحاناً لرؤية نتائجك هنا."
                   : "Take an exam to see your results here.",
-              style: TextStyle(
-                fontSize: 14.sp,
-                color: Colors.grey[600],
-              ),
+              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
               textAlign: TextAlign.center,
             ),
           ],

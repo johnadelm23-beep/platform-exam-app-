@@ -35,7 +35,6 @@ class FollowUpExportService {
                   pw.Column(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
-
                       pw.Text(
                         'Follow-up & Attendance Report',
                         style: pw.TextStyle(
@@ -55,7 +54,10 @@ class FollowUpExportService {
                     ],
                   ),
                   pw.Container(
-                    padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    padding: const pw.EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
                     decoration: pw.BoxDecoration(
                       color: PdfColors.indigo50,
                       borderRadius: pw.BorderRadius.circular(6),
@@ -101,7 +103,7 @@ class FollowUpExportService {
                   'Att. %',
                   'Last Call',
                   'Last Visit',
-                  'Notes'
+                  'Notes',
                 ],
                 headerStyle: pw.TextStyle(
                   fontWeight: pw.FontWeight.bold,
@@ -136,7 +138,10 @@ class FollowUpExportService {
                 alignment: pw.Alignment.centerRight,
                 child: pw.Text(
                   'Generated automatically by Egtma3na Platform Admin UI',
-                  style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
+                  style: const pw.TextStyle(
+                    fontSize: 9,
+                    color: PdfColors.grey600,
+                  ),
                 ),
               ),
             ];
@@ -145,14 +150,14 @@ class FollowUpExportService {
       );
 
       final outputDir = await getTemporaryDirectory();
-      final filePath = '${outputDir.path}/FollowUp_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
+      final filePath =
+          '${outputDir.path}/FollowUp_Report_${DateTime.now().millisecondsSinceEpoch}.pdf';
       final file = File(filePath);
       await file.writeAsBytes(await pdf.save());
 
-      await Share.shareXFiles(
-        [XFile(file.path)],
-        text: '📊 Follow-up Summary Report (PDF)',
-      );
+      await Share.shareXFiles([
+        XFile(file.path),
+      ], text: '📊 Follow-up Summary Report (PDF)');
     } catch (e) {
       debugPrint('Error generating PDF report: $e');
       rethrow;
@@ -162,7 +167,10 @@ class FollowUpExportService {
   static pw.Widget _buildPdfSummaryTile(String label, String value) {
     return pw.Column(
       children: [
-        pw.Text(label, style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700)),
+        pw.Text(
+          label,
+          style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey700),
+        ),
         pw.SizedBox(height: 2),
         pw.Text(
           value,
@@ -216,7 +224,9 @@ class FollowUpExportService {
           TextCellValue(u.fatherPhone ?? ''),
           TextCellValue(u.motherPhone ?? ''),
           TextCellValue(u.followUpStatus ?? 'Regular'),
-          TextCellValue('${(u.attendancePercentage ?? 0.0).toStringAsFixed(1)}%'),
+          TextCellValue(
+            '${(u.attendancePercentage ?? 0.0).toStringAsFixed(1)}%',
+          ),
           TextCellValue(u.needVisit == true ? 'Yes' : 'No'),
           TextCellValue(_formatDate(u.lastContact)),
           TextCellValue(_formatDate(u.lastCallDate)),
@@ -232,16 +242,16 @@ class FollowUpExportService {
       }
 
       final outputDir = await getTemporaryDirectory();
-      final filePath = '${outputDir.path}/FollowUp_Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
+      final filePath =
+          '${outputDir.path}/FollowUp_Report_${DateTime.now().millisecondsSinceEpoch}.xlsx';
       final file = File(filePath);
 
       final bytes = excel.encode();
       if (bytes != null) {
         await file.writeAsBytes(bytes);
-        await Share.shareXFiles(
-          [XFile(file.path)],
-          text: '📊 Follow-up Summary Report (Excel)',
-        );
+        await Share.shareXFiles([
+          XFile(file.path),
+        ], text: '📊 Follow-up Summary Report (Excel)');
       }
     } catch (e) {
       debugPrint('Error generating Excel report: $e');

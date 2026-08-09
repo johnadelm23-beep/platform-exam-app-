@@ -1,9 +1,14 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
+import 'package:platformexamapp/core/widgets/section_header.dart';
 import 'package:platformexamapp/features/admin/ui/dashboard.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_list_screen.dart';
@@ -47,220 +52,240 @@ class BodyContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     final bool hasDashboardAccess = user.canAccessDashboard;
-    final int itemsCount = hasDashboardAccess ? 5 : 4;
-    final double gridHeight = (itemsCount / 2).ceil() * 130.h;
+    final gridItems = [
+      "exams",
+      if (hasDashboardAccess) "dashboard",
+      "results",
+      "profile",
+      "today_content",
+    ];
+
+    final int gridRows = (gridItems.length / 2).ceil();
 
     return Container(
-      padding: EdgeInsets.all(16.r),
+      padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
       width: double.infinity,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: surfaceColor,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30.r),
-          topRight: Radius.circular(30.r),
+          topLeft: Radius.circular(32.r),
+          topRight: Radius.circular(32.r),
         ),
+        border: Border(top: BorderSide(color: borderColor, width: 1)),
       ),
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              "ready".tr(),
-              style: TextStyle(fontSize: 26.sp, fontWeight: FontWeight.bold),
-            ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final double availableWidth = constraints.maxWidth;
+          final double cellWidth = (availableWidth - 12.w) / 2;
+          final double normalCardHeight = cellWidth / 1.35;
+          final double calcGridHeight =
+              gridRows * normalCardHeight + (gridRows - 1) * 12.h;
 
-            SizedBox(height: 10.h),
+          return SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SectionHeader(title: "ready".tr()),
 
-            SizedBox(
-              height: gridHeight,
-              child: GridView.builder(
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: itemsCount,
-                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                  crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
-                  childAspectRatio: 1.25,
-                ),
-                itemBuilder: (context, index) {
-                  final items = [
-                    "exams",
-                    if (hasDashboardAccess) "dashboard",
-                    "results",
-                    "profile",
-                    "today_content",
-                  ];
+                SizedBox(height: 12.h),
 
-                  final item = items[index];
+                SizedBox(
+                  height: calcGridHeight,
+                  child: GridView.builder(
+                    physics: const NeverScrollableScrollPhysics(),
+                    itemCount: gridItems.length,
+                    gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12.w,
+                      mainAxisSpacing: 12.h,
+                      childAspectRatio: 1.35,
+                    ),
+                    itemBuilder: (context, index) {
+                      final item = gridItems[index];
 
-                  if (item == "exams") {
-                    return StreamBuilder<int>(
-                      stream: getUnattemptedExamsCount(),
-                      builder: (context, snapshot) {
-                        final newCount = snapshot.data ?? 0;
+                      if (item == "exams") {
+                        return StreamBuilder<int>(
+                          stream: getUnattemptedExamsCount(),
+                          builder: (context, snapshot) {
+                            final newCount = snapshot.data ?? 0;
 
-                        return Stack(
-                          children: [
-                            CustomContainer(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  AppPageRoute(child: ExamsScreen(user: user)),
-                                );
-                              },
-                              title: "exams".tr(),
-                              icon: HugeIcons.strokeRoundedFile01,
-                              color: Colors.green,
-                            ),
-
-                            if (newCount > 0)
-                              Positioned(
-                                right: 5,
-                                top: 5,
-                                child: Container(
-                                  padding: EdgeInsets.all(6.r),
-                                  decoration: const BoxDecoration(
-                                    color: Colors.red,
-                                    shape: BoxShape.circle,
-                                  ),
-                                  child: Text(
-                                    "$newCount",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 12.sp,
-                                      fontWeight: FontWeight.bold,
+                            return Stack(
+                              children: [
+                                CustomContainer(
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      AppPageRoute(
+                                        child: ExamsScreen(user: user),
+                                      ),
+                                    );
+                                  },
+                                  title: "exams".tr(),
+                                  icon: HugeIcons.strokeRoundedFile01,
+                                  color: AppColors.softGold,
+                                ),
+                                if (newCount > 0)
+                                  Positioned(
+                                    right: 8.w,
+                                    top: 8.h,
+                                    child: Container(
+                                      padding: EdgeInsets.all(6.r),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.heartRed,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x66DC3545),
+                                            blurRadius: 8,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        "$newCount",
+                                        style: GoogleFonts.cairo(
+                                          color: Colors.white,
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+
+                      if (item == "dashboard") {
+                        return CustomContainer(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              AppPageRoute(
+                                child: AdminDashboardScreen(user: user),
                               ),
-                          ],
+                            );
+                          },
+                          title: "dashboard".tr(),
+                          icon: HugeIcons.strokeRoundedSettings01,
+                          color: AppColors.primaryLightNavy,
                         );
-                      },
-                    );
-                  }
+                      }
 
-                  if (item == "dashboard") {
-                    return CustomContainer(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: AdminDashboardScreen(user: user)),
+                      if (item == "results") {
+                        return CustomContainer(
+                          title: "results".tr(),
+                          icon: HugeIcons.strokeRoundedChart01,
+                          color: AppColors.goldDark,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              AppPageRoute(child: LeaderboardScreen()),
+                            );
+                          },
                         );
-                      },
-                      title: "dashboard".tr(),
-                      icon: HugeIcons.strokeRoundedSettings01,
-                      color: Colors.indigo,
-                    );
-                  }
+                      }
 
-                  if (item == "results") {
-                    return CustomContainer(
-                      title: "results".tr(),
-                      icon: HugeIcons.strokeRoundedChart01,
-                      color: Colors.blue,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: LeaderboardScreen()),
+                      if (item == "profile") {
+                        return CustomContainer(
+                          title: "profile".tr(),
+                          icon: HugeIcons.strokeRoundedUser02,
+                          color: AppColors.goldLight,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              AppPageRoute(child: const ProfileScreen()),
+                            );
+                          },
                         );
-                      },
-                    );
-                  }
+                      }
 
-                  if (item == "profile") {
-                    return CustomContainer(
-                      title: "profile".tr(),
-                      icon: HugeIcons.strokeRoundedUser02,
-                      color: Colors.red,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          AppPageRoute(child: const ProfileScreen()),
-                        );
-                      },
-                    );
-                  }
-
-                  return CustomContainer(
-                    title: "todays_material".tr(),
-                    icon: HugeIcons.strokeRoundedFileBookmark,
-                    color: Colors.purple,
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        AppPageRoute(child: const DailyContentScreen()),
+                      return CustomContainer(
+                        title: "todays_material".tr(),
+                        icon: HugeIcons.strokeRoundedFileBookmark,
+                        color: Colors.purple.shade400,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(child: const DailyContentScreen()),
+                          );
+                        },
                       );
                     },
-                  );
-                },
-              ),
-            ),
+                  ),
+                ),
 
-            const Divider(),
+                SizedBox(height: 16.h),
+                Divider(color: borderColor),
+                SizedBox(height: 8.h),
 
-            SizedBox(height: 5.h),
+                SectionHeader(title: "egtma3na_posts".tr()),
 
-            Text(
-              "egtma3na_posts".tr(),
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
-            ),
+                SizedBox(height: 12.h),
 
-            SizedBox(height: 10.h),
+                /// POSTS
+                StreamBuilder<QuerySnapshot>(
+                  stream: FirebaseFirestore.instance
+                      .collection("posts")
+                      .orderBy("createdAt", descending: true)
+                      .snapshots(),
+                  builder: (context, snapshot) {
+                    if (!snapshot.hasData) {
+                      return const LoadingState();
+                    }
 
-            /// POSTS
-            StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection("posts")
-                  .orderBy("createdAt", descending: true)
-                  .snapshots(),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+                    final posts = snapshot.data!.docs;
 
-                final posts = snapshot.data!.docs;
+                    if (posts.isEmpty) {
+                      return EmptyState(
+                        title: "no_posts_found".tr(),
+                        hugeIcon: HugeIcons.strokeRoundedFileCorrupt,
+                      );
+                    }
 
-                if (posts.isEmpty) {
-                  return Center(
-                    child: Text(
-                      "no_posts_found".tr(),
-                      style: const TextStyle(color: Colors.grey),
-                    ),
-                  );
-                }
+                    return ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: posts.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 12.h),
+                      itemBuilder: (context, index) {
+                        final post = posts[index];
+                        final data = post.data() as Map<String, dynamic>;
+                        final text = data["text"] ?? "";
+                        final Map likes = data["likes"] ?? {};
+                        final isLiked = likes.containsKey(uid);
+                        final likeCount = likes.length;
 
-                return ListView.separated(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: posts.length,
-                  separatorBuilder: (_, __) => SizedBox(height: 10.h),
-                  itemBuilder: (context, index) {
-                    final post = posts[index];
-                    final data = post.data() as Map<String, dynamic>;
-                    final text = data["text"] ?? "";
-                    final Map likes = data["likes"] ?? {};
-                    final isLiked = likes.containsKey(uid);
-                    final likeCount = likes.length;
+                        final isArabic = RegExp(
+                          r'[\u0600-\u06FF]',
+                        ).hasMatch(text);
 
-                    final isArabic = RegExp(r'[\u0600-\u06FF]').hasMatch(text);
-
-                    return PostContainer(
-                      isArabic: isArabic,
-                      isLiked: isLiked,
-                      text: text,
-                      user: user,
-                      uid: uid,
-                      likeCount: likeCount,
-                      post: post,
+                        return PostContainer(
+                          isArabic: isArabic,
+                          isLiked: isLiked,
+                          text: text,
+                          user: user,
+                          uid: uid,
+                          likeCount: likeCount,
+                          post: post,
+                        );
+                      },
                     );
                   },
-                );
-              },
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

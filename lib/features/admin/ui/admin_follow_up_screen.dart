@@ -60,58 +60,86 @@ class _AdminFollowUpView extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 20.h),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: Colors.red.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.red.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedFile01,
+                      color: Colors.red,
+                    ),
                   ),
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedFile01,
-                    color: Colors.red,
+                  title: Text(
+                    "export_as_pdf".tr(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
-                ),
-                title: Text("export_as_pdf".tr(), style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                onTap: () async {
-                  Navigator.pop(bottomSheetContext);
-                  try {
-                    await FollowUpExportService.exportToPdf(state.filteredUsers);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await FollowUpExportService.exportToPdf(
+                        state.filteredUsers,
                       );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Error: $e"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
+                  },
+                ),
               ),
               const Divider(),
-              ListTile(
-                leading: Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: Colors.green.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
+              Material(
+                color: Colors.transparent,
+                child: ListTile(
+                  leading: Container(
+                    padding: EdgeInsets.all(10.r),
+                    decoration: BoxDecoration(
+                      color: Colors.green.withValues(alpha: 0.1),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedGrid,
+                      color: Colors.green,
+                    ),
                   ),
-                  child: const HugeIcon(
-                    icon: HugeIcons.strokeRoundedGrid,
-                    color: Colors.green,
+                  title: Text(
+                    "export_as_excel".tr(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: isDark ? Colors.white : Colors.black87,
+                    ),
                   ),
-                ),
-                title: Text("export_as_excel".tr(), style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black87)),
-                onTap: () async {
-                  Navigator.pop(bottomSheetContext);
-                  try {
-                    await FollowUpExportService.exportToExcel(state.filteredUsers);
-                  } catch (e) {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text("Error: $e"), backgroundColor: Colors.red),
+                  onTap: () async {
+                    Navigator.pop(bottomSheetContext);
+                    try {
+                      await FollowUpExportService.exportToExcel(
+                        state.filteredUsers,
                       );
+                    } catch (e) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text("Error: $e"),
+                            backgroundColor: Colors.red,
+                          ),
+                        );
+                      }
                     }
-                  }
-                },
+                  },
+                ),
               ),
               SizedBox(height: 10.h),
             ],
@@ -132,7 +160,10 @@ class _AdminFollowUpView extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.white),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: Colors.white,
+          ),
         ),
         title: Text(
           "follow_up".tr(),
@@ -183,10 +214,14 @@ class _AdminFollowUpView extends StatelessWidget {
                       attendanceFilter: state.attendanceFilter,
                       needVisitFilter: state.needVisitFilter,
                       statusFilter: state.statusFilter,
-                      onSearchChanged: (q) => context.read<FollowUpCubit>().setSearchQuery(q),
-                      onAttendanceFilterChanged: (f) => context.read<FollowUpCubit>().setAttendanceFilter(f),
-                      onNeedVisitFilterChanged: (f) => context.read<FollowUpCubit>().setNeedVisitFilter(f),
-                      onStatusFilterChanged: (f) => context.read<FollowUpCubit>().setStatusFilter(f),
+                      onSearchChanged: (q) =>
+                          context.read<FollowUpCubit>().setSearchQuery(q),
+                      onAttendanceFilterChanged: (f) =>
+                          context.read<FollowUpCubit>().setAttendanceFilter(f),
+                      onNeedVisitFilterChanged: (f) =>
+                          context.read<FollowUpCubit>().setNeedVisitFilter(f),
+                      onStatusFilterChanged: (f) =>
+                          context.read<FollowUpCubit>().setStatusFilter(f),
                     ),
                   ),
                 ),
@@ -216,7 +251,9 @@ class _AdminFollowUpView extends StatelessWidget {
                             "no_members_found".tr(),
                             style: TextStyle(
                               fontSize: 14.sp,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -226,26 +263,23 @@ class _AdminFollowUpView extends StatelessWidget {
                   )
                 else
                   SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final user = state.filteredUsers[index];
-                        return FollowUpUserCard(
-                          user: user,
-                          onCallRecorded: () {
-                            if (user.uid != null) {
-                              context.read<FollowUpCubit>().recordCall(user.uid!);
-                            }
-                          },
-                          onEdit: () {
-                            FollowUpDetailsDialog.show(context, user);
-                          },
-                          onDetails: () {
-                            FollowUpDetailsDialog.show(context, user);
-                          },
-                        );
-                      },
-                      childCount: state.filteredUsers.length,
-                    ),
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final user = state.filteredUsers[index];
+                      return FollowUpUserCard(
+                        user: user,
+                        onCallRecorded: () {
+                          if (user.uid != null) {
+                            context.read<FollowUpCubit>().recordCall(user.uid!);
+                          }
+                        },
+                        onEdit: () {
+                          FollowUpDetailsDialog.show(context, user);
+                        },
+                        onDetails: () {
+                          FollowUpDetailsDialog.show(context, user);
+                        },
+                      );
+                    }, childCount: state.filteredUsers.length),
                   ),
 
                 SliverToBoxAdapter(child: SizedBox(height: 80.h)),
@@ -259,7 +293,9 @@ class _AdminFollowUpView extends StatelessWidget {
           return FloatingActionButton.extended(
             backgroundColor: AppColors.primaryColor,
             elevation: 4,
-            onPressed: state.isLoading ? null : () => _showExportOptions(context, state),
+            onPressed: state.isLoading
+                ? null
+                : () => _showExportOptions(context, state),
             icon: const HugeIcon(
               icon: HugeIcons.strokeRoundedShare01,
               color: Colors.white,

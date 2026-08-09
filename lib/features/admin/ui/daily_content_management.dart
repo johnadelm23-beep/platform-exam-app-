@@ -140,11 +140,17 @@ class _DailyContentManagementScreenState
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(currentUser.uid)
+        .get();
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Permission denied: Main Admin only."), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text("Permission denied: Main Admin only."),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -972,119 +978,122 @@ class _DailyContentManagementScreenState
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(15.r),
                         ),
-                        child: ListTile(
-                          title: Row(
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  title,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ),
-                              if (isActive)
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w,
-                                    vertical: 2.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.green[100],
-                                    borderRadius: BorderRadius.circular(5.r),
-                                  ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: ListTile(
+                            title: Row(
+                              children: [
+                                Expanded(
                                   child: Text(
-                                    "Active",
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      color: Colors.green[800],
+                                    title,
+                                    style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                     ),
                                   ),
                                 ),
-                              if (isArchived)
-                                Container(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 6.w,
-                                    vertical: 2.h,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey[300],
-                                    borderRadius: BorderRadius.circular(5.r),
-                                  ),
-                                  child: Text(
-                                    "Archived",
-                                    style: TextStyle(
-                                      fontSize: 10.sp,
-                                      color: Colors.grey[700],
-                                      fontWeight: FontWeight.bold,
+                                if (isActive)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.green[100],
+                                      borderRadius: BorderRadius.circular(5.r),
+                                    ),
+                                    child: Text(
+                                      "Active",
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: Colors.green[800],
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ),
-                                ),
-                            ],
-                          ),
-                          subtitle: Text(
-                            subtitle.isNotEmpty
-                                ? subtitle
-                                : "No subtitle provided",
-                          ),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              IconButton(
-                                icon: const HugeIcon(
-                                  icon: HugeIcons.strokeRoundedEye,
-                                  color: Colors.blue,
-                                ),
-                                onPressed: () => _showPreviewDialog(data),
-                              ),
-                              PopupMenuButton<String>(
-                                onSelected: (action) {
-                                  if (action == "edit") {
-                                    _showAddEditBottomSheet(
-                                      editDocId: doc.id,
-                                      initialData: data,
-                                    );
-                                  } else if (action == "duplicate") {
-                                    _duplicateContent(data);
-                                  } else if (action == "activate") {
-                                    _activateContent(doc.id);
-                                  } else if (action == "archive") {
-                                    _archiveContent(doc.id, isArchived);
-                                  } else if (action == "delete") {
-                                    _deleteContent(doc.id);
-                                  }
-                                },
-                                itemBuilder: (context) => [
-                                  const PopupMenuItem(
-                                    value: "edit",
-                                    child: Text("Edit"),
+                                if (isArchived)
+                                  Container(
+                                    padding: EdgeInsets.symmetric(
+                                      horizontal: 6.w,
+                                      vertical: 2.h,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: Colors.grey[300],
+                                      borderRadius: BorderRadius.circular(5.r),
+                                    ),
+                                    child: Text(
+                                      "Archived",
+                                      style: TextStyle(
+                                        fontSize: 10.sp,
+                                        color: Colors.grey[700],
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
                                   ),
-                                  const PopupMenuItem(
-                                    value: "duplicate",
-                                    child: Text("Duplicate"),
+                              ],
+                            ),
+                            subtitle: Text(
+                              subtitle.isNotEmpty
+                                  ? subtitle
+                                  : "No subtitle provided",
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const HugeIcon(
+                                    icon: HugeIcons.strokeRoundedEye,
+                                    color: Colors.blue,
                                   ),
-                                  if (!isActive && !isArchived)
+                                  onPressed: () => _showPreviewDialog(data),
+                                ),
+                                PopupMenuButton<String>(
+                                  onSelected: (action) {
+                                    if (action == "edit") {
+                                      _showAddEditBottomSheet(
+                                        editDocId: doc.id,
+                                        initialData: data,
+                                      );
+                                    } else if (action == "duplicate") {
+                                      _duplicateContent(data);
+                                    } else if (action == "activate") {
+                                      _activateContent(doc.id);
+                                    } else if (action == "archive") {
+                                      _archiveContent(doc.id, isArchived);
+                                    } else if (action == "delete") {
+                                      _deleteContent(doc.id);
+                                    }
+                                  },
+                                  itemBuilder: (context) => [
                                     const PopupMenuItem(
-                                      value: "activate",
-                                      child: Text("Activate"),
+                                      value: "edit",
+                                      child: Text("Edit"),
                                     ),
-                                  PopupMenuItem(
-                                    value: "archive",
-                                    child: Text(
-                                      isArchived ? "Restore" : "Archive",
+                                    const PopupMenuItem(
+                                      value: "duplicate",
+                                      child: Text("Duplicate"),
                                     ),
-                                  ),
-                                  const PopupMenuItem(
-                                    value: "delete",
-                                    child: Text(
-                                      "Delete",
-                                      style: TextStyle(color: Colors.red),
+                                    if (!isActive && !isArchived)
+                                      const PopupMenuItem(
+                                        value: "activate",
+                                        child: Text("Activate"),
+                                      ),
+                                    PopupMenuItem(
+                                      value: "archive",
+                                      child: Text(
+                                        isArchived ? "Restore" : "Archive",
+                                      ),
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                    const PopupMenuItem(
+                                      value: "delete",
+                                      child: Text(
+                                        "Delete",
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

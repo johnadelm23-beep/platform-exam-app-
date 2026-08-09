@@ -1,26 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/gold_button.dart';
 
 class AppButton extends StatelessWidget {
-  const AppButton({super.key, required this.text, this.onPressed});
+  const AppButton({
+    super.key,
+    required this.text,
+    this.onPressed,
+    this.isLoading = false,
+  });
   final String text;
   final void Function()? onPressed;
+  final bool isLoading;
+
   @override
   Widget build(BuildContext context) {
-    return ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: AppColors.primaryColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadiusGeometry.circular(12.r),
-        ),
-        minimumSize: Size(double.infinity, 60.h),
-      ),
+    return GoldButton(
+      title: text,
       onPressed: onPressed,
-      child: Text(
-        text,
-        style: TextStyle(fontSize: 20.sp, color: AppColors.whiteColor),
-      ),
+      isLoading: isLoading,
+      height: 52.h,
     );
   }
 }

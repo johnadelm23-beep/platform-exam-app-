@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/auth/cubit/cubit/auth_cubit.dart';
 import 'package:platformexamapp/features/auth/ui/register_screen.dart';
 import 'package:platformexamapp/features/auth/ui/widgets/custom_container_sigin_with_google.dart';
@@ -36,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (_) => const Center(
-        child: CircularProgressIndicator(color: AppColors.primaryColor),
+        child: CircularProgressIndicator(color: AppColors.softGold),
       ),
     );
   }
@@ -44,67 +47,76 @@ class _LoginScreenState extends State<LoginScreen> {
   void _showError(String msg) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red,
+        content: Text(msg, style: GoogleFonts.cairo(color: Colors.white)),
+        backgroundColor: AppColors.heartRed,
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12.r),
+        ),
       ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+
     return Scaffold(
       resizeToAvoidBottomInset: true,
-      backgroundColor: Colors.indigo.shade500,
+      backgroundColor: pageBg,
       body: SafeArea(
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 16.h),
           child: Column(
             children: [
-              SizedBox(height: 20.h),
+              SizedBox(height: 10.h),
 
-              /// 🖼️ Image
-              Image.asset(
-                'assets/images/background.png',
-                width: 270.w,
-                height: 270.h,
+              /// 🖼️ Hero Brand Image
+              Hero(
+                tag: 'app_logo',
+                child: Image.asset(
+                  'assets/images/background.png',
+                  width: 220.w,
+                  height: 220.h,
+                ),
               ),
 
               SizedBox(height: 20.h),
 
-              /// ⚪ FORM CONTAINER
-              Container(
-                width: double.infinity,
-                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 25.h),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25.r),
-                    topRight: Radius.circular(25.r),
-                  ),
-                ),
+              /// ⚪ GLASS FORM CONTAINER
+              GlassCard(
+                padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
                       "welcome".tr(),
-                      style: TextStyle(
+                      style: GoogleFonts.cairo(
                         fontSize: 24.sp,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w900,
+                        color: textColor,
                       ),
                     ),
 
-                    SizedBox(height: 25.h),
+                    SizedBox(height: 20.h),
 
                     /// 🧾 FORM
                     Form(
                       key: _formKey,
                       child: Column(
                         children: [
-                           CustomTextFormField(
+                          CustomTextFormField(
                             hintText: "email".tr(),
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
+                            prefixIcon: HugeIcon(
+                              icon: HugeIcons.strokeRoundedMail01,
+                              size: 20.r,
+                              color: AppColors.softGold,
+                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return "email_required".tr();
@@ -116,13 +128,18 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
 
-                          SizedBox(height: 12.h),
+                          SizedBox(height: 14.h),
 
                           CustomTextFormField(
                             hintText: "password".tr(),
                             controller: _passwordController,
                             obscureText: true,
                             keyboardType: TextInputType.visiblePassword,
+                            prefixIcon: HugeIcon(
+                              icon: HugeIcons.strokeRoundedLockPassword,
+                              size: 20.r,
+                              color: AppColors.softGold,
+                            ),
                             validator: (value) {
                               if (value == null || value.isEmpty) {
                                 return "password_required".tr();
@@ -131,7 +148,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             },
                           ),
 
-                          SizedBox(height: 25.h),
+                          SizedBox(height: 24.h),
 
                           /// 🔥 LOGIN BUTTON + LISTENER
                           BlocListener<AuthCubit, AuthState>(
@@ -148,12 +165,9 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                 Navigator.pushAndRemoveUntil(
                                   context,
-                                  AppPageRoute(
-                                    child: const HomeScreen(),
-                                  ),
+                                  AppPageRoute(child: const HomeScreen()),
                                   (route) => false,
                                 );
-                                //  context.read<HomeCubit>().getUserData();
                               }
 
                               if (state is AuthError) {
@@ -184,7 +198,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
 
-                    SizedBox(height: 10.h),
+                    SizedBox(height: 16.h),
 
                     /// 🔵 GOOGLE
                     CustomContainerSiginWithGoogle(
@@ -200,9 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       onTap: () {
                         Navigator.push(
                           context,
-                          AppPageRoute(
-                            child: const RegisterScreen(),
-                          ),
+                          AppPageRoute(child: const RegisterScreen()),
                         );
                       },
                       child: CustomTextRich(

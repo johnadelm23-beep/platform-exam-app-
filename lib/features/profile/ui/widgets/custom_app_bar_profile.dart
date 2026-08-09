@@ -57,7 +57,10 @@ class CustomAppBarProfile extends StatelessWidget {
             alignment: WrapAlignment.center,
             children: [
               CustomStateContainer(title: "score".tr(), value: "$totalScore"),
-              CustomStateContainer(title: "exams".tr(), value: "${docs.length}"),
+              CustomStateContainer(
+                title: "exams".tr(),
+                value: "${docs.length}",
+              ),
               CustomStateContainer(title: "rank".tr(), value: "#$rank"),
             ],
           ),

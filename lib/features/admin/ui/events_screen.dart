@@ -3,9 +3,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/services/offline_sync_service.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 
 class EventsManagementScreen extends StatefulWidget {
   const EventsManagementScreen({super.key});
@@ -31,6 +34,7 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
   }
 
   Future<void> _selectDate(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: _selectedDate,
@@ -39,10 +43,13 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.softGold,
+              onPrimary: Colors.black,
+              surface: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              onSurface: isDark
+                  ? AppColors.darkTextMain
+                  : AppColors.lightTextMain,
             ),
           ),
           child: child!,
@@ -57,16 +64,20 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
   }
 
   Future<void> _selectTime(BuildContext context) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: _selectedTime,
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.softGold,
+              onPrimary: Colors.black,
+              surface: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              onSurface: isDark
+                  ? AppColors.darkTextMain
+                  : AppColors.lightTextMain,
             ),
           ),
           child: child!,
@@ -85,11 +96,17 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(currentUser.uid)
+        .get();
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Permission denied: Main Admin only."), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text("Permission denied: Main Admin only."),
+          backgroundColor: AppColors.heartRed,
+        ),
       );
       return;
     }
@@ -152,7 +169,7 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Failed to create event: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -187,13 +204,24 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error updating event status: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
   }
 
   void _showAddEventBottomSheet() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkSurface : Colors.white;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final inputBg = isDark
+        ? AppColors.darkGlassSurface
+        : AppColors.lightGlassSurface;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -209,11 +237,12 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                 bottom: MediaQuery.of(context).viewInsets.bottom + 20.r,
               ),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: surfaceColor,
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(30.r),
                   topRight: Radius.circular(30.r),
                 ),
+                border: Border.all(color: borderColor),
               ),
               child: Form(
                 key: _formKey,
@@ -227,7 +256,9 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                           width: 40.w,
                           height: 4.h,
                           decoration: BoxDecoration(
-                            color: Colors.grey[300],
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : Colors.grey[300],
                             borderRadius: BorderRadius.circular(10.r),
                           ),
                         ),
@@ -235,20 +266,42 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                       SizedBox(height: 15.h),
                       Text(
                         "create_new_event".tr(),
-                        style: TextStyle(
-                          fontSize: 20.sp,
+                        style: GoogleFonts.cairo(
+                          fontSize: 18.sp,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryColor,
+                          color: isDark
+                              ? AppColors.softGold
+                              : AppColors.primaryColor,
                         ),
                       ),
                       SizedBox(height: 15.h),
                       TextFormField(
                         controller: _titleController,
+                        style: GoogleFonts.cairo(color: textColor),
                         decoration: InputDecoration(
                           labelText: "event_title".tr(),
-                          prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedFile01, size: 20.r),
+                          labelStyle: GoogleFonts.cairo(color: mutedColor),
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedFile01,
+                            size: 20.r,
+                            color: AppColors.softGold,
+                          ),
+                          fillColor: inputBg,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: const BorderSide(
+                              color: AppColors.softGold,
+                              width: 1.5,
+                            ),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
                           ),
                         ),
                         validator: (value) =>
@@ -260,11 +313,31 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                       TextFormField(
                         controller: _descController,
                         maxLines: 2,
+                        style: GoogleFonts.cairo(color: textColor),
                         decoration: InputDecoration(
                           labelText: "description".tr(),
-                          prefixIcon: HugeIcon(icon: HugeIcons.strokeRoundedEdit01, size: 20.r),
+                          labelStyle: GoogleFonts.cairo(color: mutedColor),
+                          prefixIcon: HugeIcon(
+                            icon: HugeIcons.strokeRoundedEdit01,
+                            size: 20.r,
+                            color: AppColors.softGold,
+                          ),
+                          fillColor: inputBg,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: const BorderSide(
+                              color: AppColors.softGold,
+                              width: 1.5,
+                            ),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
                           ),
                         ),
                         validator: (value) =>
@@ -283,17 +356,19 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                               },
                               icon: const HugeIcon(
                                 icon: HugeIcons.strokeRoundedCalendar01,
-                                color: Colors.black,
+                                color: AppColors.softGold,
                               ),
                               label: Text(
                                 "${_selectedDate.year}-${_selectedDate.month.toString().padLeft(2, '0')}-${_selectedDate.day.toString().padLeft(2, '0')}",
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: .bold,
+                                style: GoogleFonts.cairo(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.sp,
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(vertical: 12.h),
+                                side: BorderSide(color: borderColor),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
@@ -309,17 +384,19 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                               },
                               icon: const HugeIcon(
                                 icon: HugeIcons.strokeRoundedClock01,
-                                color: Colors.black,
+                                color: AppColors.softGold,
                               ),
                               label: Text(
                                 _selectedTime.format(context),
-                                style: TextStyle(
-                                  color: Colors.black,
-                                  fontWeight: .bold,
+                                style: GoogleFonts.cairo(
+                                  color: textColor,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 12.sp,
                                 ),
                               ),
                               style: OutlinedButton.styleFrom(
                                 padding: EdgeInsets.symmetric(vertical: 12.h),
+                                side: BorderSide(color: borderColor),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(12.r),
                                 ),
@@ -331,44 +408,82 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                       SizedBox(height: 15.h),
                       Text(
                         "event_type".tr(),
-                        style: TextStyle(
+                        style: GoogleFonts.cairo(
                           fontSize: 14.sp,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey[700],
+                          color: mutedColor,
                         ),
                       ),
                       SizedBox(height: 8.h),
                       DropdownButtonFormField<String>(
                         value: _selectedType,
+                        dropdownColor: surfaceColor,
+                        style: GoogleFonts.cairo(
+                          color: textColor,
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w600,
+                        ),
                         decoration: InputDecoration(
+                          fillColor: inputBg,
+                          filled: true,
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12.r),
+                            borderSide: const BorderSide(
+                              color: AppColors.softGold,
+                              width: 1.5,
+                            ),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(12.r),
+                            borderSide: BorderSide(color: borderColor),
                           ),
                         ),
                         items: [
                           DropdownMenuItem(
                             value: 'friday_meeting',
-                            child: Text('friday_meeting'.tr()),
+                            child: Text(
+                              'friday_meeting'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'sunday_activity',
-                            child: Text('sunday_activity'.tr()),
+                            child: Text(
+                              'sunday_activity'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'conference',
-                            child: Text('conference'.tr()),
+                            child: Text(
+                              'conference'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'camp',
-                            child: Text('camp'.tr()),
+                            child: Text(
+                              'camp'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'trip',
-                            child: Text('trip'.tr()),
+                            child: Text(
+                              'trip'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                           DropdownMenuItem(
                             value: 'special_meeting',
-                            child: Text('special_meeting'.tr()),
+                            child: Text(
+                              'special_meeting'.tr(),
+                              style: GoogleFonts.cairo(color: textColor),
+                            ),
                           ),
                         ],
                         onChanged: (val) {
@@ -380,16 +495,32 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                         },
                       ),
                       SizedBox(height: 10.h),
-                      SwitchListTile(
-                        title: Text("make_active_event".tr()),
-                        subtitle: Text("automaticaly_deactive".tr()),
-                        value: _isActive,
-                        activeColor: AppColors.primaryColor,
-                        onChanged: (val) {
-                          setSheetState(() {
-                            _isActive = val;
-                          });
-                        },
+                      Material(
+                        color: Colors.transparent,
+                        child: SwitchListTile(
+                          title: Text(
+                            "make_active_event".tr(),
+                            style: GoogleFonts.cairo(
+                              fontSize: 15.sp,
+                              color: textColor,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          subtitle: Text(
+                            "automaticaly_deactive".tr(),
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.sp,
+                              color: mutedColor,
+                            ),
+                          ),
+                          value: _isActive,
+                          activeColor: AppColors.softGold,
+                          onChanged: (val) {
+                            setSheetState(() {
+                              _isActive = val;
+                            });
+                          },
+                        ),
                       ),
                       SizedBox(height: 15.h),
                       SizedBox(
@@ -398,17 +529,18 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                         child: ElevatedButton(
                           onPressed: _createNewEvent,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.primaryColor,
-                            foregroundColor: Colors.white,
+                            backgroundColor: AppColors.softGold,
+                            foregroundColor: Colors.black87,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(12.r),
                             ),
                           ),
                           child: Text(
                             "create_event".tr(),
-                            style: TextStyle(
-                              fontWeight: .bold,
-                              fontSize: 20.sp,
+                            style: GoogleFonts.cairo(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16.sp,
+                              color: Colors.black87,
                             ),
                           ),
                         ),
@@ -426,25 +558,44 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textColor,
+            size: 20.r,
+          ),
         ),
         title: Text(
           "events_management".tr(),
-          style: TextStyle(color: Colors.white, fontWeight: .bold),
+          style: GoogleFonts.cairo(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18.sp,
+          ),
         ),
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _showAddEventBottomSheet,
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryColor,
+        backgroundColor: AppColors.softGold,
+        foregroundColor: Colors.black87,
         child: const Icon(Icons.add),
       ),
       body: Container(
@@ -452,11 +603,12 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
         padding: EdgeInsets.all(16.r),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[100],
+          color: surfaceColor,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
+            topLeft: Radius.circular(32.r),
+            topRight: Radius.circular(32.r),
           ),
+          border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -465,36 +617,23 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
               .snapshots(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
+              return const Center(
+                child: CircularProgressIndicator(color: AppColors.softGold),
+              );
             }
 
             final docs = snapshot.data?.docs ?? [];
             if (docs.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar01,
-                      size: 60.r,
-                      color: Colors.grey[400],
-                    ),
-                    SizedBox(height: 10.h),
-                    Text(
-                      "No events created yet.",
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 16.sp,
-                      ),
-                    ),
-                  ],
-                ),
+              return EmptyState(
+                title: "No events created yet.",
+                hugeIcon: HugeIcons.strokeRoundedCalendar01,
               );
             }
 
             return ListView.separated(
+              physics: const BouncingScrollPhysics(),
               itemCount: docs.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10.h),
+              separatorBuilder: (_, __) => SizedBox(height: 12.h),
               itemBuilder: (context, index) {
                 final doc = docs[index];
                 final data = doc.data() as Map<String, dynamic>;
@@ -537,98 +676,96 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
                     typeLabel = 'Other Event';
                 }
 
-                return Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.r),
-                  ),
-                  color: Colors.white,
-                  elevation: 2,
-                  child: Padding(
-                    padding: EdgeInsets.all(12.r),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: EdgeInsets.symmetric(
-                                horizontal: 8.w,
-                                vertical: 4.h,
-                              ),
-                              decoration: BoxDecoration(
-                                color: typeColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(8.r),
-                              ),
-                              child: Text(
-                                typeLabel,
-                                style: TextStyle(
-                                  color: typeColor,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12.sp,
-                                ),
+                return GlassCard(
+                  padding: EdgeInsets.all(14.r),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Container(
+                            padding: EdgeInsets.symmetric(
+                              horizontal: 10.w,
+                              vertical: 4.h,
+                            ),
+                            decoration: BoxDecoration(
+                              color: typeColor.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(10.r),
+                              border: Border.all(
+                                color: typeColor.withValues(alpha: 0.4),
                               ),
                             ),
-                            Switch(
-                              value: isActive,
-                              activeColor: AppColors.primaryColor,
-                              onChanged: (val) {
-                                _toggleEventActive(doc.id, isActive);
-                              },
+                            child: Text(
+                              typeLabel,
+                              style: GoogleFonts.cairo(
+                                color: typeColor,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11.sp,
+                              ),
                             ),
-                          ],
-                        ),
-                        SizedBox(height: 8.h),
-                        Text(
-                          title,
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black87,
                           ),
+                          Switch(
+                            value: isActive,
+                            activeColor: AppColors.softGold,
+                            onChanged: (val) {
+                              _toggleEventActive(doc.id, isActive);
+                            },
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+                      Text(
+                        title,
+                        style: GoogleFonts.cairo(
+                          fontSize: 16.sp,
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
                         ),
+                      ),
+                      if (desc.isNotEmpty) ...[
                         SizedBox(height: 4.h),
                         Text(
                           desc,
-                          style: TextStyle(
-                            fontSize: 14.sp,
-                            color: Colors.grey[600],
+                          style: GoogleFonts.cairo(
+                            fontSize: 13.sp,
+                            color: mutedColor,
                           ),
                         ),
-                        SizedBox(height: 10.h),
-                        Row(
-                          children: [
-                            HugeIcon(
-                              icon: HugeIcons.strokeRoundedCalendar01,
-                              size: 16.r,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(width: 5.w),
-                            Text(
-                              date,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                            SizedBox(width: 15.w),
-                            HugeIcon(
-                              icon: HugeIcons.strokeRoundedClock01,
-                              size: 16.r,
-                              color: Colors.grey,
-                            ),
-                            SizedBox(width: 5.w),
-                            Text(
-                              time,
-                              style: TextStyle(
-                                fontSize: 13.sp,
-                                color: Colors.grey[700],
-                              ),
-                            ),
-                          ],
-                        ),
                       ],
-                    ),
+                      SizedBox(height: 10.h),
+                      Row(
+                        children: [
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedCalendar01,
+                            size: 16.r,
+                            color: AppColors.softGold,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            date,
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.sp,
+                              color: mutedColor,
+                            ),
+                          ),
+                          SizedBox(width: 16.w),
+                          HugeIcon(
+                            icon: HugeIcons.strokeRoundedClock01,
+                            size: 16.r,
+                            color: AppColors.softGold,
+                          ),
+                          SizedBox(width: 6.w),
+                          Text(
+                            time,
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.sp,
+                              color: mutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 );
               },

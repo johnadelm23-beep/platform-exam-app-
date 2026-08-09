@@ -1,10 +1,12 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class ProfileQrDialog extends StatelessWidget {
@@ -32,7 +34,7 @@ class ProfileQrDialog extends StatelessWidget {
       context: context,
       barrierDismissible: true,
       barrierLabel: "Dismiss QR",
-      barrierColor: Colors.black.withValues(alpha: 0.6),
+      barrierColor: Colors.black.withOpacity(0.6),
       transitionDuration: const Duration(milliseconds: 300),
       pageBuilder: (context, anim1, anim2) {
         return ProfileQrDialog(
@@ -58,6 +60,9 @@ class ProfileQrDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+
     final screenSize = MediaQuery.of(context).size;
     final qrSize = (screenSize.width * 0.72).clamp(240.0, 320.0);
 
@@ -65,33 +70,19 @@ class ProfileQrDialog extends StatelessWidget {
       backgroundColor: Colors.transparent,
       body: Stack(
         children: [
-          // Glass blur backdrop
           Positioned.fill(
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-              child: Container(
-                color: Colors.black.withValues(alpha: 0.5),
-              ),
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+              child: Container(color: Colors.black.withOpacity(0.6)),
             ),
           ),
 
-          // Main Card Container
           Center(
             child: SingleChildScrollView(
               padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 24.h),
-              child: Container(
+              child: GlassCard(
                 padding: EdgeInsets.all(24.r),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(28.r),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withValues(alpha: 0.25),
-                      blurRadius: 25,
-                      offset: const Offset(0, 10),
-                    ),
-                  ],
-                ),
+                borderRadius: 28.r,
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -104,31 +95,33 @@ class ProfileQrDialog extends StatelessWidget {
                             Container(
                               padding: EdgeInsets.all(8.r),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withValues(alpha: 0.1),
+                                color: AppColors.softGold.withOpacity(0.15),
                                 shape: BoxShape.circle,
                               ),
                               child: HugeIcon(
                                 icon: HugeIcons.strokeRoundedQrCode,
-                                color: AppColors.primaryColor,
+                                color: AppColors.softGold,
                                 size: 20.r,
                               ),
                             ),
                             SizedBox(width: 8.w),
                             Text(
                               "profile".tr(),
-                              style: TextStyle(
+                              style: GoogleFonts.cairo(
                                 fontSize: 16.sp,
                                 fontWeight: FontWeight.bold,
-                                color: AppColors.primaryColor,
+                                color: AppColors.softGold,
                               ),
                             ),
                           ],
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
-                          icon: Icon(Icons.close, size: 24.r, color: Colors.grey[700]),
+                          icon: Icon(Icons.close, size: 22.r, color: textColor),
                           style: IconButton.styleFrom(
-                            backgroundColor: Colors.grey[100],
+                            backgroundColor: isDark
+                                ? Colors.white.withOpacity(0.08)
+                                : Colors.black.withOpacity(0.05),
                           ),
                         ),
                       ],
@@ -139,36 +132,50 @@ class ProfileQrDialog extends StatelessWidget {
                     // User Info
                     CircleAvatar(
                       radius: 36.r,
-                      backgroundColor: AppColors.primaryColor.withValues(alpha: 0.1),
-                      backgroundImage: user.profileImage != null && user.profileImage!.isNotEmpty
+                      backgroundColor: AppColors.softGold.withOpacity(0.15),
+                      backgroundImage:
+                          user.profileImage != null &&
+                              user.profileImage!.isNotEmpty
                           ? NetworkImage(user.profileImage!)
                           : null,
-                      child: user.profileImage == null || user.profileImage!.isEmpty
-                          ? HugeIcon(icon: HugeIcons.strokeRoundedUser02, size: 36.r, color: AppColors.primaryColor)
+                      child:
+                          user.profileImage == null ||
+                              user.profileImage!.isEmpty
+                          ? HugeIcon(
+                              icon: HugeIcons.strokeRoundedUser02,
+                              size: 36.r,
+                              color: AppColors.softGold,
+                            )
                           : null,
                     ),
                     SizedBox(height: 10.h),
                     Text(
                       user.name ?? "User",
-                      style: TextStyle(
+                      style: GoogleFonts.cairo(
                         fontSize: 20.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.black87,
+                        color: textColor,
                       ),
                       textAlign: TextAlign.center,
                     ),
                     SizedBox(height: 4.h),
                     Container(
-                      padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 4.h),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: 12.w,
+                        vertical: 4.h,
+                      ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withValues(alpha: 0.08),
+                        color: AppColors.softGold.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(20.r),
+                        border: Border.all(
+                          color: AppColors.softGold.withOpacity(0.3),
+                        ),
                       ),
                       child: Text(
                         "ID: ${user.humanReadableId ?? 'EGT000000'}",
-                        style: TextStyle(
+                        style: GoogleFonts.cairo(
                           fontSize: 13.sp,
-                          color: AppColors.primaryColor,
+                          color: AppColors.softGold,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -185,13 +192,13 @@ class ProfileQrDialog extends StatelessWidget {
                           color: Colors.white,
                           borderRadius: BorderRadius.circular(20.r),
                           border: Border.all(
-                            color: AppColors.primaryColor.withValues(alpha: 0.2),
+                            color: AppColors.softGold,
                             width: 2,
                           ),
-                          boxShadow: [
+                          boxShadow: const [
                             BoxShadow(
-                              color: AppColors.primaryColor.withValues(alpha: 0.08),
-                              blurRadius: 15,
+                              color: Color(0x33D4AF37),
+                              blurRadius: 20,
                               spreadRadius: 2,
                             ),
                           ],
@@ -202,11 +209,11 @@ class ProfileQrDialog extends StatelessWidget {
                           size: qrSize.r,
                           eyeStyle: const QrEyeStyle(
                             eyeShape: QrEyeShape.square,
-                            color: AppColors.primaryColor,
+                            color: AppColors.cinematicNavy,
                           ),
                           dataModuleStyle: const QrDataModuleStyle(
                             dataModuleShape: QrDataModuleShape.square,
-                            color: AppColors.primaryColor,
+                            color: AppColors.cinematicNavy,
                           ),
                         ),
                       ),
@@ -223,11 +230,19 @@ class ProfileQrDialog extends StatelessWidget {
                               Navigator.pop(context);
                               onSave();
                             },
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedDownload01, color: Colors.white),
-                            label: Text("save_qr".tr()),
+                            icon: const HugeIcon(
+                              icon: HugeIcons.strokeRoundedDownload01,
+                              color: AppColors.cinematicNavy,
+                            ),
+                            label: Text(
+                              "save_qr".tr(),
+                              style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.cinematicNavy,
+                              ),
+                            ),
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: AppColors.primaryColor,
-                              foregroundColor: Colors.white,
+                              backgroundColor: AppColors.softGold,
                               padding: EdgeInsets.symmetric(vertical: 12.h),
                               elevation: 2,
                               shape: RoundedRectangleBorder(
@@ -243,11 +258,19 @@ class ProfileQrDialog extends StatelessWidget {
                               Navigator.pop(context);
                               onShare();
                             },
-                            icon: const HugeIcon(icon: HugeIcons.strokeRoundedShare01, color: AppColors.primaryColor),
-                            label: Text("share_qr".tr()),
+                            icon: const HugeIcon(
+                              icon: HugeIcons.strokeRoundedShare01,
+                              color: AppColors.softGold,
+                            ),
+                            label: Text(
+                              "share_qr".tr(),
+                              style: GoogleFonts.cairo(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.softGold,
+                              ),
+                            ),
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.primaryColor,
-                              side: const BorderSide(color: AppColors.primaryColor),
+                              side: const BorderSide(color: AppColors.softGold),
                               padding: EdgeInsets.symmetric(vertical: 12.h),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14.r),

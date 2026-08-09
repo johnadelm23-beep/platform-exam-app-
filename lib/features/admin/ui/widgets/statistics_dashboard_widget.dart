@@ -119,11 +119,7 @@ class StatisticsDashboardWidget extends StatelessWidget {
                   color: Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
-                child: HugeIcon(
-                  icon: icon,
-                  color: Colors.white,
-                  size: 20.r,
-                ),
+                child: HugeIcon(icon: icon, color: Colors.white, size: 20.r),
               ),
               Text(
                 title,

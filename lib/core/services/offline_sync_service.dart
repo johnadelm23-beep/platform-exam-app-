@@ -47,8 +47,9 @@ class OfflineSyncService {
         jsonList = json.decode(queueStr);
       }
 
-      final isDuplicate = jsonList.any((item) =>
-          item["userId"] == userId && item["eventId"] == eventId);
+      final isDuplicate = jsonList.any(
+        (item) => item["userId"] == userId && item["eventId"] == eventId,
+      );
 
       if (!isDuplicate) {
         jsonList.add({
@@ -76,7 +77,9 @@ class OfflineSyncService {
     required DateTime now,
   }) {
     int oldCurrentStreak = (userDataMap?["currentStreak"] ?? 0) as int;
-    int oldHighestStreak = (userDataMap?["highestStreak"] ?? userDataMap?["longestStreak"] ?? 0) as int;
+    int oldHighestStreak =
+        (userDataMap?["highestStreak"] ?? userDataMap?["longestStreak"] ?? 0)
+            as int;
 
     DateTime? lastDate;
     final ts = userDataMap?["lastAttendanceDate"];
@@ -151,7 +154,9 @@ class OfflineSyncService {
           final userSnap = await userRef.get();
 
           final streakResult = calculateStreakUpdate(
-            userDataMap: userSnap.exists ? userSnap.data() as Map<String, dynamic> : null,
+            userDataMap: userSnap.exists
+                ? userSnap.data() as Map<String, dynamic>
+                : null,
             now: DateTime.now(),
           );
           final currentStreak = streakResult["currentStreak"]!;
@@ -216,7 +221,9 @@ class OfflineSyncService {
             .where("seasonId", isEqualTo: seasonId)
             .get();
       } else {
-        eventsSnap = await FirebaseFirestore.instance.collection("events").get();
+        eventsSnap = await FirebaseFirestore.instance
+            .collection("events")
+            .get();
       }
 
       final pastEventIds = <String>{};
@@ -229,9 +236,9 @@ class OfflineSyncService {
       }
 
       if (pastEventIds.isEmpty) {
-        await FirebaseFirestore.instance.collection("users").doc(userId).update({
-          "attendancePercentage": 0.0,
-        });
+        await FirebaseFirestore.instance.collection("users").doc(userId).update(
+          {"attendancePercentage": 0.0},
+        );
         return;
       }
 
@@ -258,7 +265,8 @@ class OfflineSyncService {
         }
       }
 
-      final rawPercentage = (attendedPastEventIds.length / pastEventIds.length) * 100.0;
+      final rawPercentage =
+          (attendedPastEventIds.length / pastEventIds.length) * 100.0;
       final roundedPercentage = double.parse(rawPercentage.toStringAsFixed(1));
 
       await FirebaseFirestore.instance.collection("users").doc(userId).update({
@@ -273,9 +281,14 @@ class OfflineSyncService {
   static Future<void> resetAttendanceData() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(currentUser.uid)
+        .get();
     if (userDoc.data()?["isAdmin"] != true) {
-      throw Exception("Permission denied: Only Main Admin can reset attendance data.");
+      throw Exception(
+        "Permission denied: Only Main Admin can reset attendance data.",
+      );
     }
 
     final firestore = FirebaseFirestore.instance;

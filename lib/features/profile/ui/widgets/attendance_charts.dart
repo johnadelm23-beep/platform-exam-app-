@@ -8,7 +8,7 @@ class AttendanceCharts extends StatefulWidget {
   final double attendancePct;
   final double absencePct;
   final Map<int, int> monthlyData; // Month 1..12 -> count
-  final Map<int, int> weeklyData;  // Week day 1..7 -> count
+  final Map<int, int> weeklyData; // Week day 1..7 -> count
 
   const AttendanceCharts({
     super.key,
@@ -188,10 +188,7 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
         Container(
           width: 12.r,
           height: 12.r,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
-          ),
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
         SizedBox(width: 6.w),
         Text(
@@ -250,8 +247,18 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
                     showTitles: true,
                     getTitlesWidget: (double value, TitleMeta meta) {
                       final monthNames = [
-                        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                        'Jan',
+                        'Feb',
+                        'Mar',
+                        'Apr',
+                        'May',
+                        'Jun',
+                        'Jul',
+                        'Aug',
+                        'Sep',
+                        'Oct',
+                        'Nov',
+                        'Dec',
                       ];
                       final index = value.toInt() - 1;
                       if (index >= 0 && index < monthNames.length) {
@@ -286,10 +293,7 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) {
-                  return FlLine(
-                    color: Colors.grey[200]!,
-                    strokeWidth: 1,
-                  );
+                  return FlLine(color: Colors.grey[200]!, strokeWidth: 1);
                 },
               ),
               borderData: FlBorderData(show: false),

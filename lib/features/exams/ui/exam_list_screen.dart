@@ -1,10 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
@@ -13,14 +16,23 @@ import 'package:platformexamapp/core/theme/app_page_route.dart';
 class ExamsScreen extends StatelessWidget {
   const ExamsScreen({super.key, required this.user});
   final UserData user;
+
   Future<void> deleteExam(String examId) async {
     await FirebaseFirestore.instance.collection("exams").doc(examId).delete();
   }
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -31,10 +43,10 @@ class ExamsScreen extends StatelessWidget {
                   Expanded(
                     child: Text(
                       "available_exams".tr(),
-                      style: TextStyle(
-                        fontSize: 26.sp,
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
+                      style: GoogleFonts.cairo(
+                        fontSize: 24.sp,
+                        color: textColor,
+                        fontWeight: FontWeight.w900,
                       ),
                     ),
                   ),
@@ -43,13 +55,15 @@ class ExamsScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
@@ -60,10 +74,11 @@ class ExamsScreen extends StatelessWidget {
               child: Container(
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(30.r),
+                    top: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -71,20 +86,22 @@ class ExamsScreen extends StatelessWidget {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (!snapshot.hasData) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
                     final exams = snapshot.data!.docs;
                     if (exams.isEmpty) {
-                      return Center(
-                        child: Lottie.asset("assets/lottie/Empty.json"),
+                      return EmptyState(
+                        title: "no_exams".tr(),
+                        hugeIcon: HugeIcons.strokeRoundedFile01,
                       );
                     }
                     return ListView.separated(
+                      physics: const BouncingScrollPhysics(),
                       itemCount: exams.length,
-                      separatorBuilder: (_, _) => SizedBox(height: 10.h),
+                      separatorBuilder: (_, _) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
                         final exam = exams[index];
-                        return GestureDetector(
+                        return GlassCard(
                           onTap: () {
                             Navigator.push(
                               context,
@@ -97,55 +114,75 @@ class ExamsScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Container(
-                            padding: EdgeInsets.all(16.r),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(20.r),
-                            ),
-                            child: Row(
-                              children: [
-                                const HugeIcon(
+                          padding: EdgeInsets.all(16.r),
+                          borderRadius: 20.r,
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: EdgeInsets.all(10.r),
+                                decoration: BoxDecoration(
+                                  color: AppColors.softGold.withOpacity(0.15),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: HugeIcon(
                                   icon: HugeIcons.strokeRoundedFile01,
-                                  color: Colors.green,
+                                  color: AppColors.softGold,
+                                  size: 24.r,
                                 ),
-                                SizedBox(width: 10.w),
-                                Expanded(
-                                  child: Text(
-                                    exam["title"],
-                                    style: TextStyle(fontSize: 16.sp),
+                              ),
+                              SizedBox(width: 12.w),
+                              Expanded(
+                                child: Text(
+                                  exam["title"],
+                                  style: GoogleFonts.cairo(
+                                    fontSize: 16.sp,
+                                    fontWeight: FontWeight.bold,
+                                    color: textColor,
                                   ),
                                 ),
-                                if (user.isAdmin == true)
-                                  IconButton(
-                                    icon: const HugeIcon(
-                                      icon: HugeIcons.strokeRoundedDelete01,
-                                      color: Colors.red,
-                                    ),
-                                    onPressed: () {
-                                      AppDialog.show(
-                                        context: context,
-                                        icon: Icons.delete_forever,
-                                        iconColor: Colors.red,
-                                        title: "delete_exam".tr(),
-                                        description: "delete_exam_desc".tr(),
-                                        confirmText: "delete".tr(),
-                                        confirmButtonColor: Colors.red,
-                                        cancelText: "cancel".tr(),
-                                        onConfirm: () async {
-                                          Navigator.pop(context);
-                                          await deleteExam(exam.id);
-                                          if (!context.mounted) return;
-                                          ScaffoldMessenger.of(context).showSnackBar(
-                                            SnackBar(content: Text("exam_deleted_success".tr())),
-                                          );
-                                        },
-                                        onCancel: () => Navigator.pop(context),
-                                      );
-                                    },
+                              ),
+                              if (user.isAdmin == true)
+                                IconButton(
+                                  icon: const HugeIcon(
+                                    icon: HugeIcons.strokeRoundedDelete01,
+                                    color: AppColors.heartRed,
                                   ),
-                              ],
-                            ),
+                                  onPressed: () {
+                                    AppDialog.show(
+                                      context: context,
+                                      iconWidget: Icon(
+                                        Icons.delete_forever_rounded,
+                                        color: AppColors.heartRed,
+                                        size: 36.r,
+                                      ),
+                                      iconColor: AppColors.heartRed,
+                                      title: "delete_exam".tr(),
+                                      description: "delete_exam_desc".tr(),
+                                      confirmText: "delete".tr(),
+                                      confirmButtonColor: AppColors.heartRed,
+                                      cancelText: "cancel".tr(),
+                                      onConfirm: () async {
+                                        Navigator.pop(context);
+                                        await deleteExam(exam.id);
+                                        if (!context.mounted) return;
+                                        ScaffoldMessenger.of(
+                                          context,
+                                        ).showSnackBar(
+                                          SnackBar(
+                                            content: Text(
+                                              "exam_deleted_success".tr(),
+                                              style: GoogleFonts.cairo(),
+                                            ),
+                                            backgroundColor:
+                                                AppColors.successGreen,
+                                          ),
+                                        );
+                                      },
+                                      onCancel: () => Navigator.pop(context),
+                                    );
+                                  },
+                                ),
+                            ],
                           ),
                         );
                       },

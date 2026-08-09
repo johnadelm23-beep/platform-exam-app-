@@ -13,7 +13,8 @@ class FollowUpState {
   final String attendanceFilter; // 'All', '<50%', '50-75%', '>75%'
   final String groupFilter; // 'All', ...
   final String needVisitFilter; // 'All', 'Yes', 'No'
-  final String statusFilter; // 'All', 'Excellent', 'Regular', 'Needs Follow-up', 'Urgent'
+  final String
+  statusFilter; // 'All', 'Excellent', 'Regular', 'Needs Follow-up', 'Urgent'
 
   // Statistics
   final int totalUsersCount;

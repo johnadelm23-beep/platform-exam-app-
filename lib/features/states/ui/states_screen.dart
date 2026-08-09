@@ -1,12 +1,16 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:lottie/lottie.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/states/ui/widgets/custom_bod_container.dart';
 
 class LeaderboardScreen extends StatelessWidget {
   const LeaderboardScreen({super.key});
+
   Stream<List<Map<String, dynamic>>> getLeaderboardStream() {
     return FirebaseFirestore.instance
         .collection("examAttempts")
@@ -63,32 +67,35 @@ class LeaderboardScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: Icon(Icons.arrow_back_ios, color: AppColors.whiteColor),
+          onPressed: () => Navigator.pop(context),
+          icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
         ),
         centerTitle: true,
         title: Text(
           "top_players".tr(),
-          style: const TextStyle(color: Colors.white),
+          style: GoogleFonts.cairo(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18.sp,
+          ),
         ),
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: getLeaderboardStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            );
+            return const LoadingState();
           }
           final data = snapshot.data ?? [];
           if (data.isEmpty) {

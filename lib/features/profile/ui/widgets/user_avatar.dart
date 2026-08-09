@@ -54,7 +54,7 @@ class UserAvatar extends StatelessWidget {
                         color: effectiveIconColor,
                         value: loadingProgress.expectedTotalBytes != null
                             ? loadingProgress.cumulativeBytesLoaded /
-                                loadingProgress.expectedTotalBytes!
+                                  loadingProgress.expectedTotalBytes!
                             : null,
                       ),
                     ),
@@ -81,10 +81,7 @@ class UserAvatar extends StatelessWidget {
     );
 
     if (heroTag != null && heroTag!.isNotEmpty) {
-      return Hero(
-        tag: heroTag!,
-        child: avatarCore,
-      );
+      return Hero(tag: heroTag!, child: avatarCore);
     }
 
     return avatarCore;

@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart' hide TextDirection;
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class PostContainer extends StatelessWidget {
@@ -28,41 +30,67 @@ class PostContainer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     return Directionality(
       textDirection: isArabic ? TextDirection.rtl : TextDirection.ltr,
-      child: Container(
+      child: GlassCard(
         padding: EdgeInsets.all(16.r),
-        decoration: BoxDecoration(
-          color: Colors.blue.shade50,
-          borderRadius: BorderRadius.circular(14.r),
-        ),
+        borderRadius: 20.r,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             /// 🔹 TEXT + DELETE
             Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Icons.campaign, color: Colors.blue),
-                SizedBox(width: 10.w),
-
+                Container(
+                  padding: EdgeInsets.all(8.r),
+                  decoration: BoxDecoration(
+                    color: AppColors.softGold.withOpacity(0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: HugeIcon(
+                    icon: HugeIcons.strokeRoundedMegaphone01,
+                    color: AppColors.softGold,
+                    size: 20.r,
+                  ),
+                ),
+                SizedBox(width: 12.w),
                 Expanded(
-                  child: Text(
-                    text,
-                    style: TextStyle(
-                      fontSize: 16.sp,
-                      fontWeight: FontWeight.w500,
+                  child: Padding(
+                    padding: EdgeInsets.only(top: 2.h),
+                    child: Text(
+                      text,
+                      style: GoogleFonts.cairo(
+                        fontSize: 15.sp,
+                        fontWeight: FontWeight.w600,
+                        height: 1.6,
+                        color: textColor,
+                      ),
                     ),
                   ),
                 ),
                 if (user.isAdmin == true)
                   IconButton(
-                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedDelete01, color: Colors.red),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedDelete01,
+                      color: AppColors.softRed,
+                    ),
                     onPressed: () => _showDeleteDialog(context),
                   ),
               ],
             ),
 
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
+            Divider(
+              color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+            ),
+            SizedBox(height: 8.h),
 
             Row(
               children: [
@@ -82,17 +110,26 @@ class PostContainer extends StatelessWidget {
                     children: [
                       HugeIcon(
                         icon: HugeIcons.strokeRoundedFavourite,
-                        color: isLiked ? Colors.red : Colors.grey,
+                        color: isLiked ? AppColors.heartRed : mutedColor,
+                        size: 20.r,
                       ),
-                      SizedBox(width: 5.w),
-                      Text("like".tr()),
+                      SizedBox(width: 6.w),
+                      Text(
+                        "like".tr(),
+                        style: GoogleFonts.cairo(
+                          fontSize: 13.sp,
+                          color: isLiked ? AppColors.heartRed : mutedColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ],
                   ),
                 ),
-
-                SizedBox(width: 10.w),
-
-                Text("likes_count".tr(args: [likeCount.toString()]), style: TextStyle(color: Colors.grey)),
+                SizedBox(width: 16.w),
+                Text(
+                  "likes_count".tr(args: [likeCount.toString()]),
+                  style: GoogleFonts.cairo(fontSize: 13.sp, color: mutedColor),
+                ),
               ],
             ),
           ],
@@ -102,13 +139,20 @@ class PostContainer extends StatelessWidget {
   }
 
   void _showDeleteDialog(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (_) => Dialog(
-        backgroundColor: AppColors.whiteColor,
+        backgroundColor: dialogBg,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20.r),
+          borderRadius: BorderRadius.circular(24.r),
+          side: BorderSide(
+            color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+          ),
         ),
         child: Padding(
           padding: EdgeInsets.all(20.r),
@@ -116,63 +160,83 @@ class PostContainer extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: EdgeInsets.all(15.r),
+                padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: Colors.red.withOpacity(0.1),
+                  color: AppColors.heartRed.withOpacity(0.12),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.delete_forever,
-                  color: Colors.red,
-                  size: 35.r,
+                  Icons.delete_forever_rounded,
+                  color: AppColors.heartRed,
+                  size: 36.r,
                 ),
               ),
-
-              SizedBox(height: 15.h),
-
+              SizedBox(height: 16.h),
               Text(
                 "delete_post".tr(),
-                style: TextStyle(fontSize: 22.sp, fontWeight: FontWeight.bold),
+                style: GoogleFonts.cairo(
+                  fontSize: 20.sp,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
               ),
-
-              SizedBox(height: 10.h),
-
+              SizedBox(height: 8.h),
               Text(
                 "delete_post_confirm".tr(),
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 14.sp, color: Colors.black),
+                style: GoogleFonts.cairo(
+                  fontSize: 14.sp,
+                  color: isDark
+                      ? AppColors.darkTextMuted
+                      : AppColors.lightTextMuted,
+                ),
               ),
-
               SizedBox(height: 20.h),
-
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          "cancel".tr(),
-                          style: TextStyle(fontSize: 18.sp, color: Colors.black),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(
+                          color: isDark
+                              ? AppColors.darkBorder
+                              : AppColors.lightBorder,
                         ),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
+                      ),
+                      onPressed: () => Navigator.pop(context),
+                      child: Text(
+                        "cancel".tr(),
+                        style: GoogleFonts.cairo(
+                          fontSize: 16.sp,
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                     ),
                   ),
-
-                  SizedBox(width: 10.w),
-
+                  SizedBox(width: 12.w),
                   Expanded(
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
+                        backgroundColor: AppColors.heartRed,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16.r),
+                        ),
+                        padding: EdgeInsets.symmetric(vertical: 12.h),
                       ),
                       onPressed: () => _deletePost(context),
-                        child: Text(
-                          "delete".tr(),
-                          style: TextStyle(
-                            fontSize: 18.sp,
-                            color: AppColors.whiteColor,
-                          ),
+                      child: Text(
+                        "delete".tr(),
+                        style: GoogleFonts.cairo(
+                          fontSize: 16.sp,
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
                         ),
+                      ),
                     ),
                   ),
                 ],
@@ -190,7 +254,7 @@ class PostContainer extends StatelessWidget {
     try {
       messenger.showSnackBar(
         SnackBar(
-          content: Text("deleting_post".tr()),
+          content: Text("deleting_post".tr(), style: GoogleFonts.cairo()),
           duration: const Duration(seconds: 1),
         ),
       );
@@ -201,8 +265,11 @@ class PostContainer extends StatelessWidget {
       if (context.mounted) {
         messenger.showSnackBar(
           SnackBar(
-            content: Text("post_deleted_success".tr()),
-            backgroundColor: Colors.green,
+            content: Text(
+              "post_deleted_success".tr(),
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: AppColors.successGreen,
             behavior: SnackBarBehavior.floating,
           ),
         );
@@ -211,8 +278,8 @@ class PostContainer extends StatelessWidget {
       if (context.mounted) {
         messenger.showSnackBar(
           SnackBar(
-            content: Text("post_deleted_fail".tr()),
-            backgroundColor: Colors.red,
+            content: Text("post_deleted_fail".tr(), style: GoogleFonts.cairo()),
+            backgroundColor: AppColors.heartRed,
           ),
         );
       }

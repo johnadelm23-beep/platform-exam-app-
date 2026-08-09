@@ -35,7 +35,8 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final hasActiveFilters = widget.attendanceFilter != 'All' ||
+    final hasActiveFilters =
+        widget.attendanceFilter != 'All' ||
         widget.needVisitFilter != 'All' ||
         widget.statusFilter != 'All';
 
@@ -68,15 +69,23 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
                   ),
                   decoration: InputDecoration(
                     hintText: "search_by_name_hint".tr(),
-                    hintStyle: TextStyle(fontSize: 13.sp, color: isDark ? Colors.grey[400] : Colors.grey[500]),
+                    hintStyle: TextStyle(
+                      fontSize: 13.sp,
+                      color: isDark ? Colors.grey[400] : Colors.grey[500],
+                    ),
                     prefixIcon: HugeIcon(
                       icon: HugeIcons.strokeRoundedSearch01,
                       color: isDark ? Colors.grey[400]! : Colors.grey[600]!,
                       size: 18.r,
                     ),
                     filled: true,
-                    fillColor: isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF3F4F6),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 14.w, vertical: 10.h),
+                    fillColor: isDark
+                        ? const Color(0xFF2A2A2A)
+                        : const Color(0xFFF3F4F6),
+                    contentPadding: EdgeInsets.symmetric(
+                      horizontal: 14.w,
+                      vertical: 10.h,
+                    ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14.r),
                       borderSide: BorderSide.none,
@@ -87,21 +96,26 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
               SizedBox(width: 8.w),
               // Filter Button
               InkWell(
-                onTap: () => setState(() => _isFilterExpanded = !_isFilterExpanded),
+                onTap: () =>
+                    setState(() => _isFilterExpanded = !_isFilterExpanded),
                 borderRadius: BorderRadius.circular(14.r),
                 child: Container(
                   padding: EdgeInsets.all(12.r),
                   decoration: BoxDecoration(
                     color: hasActiveFilters
                         ? Theme.of(context).primaryColor
-                        : (isDark ? const Color(0xFF2A2A2A) : const Color(0xFFF3F4F6)),
+                        : (isDark
+                              ? const Color(0xFF2A2A2A)
+                              : const Color(0xFFF3F4F6)),
                     borderRadius: BorderRadius.circular(14.r),
                   ),
                   child: Row(
                     children: [
                       HugeIcon(
                         icon: HugeIcons.strokeRoundedFilter,
-                        color: hasActiveFilters ? Colors.white : (isDark ? Colors.white : Colors.black87),
+                        color: hasActiveFilters
+                            ? Colors.white
+                            : (isDark ? Colors.white : Colors.black87),
                         size: 18.r,
                       ),
                       SizedBox(width: 4.w),
@@ -110,7 +124,9 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
                         style: TextStyle(
                           fontSize: 13.sp,
                           fontWeight: FontWeight.bold,
-                          color: hasActiveFilters ? Colors.white : (isDark ? Colors.white : Colors.black87),
+                          color: hasActiveFilters
+                              ? Colors.white
+                              : (isDark ? Colors.white : Colors.black87),
                         ),
                       ),
                     ],
@@ -123,7 +139,10 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
           // Expandable Filter Controls
           if (_isFilterExpanded) ...[
             SizedBox(height: 12.h),
-            Divider(height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFEEEEEE)),
+            Divider(
+              height: 1,
+              color: isDark ? Colors.grey[800] : const Color(0xFFEEEEEE),
+            ),
             SizedBox(height: 10.h),
             Row(
               children: [
@@ -134,9 +153,18 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
                     value: widget.attendanceFilter,
                     items: [
                       DropdownMenuItem(value: "All", child: Text("all".tr())),
-                      const DropdownMenuItem(value: "<50%", child: Text("< 50%")),
-                      const DropdownMenuItem(value: "50-75%", child: Text("50% - 75%")),
-                      const DropdownMenuItem(value: ">75%", child: Text("> 75%")),
+                      const DropdownMenuItem(
+                        value: "<50%",
+                        child: Text("< 50%"),
+                      ),
+                      const DropdownMenuItem(
+                        value: "50-75%",
+                        child: Text("50% - 75%"),
+                      ),
+                      const DropdownMenuItem(
+                        value: ">75%",
+                        child: Text("> 75%"),
+                      ),
                     ],
                     onChanged: widget.onAttendanceFilterChanged,
                     isDark: isDark,
@@ -166,10 +194,22 @@ class _FollowUpFiltersWidgetState extends State<FollowUpFiltersWidget> {
               value: widget.statusFilter,
               items: [
                 DropdownMenuItem(value: "All", child: Text("all".tr())),
-                DropdownMenuItem(value: "Excellent", child: Text("status_excellent".tr())),
-                DropdownMenuItem(value: "Regular", child: Text("status_regular".tr())),
-                DropdownMenuItem(value: "Needs Follow-up", child: Text("status_needs_follow_up".tr())),
-                DropdownMenuItem(value: "Urgent", child: Text("status_urgent".tr())),
+                DropdownMenuItem(
+                  value: "Excellent",
+                  child: Text("status_excellent".tr()),
+                ),
+                DropdownMenuItem(
+                  value: "Regular",
+                  child: Text("status_regular".tr()),
+                ),
+                DropdownMenuItem(
+                  value: "Needs Follow-up",
+                  child: Text("status_needs_follow_up".tr()),
+                ),
+                DropdownMenuItem(
+                  value: "Urgent",
+                  child: Text("status_urgent".tr()),
+                ),
               ],
               onChanged: widget.onStatusFilterChanged,
               isDark: isDark,

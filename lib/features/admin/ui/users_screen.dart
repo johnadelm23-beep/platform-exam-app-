@@ -1,31 +1,35 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
-import 'package:lottie/lottie.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 
 class UsersScreen extends StatelessWidget {
   const UsersScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
 
+    return Scaffold(
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
-            Container(
-              width: double.infinity,
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 20.h),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    AppColors.primaryColor,
-                    AppColors.primaryColor.withOpacity(0.85),
-                  ],
-                ),
-              ),
+            Padding(
+              padding: EdgeInsets.all(16.r),
               child: Row(
                 children: [
                   GestureDetector(
@@ -33,24 +37,24 @@ class UsersScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
-
                   SizedBox(width: 12.w),
-
                   Text(
                     "All Users",
-                    style: TextStyle(
+                    style: GoogleFonts.cairo(
                       fontSize: 22.sp,
-                      color: Colors.white,
+                      color: textColor,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -58,17 +62,17 @@ class UsersScreen extends StatelessWidget {
               ),
             ),
 
-            /// ⚪ BODY
             Expanded(
               child: Container(
                 width: double.infinity,
                 padding: EdgeInsets.all(16.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(25.r),
-                    topRight: Radius.circular(25.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
                   stream: FirebaseFirestore.instance
@@ -76,22 +80,29 @@ class UsersScreen extends StatelessWidget {
                       .snapshots(),
                   builder: (context, snapshot) {
                     if (snapshot.hasError) {
-                      return const Center(child: Text("Error loading users"));
+                      return Center(
+                        child: Text(
+                          "Error loading users",
+                          style: GoogleFonts.cairo(color: AppColors.heartRed),
+                        ),
+                      );
                     }
 
                     if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
+                      return const LoadingState();
                     }
 
                     final users = snapshot.data!.docs;
 
                     if (users.isEmpty) {
-                      return Center(
-                        child: Lottie.asset("assets/lottie/Empty.json"),
+                      return EmptyState(
+                        title: "No Users Found",
+                        icon: Icons.person_off_outlined,
                       );
                     }
 
                     return ListView.separated(
+                      physics: const BouncingScrollPhysics(),
                       itemCount: users.length,
                       separatorBuilder: (_, __) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
@@ -101,37 +112,35 @@ class UsersScreen extends StatelessWidget {
                         final name = user["name"] ?? "No Name";
                         final email = user["email"] ?? "No Email";
                         final isAdmin = user["isAdmin"] == true;
-                        final isSubAdmin = !isAdmin && (user["subAdmin"] == true || user["isSubAdmin"] == true);
-                        final String roleText = isAdmin ? "Admin" : isSubAdmin ? "Sub Admin" : "User";
-                        final Color roleColor = isAdmin ? Colors.red : isSubAdmin ? Colors.orange : Colors.green;
+                        final isSubAdmin =
+                            !isAdmin &&
+                            (user["subAdmin"] == true ||
+                                user["isSubAdmin"] == true);
+                        final String roleText = isAdmin
+                            ? "Admin"
+                            : isSubAdmin
+                            ? "Sub Admin"
+                            : "User";
+                        final Color roleColor = isAdmin
+                            ? AppColors.heartRed
+                            : isSubAdmin
+                            ? Colors.orange.shade400
+                            : AppColors.successGreen;
 
-                        return Container(
+                        return GlassCard(
                           padding: EdgeInsets.all(14.r),
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(16.r),
-                            boxShadow: const [
-                              BoxShadow(
-                                color: Colors.black12,
-                                blurRadius: 8,
-                                offset: Offset(0, 4),
-                              ),
-                            ],
-                          ),
+                          borderRadius: 18.r,
                           child: Row(
                             children: [
-                              /// 👤 AVATAR
                               Container(
-                                width: 50.w,
-                                height: 50.h,
+                                width: 48.r,
+                                height: 48.r,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  gradient: LinearGradient(
-                                    colors: isAdmin
-                                        ? [Colors.red, Colors.redAccent]
-                                        : isSubAdmin
-                                            ? [Colors.orange, Colors.orangeAccent]
-                                            : [Colors.blue, Colors.blueAccent],
+                                  color: roleColor.withOpacity(0.15),
+                                  border: Border.all(
+                                    color: roleColor.withOpacity(0.4),
+                                    width: 1.5,
                                   ),
                                 ),
                                 child: Center(
@@ -139,9 +148,10 @@ class UsersScreen extends StatelessWidget {
                                     name.isNotEmpty
                                         ? name[0].toUpperCase()
                                         : "?",
-                                    style: const TextStyle(
-                                      color: Colors.white,
+                                    style: GoogleFonts.cairo(
+                                      color: roleColor,
                                       fontWeight: FontWeight.bold,
+                                      fontSize: 18.sp,
                                     ),
                                   ),
                                 ),
@@ -149,48 +159,50 @@ class UsersScreen extends StatelessWidget {
 
                               SizedBox(width: 12.w),
 
-                              /// 📄 INFO
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       name,
-                                      style: TextStyle(
+                                      style: GoogleFonts.cairo(
                                         fontSize: 16.sp,
                                         fontWeight: FontWeight.bold,
+                                        color: textColor,
                                       ),
                                     ),
 
-                                    SizedBox(height: 4.h),
+                                    SizedBox(height: 2.h),
 
                                     Text(
                                       email,
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 13.sp,
+                                      style: GoogleFonts.cairo(
+                                        color: mutedColor,
+                                        fontSize: 12.sp,
                                       ),
                                     ),
                                   ],
                                 ),
                               ),
 
-                              /// 🏷 ROLE
                               Container(
                                 padding: EdgeInsets.symmetric(
                                   horizontal: 10.w,
-                                  vertical: 6.h,
+                                  vertical: 4.h,
                                 ),
                                 decoration: BoxDecoration(
                                   color: roleColor.withOpacity(0.15),
-                                  borderRadius: BorderRadius.circular(8.r),
+                                  borderRadius: BorderRadius.circular(10.r),
+                                  border: Border.all(
+                                    color: roleColor.withOpacity(0.3),
+                                  ),
                                 ),
                                 child: Text(
                                   roleText,
-                                  style: TextStyle(
+                                  style: GoogleFonts.cairo(
                                     color: roleColor,
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 12.sp,
+                                    fontSize: 11.sp,
                                   ),
                                 ),
                               ),

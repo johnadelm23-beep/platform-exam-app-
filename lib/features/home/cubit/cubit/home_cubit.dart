@@ -25,12 +25,13 @@ class HomeCubit extends Cubit<HomeState> {
         .collection("users")
         .doc(currentUser.uid)
         .snapshots()
-        .listen((snapshot) {
-      if (snapshot.exists && snapshot.data() != null) {
-        final data = snapshot.data() as Map<String, dynamic>;
-        userData = UserData.fromJson(data, currentUser.uid);
+        .listen(
+          (snapshot) {
+            if (snapshot.exists && snapshot.data() != null) {
+              final data = snapshot.data() as Map<String, dynamic>;
+              userData = UserData.fromJson(data, currentUser.uid);
 
-        debugPrint('''
+              debugPrint('''
 === CURRENT USER ROLE DEBUG INFO ===
 Current user UID: ${currentUser.uid}
 Firestore user document: users/${currentUser.uid}
@@ -43,14 +44,16 @@ canAccessContentHistory: ${userData?.canAccessContentHistory}
 ===================================
 ''');
 
-        emit(GetUserDataSuccess());
-      } else {
-        emit(GetUserDaraError());
-      }
-    }, onError: (error) {
-      debugPrint("Error listening to user doc: $error");
-      emit(GetUserDaraError());
-    });
+              emit(GetUserDataSuccess());
+            } else {
+              emit(GetUserDaraError());
+            }
+          },
+          onError: (error) {
+            debugPrint("Error listening to user doc: $error");
+            emit(GetUserDaraError());
+          },
+        );
   }
 
   @override
@@ -59,4 +62,3 @@ canAccessContentHistory: ${userData?.canAccessContentHistory}
     return super.close();
   }
 }
-

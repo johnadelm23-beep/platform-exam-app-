@@ -93,7 +93,9 @@ class FollowUpUserCard extends StatelessWidget {
     final localizedStatus = _getLocalizedStatus(statusKey);
     final statusColor = _getStatusColor(statusKey);
     final attPct = user.attendancePercentage ?? 0.0;
-    final lastCallStr = user.lastCallDate != null ? _formatDate(user.lastCallDate) : null;
+    final lastCallStr = user.lastCallDate != null
+        ? _formatDate(user.lastCallDate)
+        : null;
 
     return Container(
       margin: EdgeInsets.symmetric(horizontal: 16.w, vertical: 6.h),
@@ -121,10 +123,7 @@ class FollowUpUserCard extends StatelessWidget {
           // Top Row: Avatar + Name & Last Call + Status Badge
           Row(
             children: [
-              UserAvatar(
-                imageUrl: user.profileImage,
-                radius: 24.r,
-              ),
+              UserAvatar(imageUrl: user.profileImage, radius: 24.r),
               SizedBox(width: 12.w),
               Expanded(
                 child: Column(
@@ -150,7 +149,9 @@ class FollowUpUserCard extends StatelessWidget {
                             fontWeight: FontWeight.bold,
                             color: attPct >= 75
                                 ? const Color(0xFF2E7D32)
-                                : (attPct >= 50 ? const Color(0xFFED6C02) : const Color(0xFFD32F2F)),
+                                : (attPct >= 50
+                                      ? const Color(0xFFED6C02)
+                                      : const Color(0xFFD32F2F)),
                           ),
                         ),
                         if (lastCallStr != null) ...[
@@ -159,7 +160,9 @@ class FollowUpUserCard extends StatelessWidget {
                             "•  ${"last_call".tr()}: $lastCallStr",
                             style: TextStyle(
                               fontSize: 11.sp,
-                              color: isDark ? Colors.grey[400] : Colors.grey[600],
+                              color: isDark
+                                  ? Colors.grey[400]
+                                  : Colors.grey[600],
                             ),
                           ),
                         ],
@@ -188,7 +191,10 @@ class FollowUpUserCard extends StatelessWidget {
             ],
           ),
           SizedBox(height: 12.h),
-          Divider(height: 1, color: isDark ? Colors.grey[800] : const Color(0xFFEEEEEE)),
+          Divider(
+            height: 1,
+            color: isDark ? Colors.grey[800] : const Color(0xFFEEEEEE),
+          ),
           SizedBox(height: 8.h),
 
           // Buttons Row: 📞 Call, ✏ Edit, 👁 Details
@@ -242,11 +248,7 @@ class FollowUpUserCard extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            HugeIcon(
-              icon: icon,
-              color: color,
-              size: 16.r,
-            ),
+            HugeIcon(icon: icon, color: color, size: 16.r),
             SizedBox(width: 6.w),
             Text(
               label,

@@ -21,10 +21,7 @@ class AnimatedCounter extends StatelessWidget {
       duration: duration,
       curve: curve,
       builder: (context, animatedValue, child) {
-        return Text(
-          '$animatedValue',
-          style: style,
-        );
+        return Text('$animatedValue', style: style);
       },
     );
   }

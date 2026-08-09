@@ -2,14 +2,18 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/services/offline_sync_service.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/gold_button.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
+
 class ScannerScreen extends StatefulWidget {
   const ScannerScreen({super.key});
 
@@ -58,20 +62,20 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   Future<void> _checkInternetConnection() async {
     try {
-      // Simple offline check
-      // Wait, we can test using firestore metadata or dynamic ping
-      // Let's use simple offline check via Firestore snap or connection timeout
       final firestore = FirebaseFirestore.instance;
-      // We set short timeout
-      await firestore.collection("metadata").doc("counters").get().timeout(
-        const Duration(seconds: 2),
-        onTimeout: () {
-          setState(() {
-            _isOffline = true;
-          });
-          throw Exception("Offline");
-        },
-      );
+      await firestore
+          .collection("metadata")
+          .doc("counters")
+          .get()
+          .timeout(
+            const Duration(seconds: 2),
+            onTimeout: () {
+              setState(() {
+                _isOffline = true;
+              });
+              throw Exception("Offline");
+            },
+          );
       setState(() {
         _isOffline = false;
       });
@@ -100,14 +104,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
   Future<void> _processScan(String scanValue) async {
     String scannedUid = "";
     String scannedManualId = "";
-    
-    // Check if scanValue is JSON formatted (uid, name, email, userId)
+
     try {
       final Map<String, dynamic> data = json.decode(scanValue);
       scannedUid = (data['uid'] ?? '').toString();
       scannedManualId = (data['userId'] ?? '').toString();
     } catch (_) {
-      // Not JSON, assume scanValue is raw uid
       scannedUid = scanValue;
     }
 
@@ -119,20 +121,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _loadAndConfirmUser(uid: scannedUid, manualId: scannedManualId);
   }
 
-  Future<void> _loadAndConfirmUser({String uid = "", String manualId = ""}) async {
+  Future<void> _loadAndConfirmUser({
+    String uid = "",
+    String manualId = "",
+  }) async {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.softGold),
+      ),
     );
 
     try {
       DocumentSnapshot? userDoc;
       if (uid.isNotEmpty) {
-        userDoc = await FirebaseFirestore.instance.collection("users").doc(uid).get();
+        userDoc = await FirebaseFirestore.instance
+            .collection("users")
+            .doc(uid)
+            .get();
       }
-      
-      // If user doc not found by UID, search by manual ID
+
       if ((userDoc == null || !userDoc.exists) && manualId.isNotEmpty) {
         final query = await FirebaseFirestore.instance
             .collection("users")
@@ -144,7 +153,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
         }
       }
 
-      // Fallback search by general input if uid is input directly (manual text search)
       if ((userDoc == null || !userDoc.exists) && uid.isNotEmpty) {
         final query = await FirebaseFirestore.instance
             .collection("users")
@@ -163,17 +171,28 @@ class _ScannerScreenState extends State<ScannerScreen> {
         return;
       }
 
-      final userData = UserData.fromJson(userDoc.data() as Map<String, dynamic>, userDoc.id);
+      final userData = UserData.fromJson(
+        userDoc.data() as Map<String, dynamic>,
+        userDoc.id,
+      );
       _showConfirmationSheet(userData);
-
     } catch (e) {
       if (mounted) Navigator.pop(context);
-      _showErrorDialog("error_loading_user".tr(), "error_loading_user_desc".tr(args: [e.toString()]));
+      _showErrorDialog(
+        "error_loading_user".tr(),
+        "error_loading_user_desc".tr(args: [e.toString()]),
+      );
     }
   }
 
   Future<void> _showConfirmationSheet(UserData user) async {
-    // Fetch Active Event
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     QuerySnapshot? activeEventSnap;
     Map<String, dynamic>? activeEventData;
     String activeEventId = "";
@@ -187,7 +206,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
           .limit(1)
           .get();
       if (activeEventSnap.docs.isNotEmpty) {
-        activeEventData = activeEventSnap.docs.first.data() as Map<String, dynamic>;
+        activeEventData =
+            activeEventSnap.docs.first.data() as Map<String, dynamic>;
         activeEventId = activeEventSnap.docs.first.id;
         activeEventTitle = activeEventData["title"] ?? "Active Event";
         activeEventDayType = activeEventData["type"] ?? "custom_event";
@@ -203,10 +223,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
           return Container(
             padding: EdgeInsets.all(20.r),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: surfaceBg,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(30.r),
-                topRight: Radius.circular(30.r),
+                topLeft: Radius.circular(32.r),
+                topRight: Radius.circular(32.r),
+              ),
+              border: Border(
+                top: BorderSide(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
               ),
             ),
             child: Column(
@@ -215,71 +240,113 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 Container(
                   width: 40.w,
                   height: 4.h,
-                  margin: EdgeInsets.only(bottom: 15.h),
+                  margin: EdgeInsets.only(bottom: 16.h),
                   decoration: BoxDecoration(
-                    color: Colors.grey[300],
+                    color: mutedColor.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(10.r),
                   ),
                 ),
                 Text(
                   "confirm_attendance".tr(),
-                  style: TextStyle(
+                  style: GoogleFonts.cairo(
                     fontSize: 20.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
+                    color: AppColors.softGold,
                   ),
                 ),
-                SizedBox(height: 15.h),
+                SizedBox(height: 16.h),
                 CircleAvatar(
                   radius: 40.r,
-                  backgroundColor: AppColors.primaryColor.withOpacity(0.1),
-                  backgroundImage: user.profileImage != null && user.profileImage!.isNotEmpty
+                  backgroundColor: AppColors.softGold.withOpacity(0.15),
+                  backgroundImage:
+                      user.profileImage != null && user.profileImage!.isNotEmpty
                       ? NetworkImage(user.profileImage!)
                       : null,
                   child: user.profileImage == null || user.profileImage!.isEmpty
-                      ? HugeIcon(icon: HugeIcons.strokeRoundedUser02, size: 40.r, color: AppColors.primaryColor)
+                      ? HugeIcon(
+                          icon: HugeIcons.strokeRoundedUser02,
+                          size: 40.r,
+                          color: AppColors.softGold,
+                        )
                       : null,
                 ),
-                SizedBox(height: 10.h),
+                SizedBox(height: 12.h),
                 Text(
                   user.name ?? "Unknown Name",
-                  style: TextStyle(fontSize: 18.sp, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
                 ),
                 Text(
                   user.email ?? "No Email",
-                  style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+                  style: GoogleFonts.cairo(fontSize: 13.sp, color: mutedColor),
                 ),
-                SizedBox(height: 15.h),
+                SizedBox(height: 16.h),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildStatCol("manual_id".tr(), user.humanReadableId ?? "N/A"),
-                    _buildStatCol("streak".tr(), "${user.currentStreak ?? 0} 🔥"),
-                    _buildStatCol("attendance".tr(), "${user.attendancePercentage ?? 0.0}%"),
+                    _buildStatCol(
+                      "manual_id".tr(),
+                      user.humanReadableId ?? "N/A",
+                      textColor,
+                      mutedColor,
+                    ),
+                    _buildStatCol(
+                      "streak".tr(),
+                      "${user.currentStreak ?? 0} 🔥",
+                      textColor,
+                      mutedColor,
+                    ),
+                    _buildStatCol(
+                      "attendance".tr(),
+                      "${user.attendancePercentage ?? 0.0}%",
+                      textColor,
+                      mutedColor,
+                    ),
                   ],
                 ),
-                const Divider(height: 25),
-                Container(
-                  padding: EdgeInsets.all(10.r),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: BorderRadius.circular(10.r),
-                  ),
+                SizedBox(height: 16.h),
+                Divider(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                ),
+                SizedBox(height: 12.h),
+                GlassCard(
+                  padding: EdgeInsets.all(12.r),
+                  borderRadius: 16.r,
                   child: Row(
                     children: [
-                      const HugeIcon(icon: HugeIcons.strokeRoundedCalendar01, color: AppColors.primaryColor),
-                      SizedBox(width: 10.w),
+                      Container(
+                        padding: EdgeInsets.all(8.r),
+                        decoration: BoxDecoration(
+                          color: AppColors.softGold.withOpacity(0.15),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const HugeIcon(
+                          icon: HugeIcons.strokeRoundedCalendar01,
+                          color: AppColors.softGold,
+                        ),
+                      ),
+                      SizedBox(width: 12.w),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               "todays_meeting".tr(),
-                              style: TextStyle(fontSize: 12.sp, color: Colors.grey[600]),
+                              style: GoogleFonts.cairo(
+                                fontSize: 12.sp,
+                                color: mutedColor,
+                              ),
                             ),
                             Text(
                               activeEventTitle,
-                              style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.cairo(
+                                fontSize: 15.sp,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
                             ),
                           ],
                         ),
@@ -287,7 +354,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: 20.h),
+                SizedBox(height: 24.h),
                 Row(
                   children: [
                     Expanded(
@@ -297,33 +364,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
                           _resumeScanning();
                         },
                         style: OutlinedButton.styleFrom(
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
+                          side: BorderSide(
+                            color: isDark
+                                ? AppColors.darkBorder
+                                : AppColors.lightBorder,
+                          ),
+                          padding: EdgeInsets.symmetric(vertical: 14.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(16.r),
                           ),
                         ),
-                        child: Text("cancel".tr()),
+                        child: Text(
+                          "cancel".tr(),
+                          style: GoogleFonts.cairo(
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                       ),
                     ),
-                    SizedBox(width: 10.w),
+                    SizedBox(width: 12.w),
                     Expanded(
-                      child: ElevatedButton(
+                      child: GoldButton(
+                        title: "confirm".tr(),
                         onPressed: activeEventId.isEmpty
                             ? null
                             : () => _confirmAttendance(
-                                  userId: user.uid!,
-                                  eventId: activeEventId,
-                                  dayType: activeEventDayType,
-                                ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 12.h),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
-                          ),
-                        ),
-                        child: Text("confirm".tr()),
+                                userId: user.uid!,
+                                eventId: activeEventId,
+                                dayType: activeEventDayType,
+                              ),
+                        height: 48.h,
                       ),
                     ),
                   ],
@@ -336,12 +407,27 @@ class _ScannerScreenState extends State<ScannerScreen> {
     }
   }
 
-  Widget _buildStatCol(String title, String val) {
+  Widget _buildStatCol(
+    String title,
+    String val,
+    Color textColor,
+    Color mutedColor,
+  ) {
     return Column(
       children: [
-        Text(title, style: TextStyle(fontSize: 12.sp, color: Colors.grey[500])),
-        SizedBox(height: 4.h),
-        Text(val, style: TextStyle(fontSize: 15.sp, fontWeight: FontWeight.bold)),
+        Text(
+          title,
+          style: GoogleFonts.cairo(fontSize: 11.sp, color: mutedColor),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          val,
+          style: GoogleFonts.cairo(
+            fontSize: 14.sp,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
       ],
     );
   }
@@ -351,18 +437,20 @@ class _ScannerScreenState extends State<ScannerScreen> {
     required String eventId,
     required String dayType,
   }) async {
-    Navigator.pop(context); // Close Confirmation Sheet
+    Navigator.pop(context);
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (_) => const Center(child: CircularProgressIndicator(color: Colors.white)),
+      builder: (_) => const Center(
+        child: CircularProgressIndicator(color: AppColors.softGold),
+      ),
     );
 
     await _checkInternetConnection();
-    final String adminId = "admin_placeholder"; // Replace with real admin UID or currentUser.uid
+    final String adminId = "admin_placeholder";
 
-    if (mounted) Navigator.pop(context); // Close Loading
+    if (mounted) Navigator.pop(context);
 
     if (_isOffline) {
       await OfflineSyncService.queueAttendance(
@@ -371,11 +459,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
         adminId: adminId,
         dayType: dayType,
       );
-      _showSuccessDialog("attendance_queued".tr(), "attendance_queued_desc".tr());
+      _showSuccessDialog(
+        "attendance_queued".tr(),
+        "attendance_queued_desc".tr(),
+      );
     } else {
-      // Online write
       final docId = "${eventId}_$userId";
-      final docRef = FirebaseFirestore.instance.collection("attendance").doc(docId);
+      final docRef = FirebaseFirestore.instance
+          .collection("attendance")
+          .doc(docId);
 
       try {
         final docSnap = await docRef.get();
@@ -384,11 +476,15 @@ class _ScannerScreenState extends State<ScannerScreen> {
           return;
         }
 
-        final userRef = FirebaseFirestore.instance.collection("users").doc(userId);
+        final userRef = FirebaseFirestore.instance
+            .collection("users")
+            .doc(userId);
         final userSnap = await userRef.get();
-        
+
         final streakResult = OfflineSyncService.calculateStreakUpdate(
-          userDataMap: userSnap.exists ? userSnap.data() as Map<String, dynamic> : null,
+          userDataMap: userSnap.exists
+              ? userSnap.data() as Map<String, dynamic>
+              : null,
           now: DateTime.now(),
         );
         final currentStreak = streakResult["currentStreak"]!;
@@ -428,10 +524,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         await OfflineSyncService.recalculateAttendancePercentage(userId);
 
         _showSuccessDialog("attendance_confirmed".tr(), "success".tr());
-        // Sync any queued items background
         OfflineSyncService.syncQueue();
       } catch (e) {
-        _showErrorDialog("confirmation_failed".tr(), "confirmation_failed_desc".tr(args: [e.toString()]));
+        _showErrorDialog(
+          "confirmation_failed".tr(),
+          "confirmation_failed_desc".tr(args: [e.toString()]),
+        );
       }
     }
   }
@@ -445,12 +543,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void _showSuccessDialog(String title, String body) {
     AppDialog.show(
       context: context,
-      icon: Icons.check_circle,
-      iconColor: Colors.green,
+      iconWidget: Icon(
+        Icons.check_circle_rounded,
+        color: AppColors.successGreen,
+        size: 36.r,
+      ),
+      iconColor: AppColors.successGreen,
       title: title,
       description: body,
       confirmText: "ok".tr(),
-      confirmButtonColor: Colors.green,
+      confirmButtonColor: AppColors.successGreen,
       onConfirm: () {
         Navigator.pop(context);
         _resumeScanning();
@@ -461,12 +563,16 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void _showErrorDialog(String title, String body) {
     AppDialog.show(
       context: context,
-      icon: Icons.error,
-      iconColor: Colors.red,
+      iconWidget: Icon(
+        Icons.error_outline_rounded,
+        color: AppColors.heartRed,
+        size: 36.r,
+      ),
+      iconColor: AppColors.heartRed,
       title: title,
       description: body,
       confirmText: "retry".tr(),
-      confirmButtonColor: Colors.red,
+      confirmButtonColor: AppColors.heartRed,
       onConfirm: () {
         Navigator.pop(context);
         _resumeScanning();
@@ -476,42 +582,55 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+
     if (_isCheckingPermission) {
-      return const Scaffold(
-        backgroundColor: Colors.black,
-        body: Center(child: CircularProgressIndicator(color: Colors.white)),
+      return Scaffold(
+        backgroundColor: pageBg,
+        body: const Center(
+          child: CircularProgressIndicator(color: AppColors.softGold),
+        ),
       );
     }
 
     if (!_isPermissionGranted) {
       return Scaffold(
-        backgroundColor: Colors.black,
+        backgroundColor: pageBg,
         body: Center(
           child: Padding(
             padding: EdgeInsets.all(24.r),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.camera_alt_outlined, size: 64.r, color: Colors.white),
+                Icon(
+                  Icons.camera_alt_outlined,
+                  size: 64.r,
+                  color: AppColors.softGold,
+                ),
                 SizedBox(height: 16.h),
                 Text(
                   "camera_permission_required".tr(),
-                  style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.bold),
+                  style: GoogleFonts.cairo(
+                    color: Colors.white,
+                    fontSize: 18.sp,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 SizedBox(height: 8.h),
                 Text(
                   "camera_permission_desc".tr(),
                   textAlign: TextAlign.center,
-                  style: TextStyle(color: Colors.grey[400], fontSize: 14.sp),
+                  style: GoogleFonts.cairo(
+                    color: AppColors.darkTextMuted,
+                    fontSize: 14.sp,
+                  ),
                 ),
                 SizedBox(height: 24.h),
-                ElevatedButton(
+                GoldButton(
+                  title: "grant_permission".tr(),
                   onPressed: _checkPermission,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primaryColor,
-                    padding: EdgeInsets.symmetric(horizontal: 24.w, vertical: 12.h),
-                  ),
-                  child: Text("grant_permission".tr(), style: const TextStyle(color: Colors.white)),
+                  width: 200.w,
                 ),
               ],
             ),
@@ -529,13 +648,19 @@ class _ScannerScreenState extends State<ScannerScreen> {
           onPressed: () => Navigator.pop(context),
           icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
         ),
-        title: Text("attendance_scanner".tr(), style: const TextStyle(color: Colors.white)),
+        title: Text(
+          "attendance_scanner".tr(),
+          style: GoogleFonts.cairo(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         centerTitle: true,
         actions: [
           IconButton(
             icon: Icon(
               _isFlashOn ? Icons.flash_on : Icons.flash_off,
-              color: Colors.white,
+              color: AppColors.softGold,
             ),
             onPressed: () {
               _scannerController.toggleTorch();
@@ -545,7 +670,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.flip_camera_ios, color: Colors.white),
+            icon: const Icon(Icons.flip_camera_ios, color: AppColors.softGold),
             onPressed: () {
               _scannerController.switchCamera();
             },
@@ -555,10 +680,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
       body: Stack(
         children: [
           // Camera scanner
-          MobileScanner(
-            controller: _scannerController,
-            onDetect: _onDetect,
-          ),
+          MobileScanner(controller: _scannerController, onDetect: _onDetect),
 
           // QR Box Target Overlay
           Center(
@@ -566,8 +688,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
               width: 250.w,
               height: 250.h,
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.green, width: 3),
-                borderRadius: BorderRadius.circular(16.r),
+                border: Border.all(color: AppColors.softGold, width: 3),
+                borderRadius: BorderRadius.circular(20.r),
+                boxShadow: const [
+                  BoxShadow(color: Color(0x66D4AF37), blurRadius: 20),
+                ],
               ),
             ),
           ),
@@ -576,17 +701,13 @@ class _ScannerScreenState extends State<ScannerScreen> {
           if (_isScanningPaused)
             Positioned.fill(
               child: Container(
-                color: Colors.black54,
+                color: Colors.black,
                 child: Center(
-                  child: ElevatedButton.icon(
+                  child: GoldButton(
+                    title: "resume_scanner".tr(),
+                    icon: Icons.play_arrow_rounded,
                     onPressed: _resumeScanning,
-                    icon: const Icon(Icons.play_arrow),
-                    label: Text("resume_scanner".tr()),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.green,
-                      foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(horizontal: 20.w, vertical: 12.h),
-                    ),
+                    width: 200.w,
                   ),
                 ),
               ),
@@ -601,8 +722,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
               child: Container(
                 padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 16.w),
                 decoration: BoxDecoration(
-                  color: Colors.orange.withOpacity(0.9),
-                  borderRadius: BorderRadius.circular(8.r),
+                  color: Colors.orange.withOpacity(0.95),
+                  borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Row(
                   children: [
@@ -611,7 +732,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     Expanded(
                       child: Text(
                         "offline_mode_warning".tr(),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                        style: GoogleFonts.cairo(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ],
@@ -624,25 +748,37 @@ class _ScannerScreenState extends State<ScannerScreen> {
             bottom: 30.h,
             left: 16.w,
             right: 16.w,
-            child: Container(
-              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.9),
-                borderRadius: BorderRadius.circular(25.r),
-              ),
+            child: GlassCard(
+              padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 4.h),
+              borderRadius: 25.r,
               child: Row(
                 children: [
                   Expanded(
                     child: TextField(
                       controller: _searchController,
+                      style: GoogleFonts.cairo(
+                        color: isDark
+                            ? AppColors.darkTextMain
+                            : AppColors.lightTextMain,
+                      ),
                       decoration: InputDecoration(
                         hintText: "enter_manual_id".tr(),
+                        hintStyle: GoogleFonts.cairo(
+                          color: isDark
+                              ? AppColors.darkTextCaption
+                              : AppColors.lightTextCaption,
+                        ),
                         border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
                       ),
                     ),
                   ),
                   IconButton(
-                    icon: const HugeIcon(icon: HugeIcons.strokeRoundedSearch01, color: AppColors.primaryColor),
+                    icon: const HugeIcon(
+                      icon: HugeIcons.strokeRoundedSearch01,
+                      color: AppColors.softGold,
+                    ),
                     onPressed: () {
                       final val = _searchController.text.trim();
                       if (val.isNotEmpty) {

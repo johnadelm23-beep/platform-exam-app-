@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -21,26 +22,44 @@ import 'package:platformexamapp/features/admin/ui/seasons_management.dart';
 import 'package:platformexamapp/features/admin/ui/admin_follow_up_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
-
   const AdminDashboardScreen({super.key, required this.user});
   final UserData user;
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     if (!user.canAccessDashboard) {
       return Scaffold(
+        backgroundColor: pageBg,
         appBar: AppBar(
-          title: const Text("Access Denied"),
-          backgroundColor: AppColors.primaryColor,
+          title: Text(
+            "Access Denied",
+            style: GoogleFonts.cairo(
+              color: textColor,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          backgroundColor: pageBg,
+          elevation: 0,
         ),
-        body: const Center(
-          child: Text("You do not have permission to access the Dashboard."),
+        body: Center(
+          child: Text(
+            "You do not have permission to access the Dashboard.",
+            style: GoogleFonts.cairo(color: textColor, fontSize: 16.sp),
+          ),
         ),
       );
     }
 
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       body: SafeArea(
         child: Column(
           children: [
@@ -53,23 +72,42 @@ class AdminDashboardScreen extends StatelessWidget {
                     child: Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDark
+                            ? Colors.white.withOpacity(0.08)
+                            : Colors.black.withOpacity(0.05),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.arrow_back_ios,
-                        color: Colors.white,
-                        size: 20,
+                        color: textColor,
+                        size: 18.r,
                       ),
                     ),
                   ),
-                  SizedBox(width: 10.w),
-                  Text(
-                    "welcome_name".tr(args: [user.name ?? "Admin"]),
-                    style: TextStyle(
-                      fontSize: 24.sp,
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
+                  SizedBox(width: 12.w),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "welcome_name".tr(args: [user.name ?? "Admin"]),
+                          style: GoogleFonts.cairo(
+                            fontSize: 22.sp,
+                            color: textColor,
+                            fontWeight: FontWeight.w900,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        Text(
+                          "Admin & Control Center",
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.sp,
+                            color: AppColors.softGold,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -81,28 +119,29 @@ class AdminDashboardScreen extends StatelessWidget {
                 padding: EdgeInsets.all(16.r),
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: surfaceColor,
                   borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(30.r),
-                    topRight: Radius.circular(30.r),
+                    topLeft: Radius.circular(32.r),
+                    topRight: Radius.circular(32.r),
                   ),
+                  border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: GridView.count(
+                  physics: const BouncingScrollPhysics(),
                   crossAxisCount: 2,
-                  crossAxisSpacing: 12,
-                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12.w,
+                  mainAxisSpacing: 12.h,
+                  childAspectRatio: 1.2,
                   children: [
                     if (user.canAccessFollowUp)
                       CustomContainer(
                         title: "Follow Up",
                         icon: HugeIcons.strokeRoundedCustomerSupport,
-                        color: Colors.deepOrange,
+                        color: Colors.deepOrange.shade400,
                         onTap: () {
                           Navigator.push(
                             context,
-                            AppPageRoute(
-                              child: const AdminFollowUpScreen(),
-                            ),
+                            AppPageRoute(child: const AdminFollowUpScreen()),
                           );
                         },
                       ),
@@ -110,13 +149,11 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "attendance_scanner".tr(),
                         icon: HugeIcons.strokeRoundedQrCode,
-                        color: Colors.indigo,
+                        color: AppColors.softGold,
                         onTap: () {
                           Navigator.push(
                             context,
-                            AppPageRoute(
-                              child: const ScannerScreen(),
-                            ),
+                            AppPageRoute(child: const ScannerScreen()),
                           );
                         },
                       ),
@@ -124,13 +161,11 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "events_manager".tr(),
                         icon: HugeIcons.strokeRoundedCalendar01,
-                        color: Colors.orange,
+                        color: Colors.orange.shade400,
                         onTap: () {
                           Navigator.push(
                             context,
-                            AppPageRoute(
-                              child: const EventsManagementScreen(),
-                            ),
+                            AppPageRoute(child: const EventsManagementScreen()),
                           );
                         },
                       ),
@@ -138,7 +173,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "attendance_stats".tr(),
                         icon: HugeIcons.strokeRoundedChart01,
-                        color: Colors.pink,
+                        color: AppColors.goldLight,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -152,13 +187,11 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "add_exam".tr(),
                         icon: HugeIcons.strokeRoundedAdd01,
-                        color: Colors.green,
+                        color: AppColors.successGreen,
                         onTap: () {
                           Navigator.push(
                             context,
-                            AppPageRoute(
-                              child: const AddExamScreen(),
-                            ),
+                            AppPageRoute(child: const AddExamScreen()),
                           );
                         },
                       ),
@@ -166,7 +199,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "users".tr(),
                         icon: HugeIcons.strokeRoundedUser,
-                        color: Colors.blue,
+                        color: AppColors.primaryLightNavy,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -178,7 +211,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "stats".tr(),
                         icon: HugeIcons.strokeRoundedAnalytics01,
-                        color: Colors.purple,
+                        color: Colors.purple.shade400,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -192,7 +225,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "add_post".tr(),
                         icon: HugeIcons.strokeRoundedBookmark01,
-                        color: Colors.amber,
+                        color: AppColors.goldDark,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -204,7 +237,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "top_interactions".tr(),
                         icon: HugeIcons.strokeRoundedFavourite,
-                        color: Colors.red,
+                        color: AppColors.heartRed,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -216,7 +249,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "daily_content_manager".tr(),
                         icon: HugeIcons.strokeRoundedFileBookmark,
-                        color: Colors.teal,
+                        color: Colors.teal.shade300,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -230,7 +263,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "content_history".tr(),
                         icon: HugeIcons.strokeRoundedFile01,
-                        color: Colors.brown,
+                        color: Colors.brown.shade400,
                         onTap: () {
                           Navigator.push(
                             context,
@@ -244,7 +277,7 @@ class AdminDashboardScreen extends StatelessWidget {
                       CustomContainer(
                         title: "seasons_manager".tr(),
                         icon: HugeIcons.strokeRoundedGrid,
-                        color: Colors.blueGrey,
+                        color: Colors.blueGrey.shade400,
                         onTap: () {
                           Navigator.push(
                             context,

@@ -9,8 +9,8 @@ class FollowUpCubit extends Cubit<FollowUpState> {
   StreamSubscription<List<UserData>>? _usersSubscription;
 
   FollowUpCubit({IFollowUpRepository? repository})
-      : _repository = repository ?? FollowUpRepository(),
-        super(const FollowUpState()) {
+    : _repository = repository ?? FollowUpRepository(),
+      super(const FollowUpState()) {
     init();
   }
 
@@ -22,10 +22,12 @@ class FollowUpCubit extends Cubit<FollowUpState> {
         _processUsers(users);
       },
       onError: (error) {
-        emit(state.copyWith(
-          isLoading: false,
-          errorMessage: 'Failed to load users: $error',
-        ));
+        emit(
+          state.copyWith(
+            isLoading: false,
+            errorMessage: 'Failed to load users: $error',
+          ),
+        );
       },
     );
   }
@@ -64,17 +66,19 @@ class FollowUpCubit extends Cubit<FollowUpState> {
       statusFilter: state.statusFilter,
     );
 
-    emit(state.copyWith(
-      allUsers: users,
-      filteredUsers: filtered,
-      isLoading: false,
-      totalUsersCount: total,
-      activeUsersCount: active,
-      needFollowUpCount: needFollowUp,
-      urgentCasesCount: urgent,
-      callsCompletedCount: calls,
-      visitsCompletedCount: visits,
-    ));
+    emit(
+      state.copyWith(
+        allUsers: users,
+        filteredUsers: filtered,
+        isLoading: false,
+        totalUsersCount: total,
+        activeUsersCount: active,
+        needFollowUpCount: needFollowUp,
+        urgentCasesCount: urgent,
+        callsCompletedCount: calls,
+        visitsCompletedCount: visits,
+      ),
+    );
   }
 
   void setSearchQuery(String query) {
@@ -148,46 +152,61 @@ class FollowUpCubit extends Cubit<FollowUpState> {
     return users.where((u) {
       // 1. Search Query
       if (searchQuery.isNotEmpty) {
-        final nameMatches = (u.name ?? '').toLowerCase().contains(searchQuery.toLowerCase());
+        final nameMatches = (u.name ?? '').toLowerCase().contains(
+          searchQuery.toLowerCase(),
+        );
         final phoneMatches = (u.phone ?? '').contains(searchQuery);
-        final emailMatches = (u.email ?? '').toLowerCase().contains(searchQuery.toLowerCase());
+        final emailMatches = (u.email ?? '').toLowerCase().contains(
+          searchQuery.toLowerCase(),
+        );
         if (!nameMatches && !phoneMatches && !emailMatches) return false;
       }
 
       // 2. Attendance % Filter
       final pct = u.attendancePercentage ?? 0.0;
       if (attendanceFilter == '<50%' && pct >= 50.0) return false;
-      if (attendanceFilter == '50-75%' && (pct < 50.0 || pct > 75.0)) return false;
+      if (attendanceFilter == '50-75%' && (pct < 50.0 || pct > 75.0))
+        return false;
       if (attendanceFilter == '>75%' && pct <= 75.0) return false;
 
       // 3. Group Filter
-      if (groupFilter != 'All' && (u.group ?? 'General') != groupFilter) return false;
+      if (groupFilter != 'All' && (u.group ?? 'General') != groupFilter)
+        return false;
 
       // 4. Need Visit Filter
       if (needVisitFilter == 'Yes' && u.needVisit != true) return false;
       if (needVisitFilter == 'No' && u.needVisit == true) return false;
 
       // 5. Follow-up Status Filter
-      if (statusFilter != 'All' && (u.followUpStatus ?? 'Regular') != statusFilter) return false;
+      if (statusFilter != 'All' &&
+          (u.followUpStatus ?? 'Regular') != statusFilter)
+        return false;
 
       return true;
     }).toList();
   }
 
-  Future<bool> saveUserFollowUp(String userId, Map<String, dynamic> data) async {
+  Future<bool> saveUserFollowUp(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
     emit(state.copyWith(isSaving: true));
     try {
       await _repository.updateUserFollowUp(userId, data);
-      emit(state.copyWith(
-        isSaving: false,
-        successMessage: 'Follow-up information saved successfully!',
-      ));
+      emit(
+        state.copyWith(
+          isSaving: false,
+          successMessage: 'Follow-up information saved successfully!',
+        ),
+      );
       return true;
     } catch (e) {
-      emit(state.copyWith(
-        isSaving: false,
-        errorMessage: 'Failed to save follow-up: $e',
-      ));
+      emit(
+        state.copyWith(
+          isSaving: false,
+          errorMessage: 'Failed to save follow-up: $e',
+        ),
+      );
       return false;
     }
   }

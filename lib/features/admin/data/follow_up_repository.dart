@@ -15,11 +15,9 @@ class FollowUpRepository implements IFollowUpRepository {
   final FirebaseFirestore _firestore;
   final FirebaseAuth _auth;
 
-  FollowUpRepository({
-    FirebaseFirestore? firestore,
-    FirebaseAuth? auth,
-  })  : _firestore = firestore ?? FirebaseFirestore.instance,
-        _auth = auth ?? FirebaseAuth.instance;
+  FollowUpRepository({FirebaseFirestore? firestore, FirebaseAuth? auth})
+    : _firestore = firestore ?? FirebaseFirestore.instance,
+      _auth = auth ?? FirebaseAuth.instance;
 
   /// Helper check for Admin authority (Main Admin or Sub Admin)
   Future<bool> isCurrentUserAdmin() async {
@@ -27,10 +25,15 @@ class FollowUpRepository implements IFollowUpRepository {
     if (currentUser == null) return false;
 
     try {
-      final doc = await _firestore.collection('users').doc(currentUser.uid).get();
+      final doc = await _firestore
+          .collection('users')
+          .doc(currentUser.uid)
+          .get();
       if (doc.exists) {
         final data = doc.data();
-        return data?['isAdmin'] == true || data?['subAdmin'] == true || data?['isSubAdmin'] == true;
+        return data?['isAdmin'] == true ||
+            data?['subAdmin'] == true ||
+            data?['isSubAdmin'] == true;
       }
     } catch (e) {
       debugPrint('Error verifying admin status: $e');
@@ -61,10 +64,15 @@ class FollowUpRepository implements IFollowUpRepository {
   }
 
   @override
-  Future<void> updateUserFollowUp(String userId, Map<String, dynamic> data) async {
+  Future<void> updateUserFollowUp(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
     final isAdmin = await isCurrentUserAdmin();
     if (!isAdmin) {
-      throw Exception('Permission denied: Only admin accounts can update follow-up details.');
+      throw Exception(
+        'Permission denied: Only admin accounts can update follow-up details.',
+      );
     }
 
     try {
@@ -73,16 +81,16 @@ class FollowUpRepository implements IFollowUpRepository {
       updatePayload['updatedAt'] = FieldValue.serverTimestamp();
 
       // Update users collection document directly
-      await _firestore.collection('users').doc(userId).set(
-        updatePayload,
-        SetOptions(merge: true),
-      );
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .set(updatePayload, SetOptions(merge: true));
 
       // Synchronize dedicated follow_ups collection for audit trail
-      await _firestore.collection('follow_ups').doc(userId).set(
-        updatePayload,
-        SetOptions(merge: true),
-      );
+      await _firestore
+          .collection('follow_ups')
+          .doc(userId)
+          .set(updatePayload, SetOptions(merge: true));
     } catch (e) {
       debugPrint('Error saving follow-up data: $e');
       rethrow;
@@ -104,7 +112,10 @@ class FollowUpRepository implements IFollowUpRepository {
       };
 
       await _firestore.collection('users').doc(userId).update(payload);
-      await _firestore.collection('follow_ups').doc(userId).set(payload, SetOptions(merge: true));
+      await _firestore
+          .collection('follow_ups')
+          .doc(userId)
+          .set(payload, SetOptions(merge: true));
     } catch (e) {
       debugPrint('Error recording call completed: $e');
     }
@@ -126,7 +137,10 @@ class FollowUpRepository implements IFollowUpRepository {
       };
 
       await _firestore.collection('users').doc(userId).update(payload);
-      await _firestore.collection('follow_ups').doc(userId).set(payload, SetOptions(merge: true));
+      await _firestore
+          .collection('follow_ups')
+          .doc(userId)
+          .set(payload, SetOptions(merge: true));
     } catch (e) {
       debugPrint('Error recording visit completed: $e');
     }

@@ -83,7 +83,7 @@ class UserData {
 
   /// Role getters and permission checks
   bool get isAdminVal => isAdmin == true;
-  
+
   bool get subAdmin => (isAdmin == true) ? false : (isSubAdmin == true);
   set subAdmin(bool? val) => isSubAdmin = val;
   bool get isSubAdminVal => subAdmin;
@@ -242,9 +242,15 @@ class UserData {
       "servantNotes": servantNotes,
       "callsCount": callsCount ?? 0,
       "visitsCount": visitsCount ?? 0,
-      "lastContact": lastContact == null ? null : Timestamp.fromDate(lastContact!),
-      "lastCallDate": lastCallDate == null ? null : Timestamp.fromDate(lastCallDate!),
-      "lastVisitDate": lastVisitDate == null ? null : Timestamp.fromDate(lastVisitDate!),
+      "lastContact": lastContact == null
+          ? null
+          : Timestamp.fromDate(lastContact!),
+      "lastCallDate": lastCallDate == null
+          ? null
+          : Timestamp.fromDate(lastCallDate!),
+      "lastVisitDate": lastVisitDate == null
+          ? null
+          : Timestamp.fromDate(lastVisitDate!),
     };
   }
 
@@ -293,8 +299,10 @@ class UserData {
       isSubAdmin: isSubAdmin ?? this.isSubAdmin,
       profileImage: profileImage ?? this.profileImage,
       attendancePercentage: attendancePercentage ?? this.attendancePercentage,
-      fridayAttendanceCount: fridayAttendanceCount ?? this.fridayAttendanceCount,
-      sundayAttendanceCount: sundayAttendanceCount ?? this.sundayAttendanceCount,
+      fridayAttendanceCount:
+          fridayAttendanceCount ?? this.fridayAttendanceCount,
+      sundayAttendanceCount:
+          sundayAttendanceCount ?? this.sundayAttendanceCount,
       currentStreak: currentStreak ?? this.currentStreak,
       longestStreak: longestStreak ?? this.longestStreak,
       highestStreak: highestStreak ?? this.highestStreak,

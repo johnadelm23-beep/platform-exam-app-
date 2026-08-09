@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:easy_localization/easy_localization.dart';
@@ -12,6 +13,8 @@ import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/attendance_history_view.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/profile_qr_dialog.dart';
@@ -44,8 +47,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to share card: $e'),
-          backgroundColor: Colors.red,
+          content: Text('Failed to share card: $e', style: GoogleFonts.cairo()),
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -68,8 +71,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('system_dialog_save'.tr()),
-              backgroundColor: Colors.green,
+              content: Text(
+                'system_dialog_save'.tr(),
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: AppColors.successGreen,
             ),
           );
         }
@@ -78,8 +84,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Failed to export card: $e'),
-          backgroundColor: Colors.red,
+          content: Text(
+            'Failed to export card: $e',
+            style: GoogleFonts.cairo(),
+          ),
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -97,22 +106,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     final uid = FirebaseAuth.instance.currentUser?.uid ?? "";
 
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         automaticallyImplyLeading: false,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: AppColors.whiteColor),
+          icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
         ),
         title: Text(
           "my_profile".tr(),
-          style: TextStyle(
-            color: Colors.white,
+          style: GoogleFonts.cairo(
+            color: textColor,
             fontWeight: FontWeight.bold,
             fontSize: 18.sp,
           ),
@@ -126,9 +146,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             .snapshots(),
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            );
+            return const LoadingState();
           }
 
           if (!userSnapshot.hasData || !userSnapshot.data!.exists) {
@@ -154,19 +172,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 padding: EdgeInsets.symmetric(horizontal: 16.w, vertical: 8.h),
                 child: Screenshot(
                   controller: _screenshotController,
-                  child: Container(
+                  child: GlassCard(
                     padding: EdgeInsets.all(16.r),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(24.r),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withValues(alpha: 0.12),
-                          blurRadius: 15,
-                          offset: const Offset(0, 5),
-                        ),
-                      ],
-                    ),
+                    borderRadius: 24.r,
                     child: StreamBuilder<QuerySnapshot>(
                       stream: FirebaseFirestore.instance
                           .collection("seasons")
@@ -174,8 +182,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           .limit(1)
                           .snapshots(),
                       builder: (context, seasonSnap) {
-                        final seasonName = (seasonSnap.data?.docs.isNotEmpty == true)
-                            ? seasonSnap.data!.docs.first["name"] ?? "Default Season"
+                        final seasonName =
+                            (seasonSnap.data?.docs.isNotEmpty == true)
+                            ? seasonSnap.data!.docs.first["name"] ??
+                                  "Default Season"
                             : "No Active Season";
 
                         return StreamBuilder<QuerySnapshot>(
@@ -187,81 +197,96 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           builder: (context, eventSnap) {
                             final activeEventId =
                                 (eventSnap.data?.docs.isNotEmpty == true)
-                                    ? eventSnap.data!.docs.first.id
-                                    : "";
+                                ? eventSnap.data!.docs.first.id
+                                : "";
 
                             return StreamBuilder<DocumentSnapshot>(
                               stream: activeEventId.isNotEmpty
                                   ? FirebaseFirestore.instance
-                                      .collection("attendance")
-                                      .doc("${activeEventId}_$uid")
-                                      .snapshots()
+                                        .collection("attendance")
+                                        .doc("${activeEventId}_$uid")
+                                        .snapshots()
                                   : const Stream<DocumentSnapshot>.empty(),
                               builder: (context, attendanceSnap) {
-                                final isPresent = attendanceSnap.data?.exists == true;
+                                final isPresent =
+                                    attendanceSnap.data?.exists == true;
                                 final statusText = activeEventId.isEmpty
                                     ? "no_active_meeting_status".tr()
                                     : isPresent
-                                        ? "present".tr()
-                                        : "absent".tr();
+                                    ? "present".tr()
+                                    : "absent".tr();
                                 final isUnlocked = isPresent;
 
                                 return Column(
                                   children: [
                                     // User Avatar + Details + Tap to Open Large QR
                                     InkWell(
-                                      onTap: () => _openQrFullscreen(userData, qrPayload),
+                                      onTap: () => _openQrFullscreen(
+                                        userData,
+                                        qrPayload,
+                                      ),
                                       borderRadius: BorderRadius.circular(16.r),
                                       child: Row(
                                         children: [
                                           CircleAvatar(
                                             radius: 28.r,
-                                            backgroundColor: AppColors.primaryColor
-                                                .withValues(alpha: 0.1),
+                                            backgroundColor: AppColors.softGold
+                                                .withOpacity(0.15),
                                             backgroundImage:
                                                 userData.profileImage != null &&
-                                                        userData.profileImage!.isNotEmpty
-                                                    ? NetworkImage(userData.profileImage!)
-                                                    : null,
-                                            child: userData.profileImage == null ||
-                                                    userData.profileImage!.isEmpty
+                                                    userData
+                                                        .profileImage!
+                                                        .isNotEmpty
+                                                ? NetworkImage(
+                                                    userData.profileImage!,
+                                                  )
+                                                : null,
+                                            child:
+                                                userData.profileImage == null ||
+                                                    userData
+                                                        .profileImage!
+                                                        .isEmpty
                                                 ? HugeIcon(
-                                                    icon: HugeIcons.strokeRoundedUser02,
+                                                    icon: HugeIcons
+                                                        .strokeRoundedUser02,
                                                     size: 28.r,
-                                                    color: AppColors.primaryColor,
+                                                    color: AppColors.softGold,
                                                   )
                                                 : null,
                                           ),
                                           SizedBox(width: 12.w),
                                           Expanded(
                                             child: Column(
-                                              crossAxisAlignment: CrossAxisAlignment.start,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
                                               children: [
                                                 Text(
                                                   userData.name ?? "User",
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.cairo(
                                                     fontSize: 17.sp,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
+                                                    color: textColor,
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                                 Text(
                                                   userData.email ?? "",
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.cairo(
                                                     fontSize: 12.sp,
-                                                    color: Colors.grey[600],
+                                                    color: mutedColor,
                                                   ),
                                                   maxLines: 1,
-                                                  overflow: TextOverflow.ellipsis,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
                                                 ),
                                                 SizedBox(height: 3.h),
                                                 Text(
                                                   "ID: ${userData.humanReadableId ?? 'EGT000000'}",
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.cairo(
                                                     fontSize: 12.sp,
-                                                    color: AppColors.primaryColor,
+                                                    color: AppColors.softGold,
                                                     fontWeight: FontWeight.bold,
                                                   ),
                                                 ),
@@ -276,9 +301,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               padding: EdgeInsets.all(4.r),
                                               decoration: BoxDecoration(
                                                 color: Colors.white,
-                                                borderRadius: BorderRadius.circular(10.r),
+                                                borderRadius:
+                                                    BorderRadius.circular(12.r),
                                                 border: Border.all(
-                                                  color: AppColors.primaryColor.withValues(alpha: 0.2),
+                                                  color: AppColors.softGold,
+                                                  width: 1.5,
                                                 ),
                                               ),
                                               child: QrImageView(
@@ -287,60 +314,72 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                                 size: 58.r,
                                                 eyeStyle: const QrEyeStyle(
                                                   eyeShape: QrEyeShape.square,
-                                                  color: AppColors.primaryColor,
+                                                  color:
+                                                      AppColors.cinematicNavy,
                                                 ),
-                                                dataModuleStyle: const QrDataModuleStyle(
-                                                  dataModuleShape: QrDataModuleShape.square,
-                                                  color: AppColors.primaryColor,
-                                                ),
+                                                dataModuleStyle:
+                                                    const QrDataModuleStyle(
+                                                      dataModuleShape:
+                                                          QrDataModuleShape
+                                                              .square,
+                                                      color: AppColors
+                                                          .cinematicNavy,
+                                                    ),
                                               ),
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
-                                    Divider(height: 20.h, color: Colors.grey[200]),
+                                    Divider(height: 20.h, color: borderColor),
 
                                     // Statistics Metrics Cards Row
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceAround,
                                       children: [
                                         _buildCardMetric(
+                                          context,
                                           HugeIcons.strokeRoundedChart01,
                                           "attendance".tr(),
                                           "${userData.attendancePercentage ?? 0.0}%",
                                         ),
                                         _buildCardMetric(
+                                          context,
                                           HugeIcons.strokeRoundedFire,
                                           "streak".tr(),
                                           "${userData.displayStreak} 🔥",
                                         ),
                                         _buildCardMetric(
+                                          context,
                                           HugeIcons.strokeRoundedAward01,
                                           "Highest".tr(),
                                           "${userData.highestStreakVal} 🏆",
                                         ),
                                         _buildCardMetric(
+                                          context,
                                           HugeIcons.strokeRoundedCalendar01,
                                           "total_present".tr(),
                                           "${userData.totalAttendance ?? 0}",
                                         ),
                                       ],
                                     ),
-                                    Divider(height: 20.h, color: Colors.grey[200]),
+                                    Divider(height: 20.h, color: borderColor),
 
                                     // Season and Status indicators
                                     Row(
-                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.spaceBetween,
                                       children: [
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
                                           children: [
                                             Text(
                                               "current_season".tr(),
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: Colors.grey[500],
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 11.sp,
+                                                color: mutedColor,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -348,17 +387,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             Row(
                                               children: [
                                                 HugeIcon(
-                                                  icon: HugeIcons.strokeRoundedGrid,
+                                                  icon: HugeIcons
+                                                      .strokeRoundedGrid,
                                                   size: 14.r,
-                                                  color: AppColors.primaryColor,
+                                                  color: AppColors.softGold,
                                                 ),
                                                 SizedBox(width: 4.w),
                                                 Text(
                                                   seasonName,
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.cairo(
                                                     fontSize: 12.sp,
                                                     fontWeight: FontWeight.bold,
-                                                    color: Colors.black87,
+                                                    color: textColor,
                                                   ),
                                                 ),
                                               ],
@@ -366,13 +406,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                           ],
                                         ),
                                         Column(
-                                          crossAxisAlignment: CrossAxisAlignment.end,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.end,
                                           children: [
                                             Text(
                                               "todays_status".tr(),
-                                              style: TextStyle(
-                                                fontSize: 10.sp,
-                                                color: Colors.grey[500],
+                                              style: GoogleFonts.cairo(
+                                                fontSize: 11.sp,
+                                                color: mutedColor,
                                                 fontWeight: FontWeight.bold,
                                               ),
                                             ),
@@ -380,17 +421,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                             Row(
                                               children: [
                                                 Icon(
-                                                  isPresent ? Icons.check_circle : Icons.cancel,
+                                                  isPresent
+                                                      ? Icons.check_circle
+                                                      : Icons.cancel,
                                                   size: 14.r,
-                                                  color: isPresent ? Colors.green : Colors.red,
+                                                  color: isPresent
+                                                      ? AppColors.successGreen
+                                                      : AppColors.heartRed,
                                                 ),
                                                 SizedBox(width: 4.w),
                                                 Text(
                                                   statusText,
-                                                  style: TextStyle(
+                                                  style: GoogleFonts.cairo(
                                                     fontSize: 12.sp,
                                                     fontWeight: FontWeight.bold,
-                                                    color: isPresent ? Colors.green[800] : Colors.red[800],
+                                                    color: isPresent
+                                                        ? AppColors.successGreen
+                                                        : AppColors.heartRed,
                                                   ),
                                                 ),
                                               ],
@@ -399,7 +446,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                         ),
                                       ],
                                     ),
-                                    SizedBox(height: 8.h),
+                                    SizedBox(height: 10.h),
                                     Container(
                                       padding: EdgeInsets.symmetric(
                                         vertical: 6.h,
@@ -407,29 +454,39 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                       ),
                                       decoration: BoxDecoration(
                                         color: isUnlocked
-                                            ? Colors.green.withValues(alpha: 0.1)
-                                            : Colors.amber.withValues(alpha: 0.1),
-                                        borderRadius: BorderRadius.circular(12.r),
+                                            ? AppColors.successGreen
+                                                  .withOpacity(0.12)
+                                            : AppColors.softGold.withOpacity(
+                                                0.12,
+                                              ),
+                                        borderRadius: BorderRadius.circular(
+                                          12.r,
+                                        ),
                                       ),
                                       child: Row(
-                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.center,
                                         children: [
                                           Icon(
-                                            isUnlocked ? Icons.lock_open : Icons.lock,
+                                            isUnlocked
+                                                ? Icons.lock_open_rounded
+                                                : Icons.lock_outline_rounded,
                                             size: 14.r,
-                                            color: isUnlocked ? Colors.green : Colors.amber[800],
+                                            color: isUnlocked
+                                                ? AppColors.successGreen
+                                                : AppColors.softGold,
                                           ),
                                           SizedBox(width: 6.w),
                                           Text(
                                             isUnlocked
                                                 ? "today_content_unlocked".tr()
                                                 : "mark_present_to_unlock".tr(),
-                                            style: TextStyle(
+                                            style: GoogleFonts.cairo(
                                               fontSize: 11.sp,
                                               fontWeight: FontWeight.bold,
                                               color: isUnlocked
-                                                  ? Colors.green[800]
-                                                  : Colors.amber[900],
+                                                  ? AppColors.successGreen
+                                                  : AppColors.softGold,
                                             ),
                                           ),
                                         ],
@@ -455,15 +512,29 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _shareQR(userData),
-                        icon: HugeIcon(icon: HugeIcons.strokeRoundedShare01, size: 16.r, color: Colors.white),
-                        label: Text("share_qr".tr(), style: TextStyle(fontSize: 13.sp)),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedShare01,
+                          size: 16.r,
+                          color: textColor,
+                        ),
+                        label: Text(
+                          "share_qr".tr(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13.sp,
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                              ? AppColors.darkGlassSurface
+                              : AppColors.lightGlassSurface,
+                          foregroundColor: textColor,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: 10.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(14.r),
+                            side: BorderSide(color: borderColor),
                           ),
                         ),
                       ),
@@ -472,29 +543,31 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: () => _saveQR(userData),
-                        icon: HugeIcon(icon: HugeIcons.strokeRoundedDownload01, size: 16.r, color: Colors.white),
-                        label: Text("save_qr".tr(), style: TextStyle(fontSize: 13.sp)),
+                        icon: HugeIcon(
+                          icon: HugeIcons.strokeRoundedDownload01,
+                          size: 16.r,
+                          color: textColor,
+                        ),
+                        label: Text(
+                          "save_qr".tr(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 13.sp,
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white.withValues(alpha: 0.2),
-                          foregroundColor: Colors.white,
+                          backgroundColor: isDark
+                              ? AppColors.darkGlassSurface
+                              : AppColors.lightGlassSurface,
+                          foregroundColor: textColor,
                           elevation: 0,
                           padding: EdgeInsets.symmetric(vertical: 10.h),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12.r),
+                            borderRadius: BorderRadius.circular(14.r),
+                            side: BorderSide(color: borderColor),
                           ),
                         ),
-                      ),
-                    ),
-                    SizedBox(width: 8.w),
-                    IconButton(
-                      onPressed: () => setState(() {}),
-                      icon: HugeIcon(
-                        icon: HugeIcons.strokeRoundedActivity01,
-                        color: Colors.white,
-                        size: 18.r,
-                      ),
-                      style: IconButton.styleFrom(
-                        backgroundColor: Colors.white.withValues(alpha: 0.2),
                       ),
                     ),
                   ],
@@ -507,10 +580,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
-                    color: Colors.grey[50],
+                    color: surfaceColor,
                     borderRadius: BorderRadius.only(
                       topLeft: Radius.circular(28.r),
                       topRight: Radius.circular(28.r),
+                    ),
+                    border: Border(
+                      top: BorderSide(color: borderColor, width: 1),
                     ),
                   ),
                   child: AttendanceHistoryView(uid: uid),
@@ -523,22 +599,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Widget _buildCardMetric(List<List<dynamic>> icon, String label, String value) {
+  Widget _buildCardMetric(
+    BuildContext context,
+    List<List<dynamic>> icon,
+    String label,
+    String value,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     return Column(
       children: [
-        HugeIcon(icon: icon, size: 14.r, color: AppColors.primaryColor),
+        HugeIcon(icon: icon, size: 16.r, color: AppColors.softGold),
         SizedBox(height: 2.h),
         Text(
           label,
-          style: TextStyle(fontSize: 10.sp, color: Colors.grey[500]),
+          style: GoogleFonts.cairo(
+            fontSize: 10.sp,
+            color: mutedColor,
+            fontWeight: FontWeight.w600,
+          ),
         ),
         SizedBox(height: 2.h),
         Text(
           value,
-          style: TextStyle(
+          style: GoogleFonts.cairo(
             fontSize: 14.sp,
             fontWeight: FontWeight.bold,
-            color: AppColors.primaryColor,
+            color: textColor,
           ),
         ),
       ],

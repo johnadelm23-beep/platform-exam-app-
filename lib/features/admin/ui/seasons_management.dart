@@ -2,8 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/empty_state.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 
 class SeasonsManagementScreen extends StatefulWidget {
   const SeasonsManagementScreen({super.key});
@@ -27,6 +30,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
   }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: isStart ? _startDate : _endDate,
@@ -35,10 +39,13 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: AppColors.primaryColor,
-              onPrimary: Colors.white,
-              onSurface: Colors.black,
+            colorScheme: ColorScheme.dark(
+              primary: AppColors.softGold,
+              onPrimary: Colors.black,
+              surface: isDark ? AppColors.darkSurface : AppColors.lightSurface,
+              onSurface: isDark
+                  ? AppColors.darkTextMain
+                  : AppColors.lightTextMain,
             ),
           ),
           child: child!,
@@ -62,11 +69,17 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance.collection("users").doc(currentUser.uid).get();
+    final userDoc = await FirebaseFirestore.instance
+        .collection("users")
+        .doc(currentUser.uid)
+        .get();
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Permission denied: Main Admin only."), backgroundColor: Colors.red),
+        const SnackBar(
+          content: Text("Permission denied: Main Admin only."),
+          backgroundColor: AppColors.heartRed,
+        ),
       );
       return;
     }
@@ -132,7 +145,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error saving season: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -173,7 +186,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text("Error updating season status: $e"),
-          backgroundColor: Colors.red,
+          backgroundColor: AppColors.heartRed,
         ),
       );
     }
@@ -197,6 +210,17 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       _isActive = false;
     }
 
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final surfaceColor = isDark ? AppColors.darkSurface : Colors.white;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final inputBg = isDark
+        ? AppColors.darkGlassSurface
+        : AppColors.lightGlassSurface;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -210,11 +234,12 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
             bottom: MediaQuery.of(context).viewInsets.bottom + 20.r,
           ),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: surfaceColor,
             borderRadius: BorderRadius.only(
               topLeft: Radius.circular(30.r),
               topRight: Radius.circular(30.r),
             ),
+            border: Border.all(color: borderColor),
           ),
           child: Form(
             key: _formKey,
@@ -227,7 +252,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     width: 40.w,
                     height: 4.h,
                     decoration: BoxDecoration(
-                      color: Colors.grey[300],
+                      color: isDark ? AppColors.darkBorder : Colors.grey[300],
                       borderRadius: BorderRadius.circular(10.r),
                     ),
                   ),
@@ -235,23 +260,40 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 SizedBox(height: 15.h),
                 Text(
                   editId == null ? "Create New Season" : "Edit Season Details",
-                  style: TextStyle(
-                    fontSize: 20.sp,
+                  style: GoogleFonts.cairo(
+                    fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
+                    color: isDark ? AppColors.softGold : AppColors.primaryColor,
                   ),
                 ),
                 SizedBox(height: 15.h),
                 TextFormField(
                   controller: _nameController,
+                  style: GoogleFonts.cairo(color: textColor),
                   decoration: InputDecoration(
                     labelText: "Season Name",
+                    labelStyle: GoogleFonts.cairo(color: mutedColor),
                     prefixIcon: HugeIcon(
                       icon: HugeIcons.strokeRoundedFile01,
                       size: 20.r,
+                      color: AppColors.softGold,
+                    ),
+                    fillColor: inputBg,
+                    filled: true,
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: BorderSide(color: borderColor),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12.r),
+                      borderSide: const BorderSide(
+                        color: AppColors.softGold,
+                        width: 1.5,
+                      ),
                     ),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(12.r),
+                      borderSide: BorderSide(color: borderColor),
                     ),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
@@ -267,13 +309,18 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                         icon: HugeIcon(
                           icon: HugeIcons.strokeRoundedCalendar01,
                           size: 16.r,
+                          color: AppColors.softGold,
                         ),
                         label: Text(
                           "Start: ${_startDate.year}-${_startDate.month.toString().padLeft(2, '0')}-${_startDate.day.toString().padLeft(2, '0')}",
-                          style: TextStyle(fontSize: 12.sp),
+                          style: GoogleFonts.cairo(
+                            fontSize: 11.sp,
+                            color: textColor,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
+                          side: BorderSide(color: borderColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -287,13 +334,18 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                         icon: HugeIcon(
                           icon: HugeIcons.strokeRoundedCalendar01,
                           size: 16.r,
+                          color: AppColors.softGold,
                         ),
                         label: Text(
                           "End: ${_endDate.year}-${_endDate.month.toString().padLeft(2, '0')}-${_endDate.day.toString().padLeft(2, '0')}",
-                          style: TextStyle(fontSize: 12.sp),
+                          style: GoogleFonts.cairo(
+                            fontSize: 11.sp,
+                            color: textColor,
+                          ),
                         ),
                         style: OutlinedButton.styleFrom(
                           padding: EdgeInsets.symmetric(vertical: 12.h),
+                          side: BorderSide(color: borderColor),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12.r),
                           ),
@@ -308,13 +360,21 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     return SwitchListTile(
                       title: Text(
                         "Set as Active Season",
-                        style: TextStyle(fontSize: 18.sp),
+                        style: GoogleFonts.cairo(
+                          fontSize: 15.sp,
+                          color: textColor,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
-                      subtitle: const Text(
+                      subtitle: Text(
                         "This deactivates all other seasons",
+                        style: GoogleFonts.cairo(
+                          fontSize: 12.sp,
+                          color: mutedColor,
+                        ),
                       ),
                       value: _isActive,
-                      activeColor: AppColors.primaryColor,
+                      activeColor: AppColors.softGold,
                       onChanged: (val) {
                         setStateSheet(() {
                           _isActive = val;
@@ -330,15 +390,19 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                   child: ElevatedButton(
                     onPressed: () => _saveSeason(editId: editId),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.primaryColor,
-                      foregroundColor: Colors.white,
+                      backgroundColor: AppColors.softGold,
+                      foregroundColor: Colors.black87,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12.r),
                       ),
                     ),
                     child: Text(
                       "Save Season",
-                      style: TextStyle(fontWeight: .bold, fontSize: 25.sp),
+                      style: GoogleFonts.cairo(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16.sp,
+                        color: Colors.black87,
+                      ),
                     ),
                   ),
                 ),
@@ -352,25 +416,44 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.lightPageBg;
+    final surfaceColor = isDark
+        ? AppColors.darkSurface
+        : AppColors.lightSurface;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+
     return Scaffold(
-      backgroundColor: AppColors.primaryColor,
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(Icons.arrow_back_ios, color: Colors.white),
+          icon: Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: textColor,
+            size: 20.r,
+          ),
         ),
-        title: const Text(
+        title: Text(
           "Seasons Management",
-          style: TextStyle(color: Colors.white),
+          style: GoogleFonts.cairo(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            fontSize: 18.sp,
+          ),
         ),
         centerTitle: true,
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddEditBottomSheet(),
-        backgroundColor: Colors.white,
-        foregroundColor: AppColors.primaryColor,
+        backgroundColor: AppColors.softGold,
+        foregroundColor: Colors.black87,
         child: const Icon(Icons.add),
       ),
       body: Container(
@@ -378,11 +461,12 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
         padding: EdgeInsets.all(16.r),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: surfaceColor,
           borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(30.r),
-            topRight: Radius.circular(30.r),
+            topLeft: Radius.circular(32.r),
+            topRight: Radius.circular(32.r),
           ),
+          border: Border(top: BorderSide(color: borderColor, width: 1)),
         ),
         child: StreamBuilder<QuerySnapshot>(
           stream: FirebaseFirestore.instance
@@ -392,34 +476,22 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryColor),
+                child: CircularProgressIndicator(color: AppColors.softGold),
               );
             }
 
             final docs = snapshot.data?.docs ?? [];
             if (docs.isEmpty) {
-              return Center(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedGrid,
-                      size: 50.r,
-                      color: Colors.grey[300],
-                    ),
-                    SizedBox(height: 10.h),
-                    const Text(
-                      "No attendance seasons registered.",
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                  ],
-                ),
+              return EmptyState(
+                title: "No attendance seasons registered.",
+                hugeIcon: HugeIcons.strokeRoundedGrid,
               );
             }
 
             return ListView.separated(
+              physics: const BouncingScrollPhysics(),
               itemCount: docs.length,
-              separatorBuilder: (_, __) => SizedBox(height: 10.h),
+              separatorBuilder: (_, __) => SizedBox(height: 12.h),
               itemBuilder: (context, index) {
                 final doc = docs[index];
                 final data = doc.data() as Map<String, dynamic>;
@@ -429,73 +501,90 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 final status = data["status"] ?? "inactive";
                 final isActive = status == "active";
 
-                return Card(
-                  elevation: 1,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(15.r),
-                  ),
-                  child: ListTile(
-                    title: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            name,
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
+                return GlassCard(
+                  padding: EdgeInsets.all(14.r),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    name,
+                                    style: GoogleFonts.cairo(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16.sp,
+                                      color: textColor,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 8.w,
+                                    vertical: 4.h,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: isActive
+                                        ? Colors.green.withValues(alpha: 0.15)
+                                        : mutedColor.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(8.r),
+                                    border: Border.all(
+                                      color: isActive
+                                          ? Colors.green.withValues(alpha: 0.4)
+                                          : borderColor,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    isActive ? "Active" : "Inactive",
+                                    style: GoogleFonts.cairo(
+                                      color: isActive
+                                          ? Colors.green
+                                          : mutedColor,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 11.sp,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            SizedBox(height: 6.h),
+                            Text(
+                              "Period: $start to $end",
+                              style: GoogleFonts.cairo(
+                                fontSize: 12.sp,
+                                color: mutedColor,
+                              ),
+                            ),
+                          ],
                         ),
-                        Container(
-                          padding: EdgeInsets.symmetric(
-                            horizontal: 8.w,
-                            vertical: 4.h,
+                      ),
+                      SizedBox(width: 8.w),
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Switch(
+                            value: isActive,
+                            activeColor: AppColors.softGold,
+                            onChanged: (val) {
+                              _toggleSeasonActive(doc.id, isActive);
+                            },
                           ),
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? Colors.green[50]
-                                : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8.r),
-                          ),
-                          child: Text(
-                            isActive ? "Active" : "Inactive",
-                            style: TextStyle(
-                              color: isActive
-                                  ? Colors.green[700]
-                                  : Colors.grey[700],
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11.sp,
+                          IconButton(
+                            icon: const HugeIcon(
+                              icon: HugeIcons.strokeRoundedEdit01,
+                              color: AppColors.softGold,
+                            ),
+                            onPressed: () => _showAddEditBottomSheet(
+                              editId: doc.id,
+                              initialData: data,
                             ),
                           ),
-                        ),
-                      ],
-                    ),
-                    subtitle: Text(
-                      "Period: $start to $end",
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey[600],
+                        ],
                       ),
-                    ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Switch(
-                          value: isActive,
-                          activeColor: AppColors.primaryColor,
-                          onChanged: (val) {
-                            _toggleSeasonActive(doc.id, isActive);
-                          },
-                        ),
-                        IconButton(
-                          icon: const HugeIcon(
-                            icon: HugeIcons.strokeRoundedEdit01,
-                            color: Colors.blue,
-                          ),
-                          onPressed: () => _showAddEditBottomSheet(
-                            editId: doc.id,
-                            initialData: data,
-                          ),
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
                 );
               },

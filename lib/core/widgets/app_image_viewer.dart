@@ -15,7 +15,8 @@ class AppImageViewer extends StatefulWidget {
 }
 
 class _AppImageViewerState extends State<AppImageViewer> {
-  final TransformationController _transformationController = TransformationController();
+  final TransformationController _transformationController =
+      TransformationController();
   TapDownDetails? _doubleTapDetails;
 
   void _handleDoubleTap() {
@@ -75,9 +76,16 @@ class _AppImageViewerState extends State<AppImageViewer> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.broken_image, color: Colors.grey, size: 64),
+                              Icon(
+                                Icons.broken_image,
+                                color: Colors.grey,
+                                size: 64,
+                              ),
                               SizedBox(height: 10),
-                              Text("Failed to load image", style: TextStyle(color: Colors.white)),
+                              Text(
+                                "Failed to load image",
+                                style: TextStyle(color: Colors.white),
+                              ),
                             ],
                           ),
                         );
@@ -101,11 +109,7 @@ class _AppImageViewerState extends State<AppImageViewer> {
                   color: Colors.black54,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.close,
-                  color: Colors.white,
-                  size: 24,
-                ),
+                child: const Icon(Icons.close, color: Colors.white, size: 24),
               ),
             ),
           ),

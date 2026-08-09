@@ -1,31 +1,41 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:easy_localization/easy_localization.dart';
+import 'package:platformexamapp/core/theme/app_theme.dart';
+import 'package:platformexamapp/core/theme/theme_cubit.dart';
 import 'package:platformexamapp/features/auth/ui/login_screen.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
 
 class ExamApp extends StatelessWidget {
   const ExamApp({super.key});
+
   @override
   Widget build(BuildContext context) {
-    return ScreenUtilInit(
-      designSize: const Size(360, 690),
-      minTextAdapt: true,
-      splitScreenMode: true,
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData(fontFamily: 'appFont'),
-        localizationsDelegates: context.localizationDelegates,
-        supportedLocales: context.supportedLocales,
-        locale: context.locale,
-        builder: (context, child) {
-          return FadeLanguageTransition(child: child!);
-        },
-        home: FirebaseAuth.instance.currentUser == null
-            ? const LoginScreen()
-            : const HomeScreen(),
-      ),
+    return BlocBuilder<ThemeCubit, ThemeMode>(
+      builder: (context, themeMode) {
+        return ScreenUtilInit(
+          designSize: const Size(360, 690),
+          minTextAdapt: true,
+          splitScreenMode: true,
+          child: MaterialApp(
+            debugShowCheckedModeBanner: false,
+            theme: AppTheme.lightTheme,
+            darkTheme: AppTheme.darkTheme,
+            themeMode: themeMode,
+            localizationsDelegates: context.localizationDelegates,
+            supportedLocales: context.supportedLocales,
+            locale: context.locale,
+            builder: (context, child) {
+              return FadeLanguageTransition(child: child!);
+            },
+            home: FirebaseAuth.instance.currentUser == null
+                ? const LoginScreen()
+                : const HomeScreen(),
+          ),
+        );
+      },
     );
   }
 }
@@ -74,9 +84,6 @@ class _FadeLanguageTransitionState extends State<FadeLanguageTransition>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: _animation,
-      child: widget.child,
-    );
+    return FadeTransition(opacity: _animation, child: widget.child);
   }
 }

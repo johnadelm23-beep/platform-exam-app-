@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,6 +9,7 @@ import 'package:screenshot/screenshot.dart';
 import 'package:share_plus/share_plus.dart';
 
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/user_avatar.dart';
 
@@ -115,8 +117,11 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error sharing report: $e"),
-            backgroundColor: Colors.red,
+            content: Text(
+              "Error sharing report: $e",
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: AppColors.heartRed,
           ),
         );
       }
@@ -142,9 +147,12 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Report exported successfully!"),
-              backgroundColor: Colors.green,
+            SnackBar(
+              content: Text(
+                "Report exported successfully!",
+                style: GoogleFonts.cairo(),
+              ),
+              backgroundColor: AppColors.successGreen,
             ),
           );
         }
@@ -153,8 +161,8 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error saving image: $e"),
-            backgroundColor: Colors.red,
+            content: Text("Error saving image: $e", style: GoogleFonts.cairo()),
+            backgroundColor: AppColors.heartRed,
           ),
         );
       }
@@ -165,36 +173,21 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         // Printable Report Card wrapped in Screenshot
         Screenshot(
           controller: _screenshotController,
-          child: Container(
+          child: GlassCard(
             padding: EdgeInsets.all(20.r),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Colors.white,
-                  AppColors.primaryColor.withValues(alpha: 0.04),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-              borderRadius: BorderRadius.circular(28.r),
-              border: Border.all(
-                color: AppColors.primaryColor.withValues(alpha: 0.2),
-                width: 1.5,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
+            borderRadius: 28.r,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -206,23 +199,23 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                       children: [
                         Container(
                           padding: EdgeInsets.all(6.r),
-                          decoration: BoxDecoration(
-                            color: AppColors.primaryColor,
+                          decoration: const BoxDecoration(
+                            color: AppColors.softGold,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(
                             Icons.church_rounded,
-                            color: Colors.white,
+                            color: AppColors.cinematicNavy,
                             size: 18.r,
                           ),
                         ),
                         SizedBox(width: 8.w),
                         Text(
                           "Egtma3na • إجتماعنا",
-                          style: TextStyle(
+                          style: GoogleFonts.cairo(
                             fontSize: 14.sp,
                             fontWeight: FontWeight.bold,
-                            color: AppColors.primaryColor,
+                            color: AppColors.softGold,
                           ),
                         ),
                       ],
@@ -233,15 +226,18 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                         vertical: 4.h,
                       ),
                       decoration: BoxDecoration(
-                        color: AppColors.primaryColor.withValues(alpha: 0.1),
+                        color: AppColors.softGold.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(12.r),
+                        border: Border.all(
+                          color: AppColors.softGold.withOpacity(0.3),
+                        ),
                       ),
                       child: Text(
                         "Attendance Report",
-                        style: TextStyle(
+                        style: GoogleFonts.cairo(
                           fontSize: 10.sp,
                           fontWeight: FontWeight.bold,
-                          color: AppColors.primaryColor,
+                          color: AppColors.softGold,
                         ),
                       ),
                     ),
@@ -249,7 +245,10 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                 ),
 
                 SizedBox(height: 16.h),
-                Divider(color: Colors.grey[200], height: 1),
+                Divider(
+                  color: isDark ? AppColors.darkBorder : AppColors.lightBorder,
+                  height: 1,
+                ),
                 SizedBox(height: 16.h),
 
                 // User Info Row
@@ -258,10 +257,7 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                     UserAvatar(
                       imageUrl: widget.user.profileImage,
                       radius: 30.r,
-                      border: Border.all(
-                        color: AppColors.primaryColor,
-                        width: 2,
-                      ),
+                      border: Border.all(color: AppColors.softGold, width: 2),
                     ),
                     SizedBox(width: 14.w),
                     Expanded(
@@ -270,10 +266,10 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                         children: [
                           Text(
                             widget.user.name ?? "Member Name",
-                            style: TextStyle(
+                            style: GoogleFonts.cairo(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.bold,
-                              color: Colors.black87,
+                              color: textColor,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -281,9 +277,9 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                           SizedBox(height: 2.h),
                           Text(
                             "ID: ${widget.user.humanReadableId ?? 'EGT000'}",
-                            style: TextStyle(
+                            style: GoogleFonts.cairo(
                               fontSize: 12.sp,
-                              color: AppColors.primaryColor,
+                              color: AppColors.softGold,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -293,24 +289,27 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                     Container(
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
-                        color: Colors.green.withValues(alpha: 0.12),
+                        color: AppColors.successGreen.withOpacity(0.15),
                         borderRadius: BorderRadius.circular(16.r),
+                        border: Border.all(
+                          color: AppColors.successGreen.withOpacity(0.3),
+                        ),
                       ),
                       child: Column(
                         children: [
                           Text(
                             "${widget.attendancePct.toStringAsFixed(0)}%",
-                            style: TextStyle(
+                            style: GoogleFonts.cairo(
                               fontSize: 18.sp,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green[700],
+                              color: AppColors.successGreen,
                             ),
                           ),
                           Text(
                             "Attendance",
-                            style: TextStyle(
+                            style: GoogleFonts.cairo(
                               fontSize: 9.sp,
-                              color: Colors.green[800],
+                              color: AppColors.successGreen,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -326,10 +325,14 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                 Container(
                   padding: EdgeInsets.all(12.r),
                   decoration: BoxDecoration(
-                    color: Colors.white,
+                    color: isDark
+                        ? AppColors.darkGlassSurface
+                        : AppColors.lightGlassSurface,
                     borderRadius: BorderRadius.circular(18.r),
                     border: Border.all(
-                      color: Colors.grey.withValues(alpha: 0.15),
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
                     ),
                   ),
                   child: Column(
@@ -338,61 +341,80 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildReportStatTile(
+                            context,
                             "Total Meetings",
                             "${widget.totalMeetings}",
-                            Colors.blue,
+                            AppColors.softGold,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Attended",
                             "${widget.attended}",
-                            Colors.green,
+                            AppColors.successGreen,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Missed",
                             "${widget.missed}",
-                            Colors.red,
+                            AppColors.heartRed,
                           ),
                         ],
                       ),
-                      Divider(height: 16.h, color: Colors.grey[200]),
+                      Divider(
+                        height: 16.h,
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildReportStatTile(
+                            context,
                             "Friday Meeting",
                             "${widget.fridayAttended}/${widget.fridayTotal}",
-                            AppColors.primaryColor,
+                            AppColors.softGold,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Sunday Activity",
                             "${widget.sundayAttended}/${widget.sundayTotal}",
                             Colors.orange,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Absence %",
                             "${widget.absencePct.toStringAsFixed(0)}%",
-                            Colors.redAccent,
+                            AppColors.heartRed,
                           ),
                         ],
                       ),
-                      Divider(height: 16.h, color: Colors.grey[200]),
+                      Divider(
+                        height: 16.h,
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _buildReportStatTile(
+                            context,
                             "Current Streak",
                             "${widget.currentStreak} 🔥",
-                            Colors.amber[800]!,
+                            AppColors.softGold,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Highest Streak",
                             "${widget.highestStreak} 🏆",
-                            Colors.purple,
+                            Colors.purple.shade300,
                           ),
                           _buildReportStatTile(
+                            context,
                             "Last Attended",
                             widget.lastAttendanceDate,
-                            Colors.teal,
+                            Colors.teal.shade300,
                           ),
                         ],
                       ),
@@ -406,18 +428,14 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.verified,
-                      size: 14.r,
-                      color: AppColors.primaryColor,
-                    ),
+                    Icon(Icons.verified, size: 14.r, color: AppColors.softGold),
                     SizedBox(width: 4.w),
                     Text(
                       "Generated by Egtma3na Platform",
-                      style: TextStyle(
+                      style: GoogleFonts.cairo(
                         fontSize: 10.sp,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey[600],
+                        color: mutedColor,
                       ),
                     ),
                   ],
@@ -438,21 +456,28 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                 icon: HugeIcon(
                   icon: HugeIcons.strokeRoundedDownload01,
                   size: 18.r,
-                  color: AppColors.primaryColor,
+                  color: textColor,
                 ),
                 label: Text(
                   "save_as_image".tr(),
-                  style: TextStyle(
+                  style: GoogleFonts.cairo(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.bold,
-                    color: AppColors.primaryColor,
+                    color: textColor,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.white,
+                  backgroundColor: isDark
+                      ? AppColors.darkGlassSurface
+                      : AppColors.lightGlassSurface,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
+                    side: BorderSide(
+                      color: isDark
+                          ? AppColors.darkBorder
+                          : AppColors.lightBorder,
+                    ),
                   ),
                   elevation: 2,
                 ),
@@ -469,14 +494,14 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
                 ),
                 label: Text(
                   "share_to_whatsapp".tr(),
-                  style: TextStyle(
+                  style: GoogleFonts.cairo(
                     fontSize: 13.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF25D366),
+                  backgroundColor: AppColors.whatsappGreen,
                   padding: EdgeInsets.symmetric(vertical: 12.h),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14.r),
@@ -491,17 +516,27 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
     );
   }
 
-  Widget _buildReportStatTile(String label, String value, Color color) {
+  Widget _buildReportStatTile(
+    BuildContext context,
+    String label,
+    String value,
+    Color color,
+  ) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
+
     return Column(
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 10.sp, color: Colors.grey[600]),
+          style: GoogleFonts.cairo(fontSize: 10.sp, color: mutedColor),
         ),
         SizedBox(height: 2.h),
         Text(
           value,
-          style: TextStyle(
+          style: GoogleFonts.cairo(
             fontSize: 13.sp,
             fontWeight: FontWeight.bold,
             color: color,
