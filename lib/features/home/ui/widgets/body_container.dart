@@ -118,6 +118,7 @@ class BodyContainer extends StatelessWidget {
                             final newCount = snapshot.data ?? 0;
 
                             return Stack(
+                              fit: StackFit.expand,
                               children: [
                                 CustomContainer(
                                   onTap: () {
