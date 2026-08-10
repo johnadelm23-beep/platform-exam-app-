@@ -6,6 +6,160 @@ import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class AuthRepo {
   static final FirebaseAuth _firebaseAuth = FirebaseAuth.instance;
+
+  /// 🔹 Centralized User Initialization & Repair System
+  /// Ensures users/{uid} document exists and has all required application fields.
+  /// For existing documents, ONLY missing fields are added via SetOptions(merge: true).
+  /// Existing fields (streaks, counts, roles, isBlocked, IDs) are NEVER reset.
+  static Future<void> ensureUserDocumentInitialized(
+    User firebaseUser, {
+    String? name,
+    String? password,
+  }) async {
+    final userDocRef = FirebaseFirestore.instance
+        .collection("users")
+        .doc(firebaseUser.uid);
+
+    final docSnap = await userDocRef.get();
+
+    if (!docSnap.exists) {
+      // -------------------------------------------------------------
+      // 1. BRAND NEW USER DOCUMENT CREATION
+      // -------------------------------------------------------------
+      final manualId = await _generateHumanReadableId();
+
+      final initialData = <String, dynamic>{
+        "uid": firebaseUser.uid,
+        "name": name ?? firebaseUser.displayName ?? "User",
+        "email": firebaseUser.email ?? "",
+        "password": password,
+        "isAdmin": false,
+        "subAdmin": false,
+        "isSubAdmin": false,
+        "isBlocked": false,
+        "profileImage": firebaseUser.photoURL,
+        "humanReadableId": manualId,
+        "attendancePercentage": 0.0,
+        "fridayAttendanceCount": 0,
+        "sundayAttendanceCount": 0,
+        "currentStreak": 0,
+        "longestStreak": 0,
+        "highestStreak": 0,
+        "totalAttendance": 0,
+        "totalAbsence": 0,
+        "lastAttendanceDate": null,
+        "phone": null,
+        "fatherPhone": null,
+        "motherPhone": null,
+        "address": null,
+        "school": null,
+        "university": null,
+        "work": null,
+        "group": "General",
+        "followUpStatus": "Regular",
+        "needVisit": false,
+        "lastContact": null,
+        "lastCallDate": null,
+        "lastVisitDate": null,
+        "notes": null,
+        "servantNotes": null,
+        "callsCount": 0,
+        "visitsCount": 0,
+      };
+
+      await userDocRef.set(initialData);
+    } else {
+      // -------------------------------------------------------------
+      // 2. EXISTING USER DOCUMENT (MIGRATION / REPAIR INCOMPLETE FIELDS)
+      // -------------------------------------------------------------
+      final existingData = docSnap.data() ?? {};
+
+      // Safeguard: Check if account is blocked
+      if (existingData["isBlocked"] == true) {
+        await FirebaseAuth.instance.signOut();
+        throw "This account is Blocked";
+      }
+
+      final missingFields = <String, dynamic>{};
+
+      void checkAndAdd(String key, dynamic defaultValue) {
+        if (!existingData.containsKey(key)) {
+          missingFields[key] = defaultValue;
+        }
+      }
+
+      checkAndAdd("uid", firebaseUser.uid);
+      if (!existingData.containsKey("name") || existingData["name"] == null) {
+        missingFields["name"] = name ?? firebaseUser.displayName ?? "User";
+      }
+      if (!existingData.containsKey("email") || existingData["email"] == null) {
+        missingFields["email"] = firebaseUser.email ?? "";
+      }
+      checkAndAdd("isAdmin", false);
+      checkAndAdd("subAdmin", false);
+      checkAndAdd("isSubAdmin", false);
+      checkAndAdd("isBlocked", false);
+      checkAndAdd("profileImage", firebaseUser.photoURL);
+      checkAndAdd("attendancePercentage", 0.0);
+      checkAndAdd("fridayAttendanceCount", 0);
+      checkAndAdd("sundayAttendanceCount", 0);
+      checkAndAdd("currentStreak", 0);
+      checkAndAdd("longestStreak", 0);
+      checkAndAdd("highestStreak", 0);
+      checkAndAdd("totalAttendance", 0);
+      checkAndAdd("totalAbsence", 0);
+      checkAndAdd("lastAttendanceDate", null);
+      checkAndAdd("phone", null);
+      checkAndAdd("fatherPhone", null);
+      checkAndAdd("motherPhone", null);
+      checkAndAdd("address", null);
+      checkAndAdd("school", null);
+      checkAndAdd("university", null);
+      checkAndAdd("work", null);
+      checkAndAdd("group", "General");
+      checkAndAdd("followUpStatus", "Regular");
+      checkAndAdd("needVisit", false);
+      checkAndAdd("lastContact", null);
+      checkAndAdd("lastCallDate", null);
+      checkAndAdd("lastVisitDate", null);
+      checkAndAdd("notes", null);
+      checkAndAdd("servantNotes", null);
+      checkAndAdd("callsCount", 0);
+      checkAndAdd("visitsCount", 0);
+
+      // Special check for humanReadableId
+      if (!existingData.containsKey("humanReadableId") ||
+          existingData["humanReadableId"] == null ||
+          existingData["humanReadableId"].toString().isEmpty) {
+        final manualId = await _generateHumanReadableId();
+        missingFields["humanReadableId"] = manualId;
+      }
+
+      if (missingFields.isNotEmpty) {
+        await userDocRef.set(missingFields, SetOptions(merge: true));
+      }
+    }
+  }
+
+  static Future<String> _generateHumanReadableId() async {
+    final counterRef = FirebaseFirestore.instance
+        .collection("metadata")
+        .doc("counters");
+    String manualId = "";
+    await FirebaseFirestore.instance.runTransaction((transaction) async {
+      final snap = await transaction.get(counterRef);
+      int currentSeq = 1;
+      if (snap.exists) {
+        currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
+      }
+      transaction.set(counterRef, {
+        "userSequence": currentSeq,
+      }, SetOptions(merge: true));
+      manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
+    });
+    return manualId;
+  }
+
   static Future<bool> login({
     required String email,
     required String password,
@@ -16,6 +170,9 @@ class AuthRepo {
         password: password,
       );
       debugPrint("${response.user}");
+      if (response.user != null) {
+        await ensureUserDocumentInitialized(response.user!);
+      }
       return true;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'user-not-found') {
@@ -46,12 +203,13 @@ class AuthRepo {
         password: password,
       );
       debugPrint("${response.user}");
-      addUser(
-        name: name,
-        email: email,
-        password: password,
-        uid: response.user?.uid ?? "",
-      );
+      if (response.user != null) {
+        await ensureUserDocumentInitialized(
+          response.user!,
+          name: name,
+          password: password,
+        );
+      }
       return true;
     } on FirebaseAuthException catch (e) {
       if (e.code == 'weak-password') {
@@ -73,40 +231,14 @@ class AuthRepo {
     required String uid,
   }) async {
     try {
-      final counterRef = FirebaseFirestore.instance
-          .collection("metadata")
-          .doc("counters");
-      String manualId = "";
-      await FirebaseFirestore.instance.runTransaction((transaction) async {
-        final snap = await transaction.get(counterRef);
-        int currentSeq = 1;
-        if (snap.exists) {
-          currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
-        }
-        transaction.set(counterRef, {
-          "userSequence": currentSeq,
-        }, SetOptions(merge: true));
-        manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
-      });
-
-      await FirebaseFirestore.instance.collection("users").doc(uid).set({
-        "uid": uid,
-        "name": name,
-        "password": password,
-        "email": email,
-        "isAdmin": false,
-        "isSubAdmin": false,
-        "profileImage": null,
-        "attendancePercentage": 0.0,
-        "fridayAttendanceCount": 0,
-        "sundayAttendanceCount": 0,
-        "currentStreak": 0,
-        "longestStreak": 0,
-        "totalAttendance": 0,
-        "totalAbsence": 0,
-        "humanReadableId": manualId,
-        "lastAttendanceDate": null,
-      });
+      final currentUser = _firebaseAuth.currentUser;
+      if (currentUser != null && currentUser.uid == uid) {
+        await ensureUserDocumentInitialized(
+          currentUser,
+          name: name,
+          password: password,
+        );
+      }
     } catch (e) {
       debugPrint("ERROR ADD USER: $e");
     }
@@ -133,22 +265,7 @@ class AuthRepo {
       final user = userCredential.user;
 
       if (user != null) {
-        final doc = await FirebaseFirestore.instance
-            .collection("users")
-            .doc(user.uid)
-            .get();
-        final data = doc.data();
-
-        if (data?["isBlocked"] == true) {
-          await FirebaseAuth.instance.signOut();
-          throw "This account is Blocked";
-        }
-
-        await FirebaseFirestore.instance.collection("users").doc(user.uid).set({
-          "name": user.displayName ?? "User",
-          "email": user.email ?? "",
-          "isBlocked": false,
-        }, SetOptions(merge: true));
+        await ensureUserDocumentInitialized(user);
       }
 
       return true;
@@ -163,6 +280,8 @@ class AuthRepo {
 
       if (currentUser == null) return null;
 
+      await ensureUserDocumentInitialized(currentUser);
+
       final userDocRef = FirebaseFirestore.instance
           .collection("users")
           .doc(currentUser.uid);
@@ -171,50 +290,6 @@ class AuthRepo {
       final data = user.data();
 
       if (data?["isBlocked"] == true) return null;
-
-      // Lazy initialization of attendance fields and human-readable IDs for older/third-party accounts
-      if (data != null && data["humanReadableId"] == null) {
-        final counterRef = FirebaseFirestore.instance
-            .collection("metadata")
-            .doc("counters");
-        String manualId = "";
-        await FirebaseFirestore.instance.runTransaction((transaction) async {
-          final snap = await transaction.get(counterRef);
-          int currentSeq = 1;
-          if (snap.exists) {
-            currentSeq = (snap.data()?["userSequence"] ?? 0) + 1;
-          }
-          transaction.set(counterRef, {
-            "userSequence": currentSeq,
-          }, SetOptions(merge: true));
-          manualId = "EGT${currentSeq.toString().padLeft(6, '0')}";
-        });
-
-        final bool isAdminVal = data["isAdmin"] == true;
-        final bool isSubVal =
-            (data["subAdmin"] == true) || (data["isSubAdmin"] == true);
-        final bool finalSubVal = isAdminVal ? false : isSubVal;
-
-        final updatedData = {
-          "uid": currentUser.uid,
-          "humanReadableId": manualId,
-          "profileImage": data["profileImage"] ?? currentUser.photoURL,
-          "attendancePercentage": data["attendancePercentage"] ?? 0.0,
-          "fridayAttendanceCount": data["fridayAttendanceCount"] ?? 0,
-          "sundayAttendanceCount": data["sundayAttendanceCount"] ?? 0,
-          "currentStreak": data["currentStreak"] ?? 0,
-          "longestStreak": data["longestStreak"] ?? 0,
-          "totalAttendance": data["totalAttendance"] ?? 0,
-          "totalAbsence": data["totalAbsence"] ?? 0,
-          "lastAttendanceDate": data["lastAttendanceDate"],
-          "isAdmin": isAdminVal,
-          "subAdmin": finalSubVal,
-          "isSubAdmin": finalSubVal,
-        };
-        await userDocRef.set(updatedData, SetOptions(merge: true));
-        final finalSnap = await userDocRef.get();
-        return UserData.fromJson(finalSnap.data() ?? {}, currentUser.uid);
-      }
 
       return UserData.fromJson(data ?? {}, currentUser.uid);
     } catch (e) {

@@ -7,6 +7,7 @@ class UserData {
   String? password;
   bool? isAdmin;
   bool? isSubAdmin;
+  bool? isBlocked;
   String? profileImage;
 
   double? attendancePercentage;
@@ -51,6 +52,7 @@ class UserData {
     this.password,
     this.isAdmin,
     this.isSubAdmin,
+    this.isBlocked,
     this.profileImage,
     this.attendancePercentage,
     this.fridayAttendanceCount,
@@ -146,6 +148,7 @@ class UserData {
     isAdmin = json["isAdmin"] == true;
     final isSub = (json["subAdmin"] == true) || (json["isSubAdmin"] == true);
     isSubAdmin = (isAdmin == true) ? false : isSub;
+    isBlocked = json["isBlocked"] == true;
     profileImage = json["profileImage"];
 
     final attendance = json["attendancePercentage"];
@@ -215,6 +218,7 @@ class UserData {
       "isAdmin": isAdmin == true,
       "subAdmin": subAdminValue,
       "isSubAdmin": subAdminValue,
+      "isBlocked": isBlocked == true,
       "profileImage": profileImage,
       "attendancePercentage": attendancePercentage ?? 0.0,
       "fridayAttendanceCount": fridayAttendanceCount ?? 0,
@@ -261,6 +265,7 @@ class UserData {
     String? password,
     bool? isAdmin,
     bool? isSubAdmin,
+    bool? isBlocked,
     String? profileImage,
     double? attendancePercentage,
     int? fridayAttendanceCount,
@@ -297,6 +302,7 @@ class UserData {
       password: password ?? this.password,
       isAdmin: isAdmin ?? this.isAdmin,
       isSubAdmin: isSubAdmin ?? this.isSubAdmin,
+      isBlocked: isBlocked ?? this.isBlocked,
       profileImage: profileImage ?? this.profileImage,
       attendancePercentage: attendancePercentage ?? this.attendancePercentage,
       fridayAttendanceCount:
