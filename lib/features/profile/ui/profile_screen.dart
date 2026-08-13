@@ -11,13 +11,16 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:screenshot/screenshot.dart';
-import 'package:share_plus/share_plus.dart';
+import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:platformexamapp/core/services/notification_service.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/attendance_history_view.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/profile_qr_dialog.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -585,6 +588,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ],
                 ),
               ),
+
+              if (kDebugMode) ...[
+                SizedBox(height: 8.h),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
+                  child: OutlinedButton.icon(
+                    onPressed: () async {
+                      final token = NotificationService.instance.currentToken;
+                      if (token != null) {
+                        await Clipboard.setData(ClipboardData(text: token));
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('FCM Token copied to clipboard!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('FCM Token not yet generated.'),
+                              backgroundColor: AppColors.heartRed,
+                            ),
+                          );
+                        }
+                      }
+                    },
+                    icon: Icon(Icons.bug_report, size: 16.r, color: AppColors.softGold),
+                    label: Text(
+                      "[DEBUG] Copy FCM Token",
+                      style: GoogleFonts.cairo(
+                        fontSize: 12.sp,
+                        color: AppColors.softGold,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: AppColors.softGold),
+                    ),
+                  ),
+                ),
+              ],
 
               SizedBox(height: 12.h),
 

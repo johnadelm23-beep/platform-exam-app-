@@ -3,6 +3,7 @@ import 'package:bloc/bloc.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
+import 'package:platformexamapp/core/services/notification_service.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 part 'home_state.dart';
@@ -45,6 +46,7 @@ canAccessContentHistory: ${userData?.canAccessContentHistory}
 ''');
 
               emit(GetUserDataSuccess());
+              NotificationService.instance.syncFcmToken();
             } else {
               emit(GetUserDaraError());
             }
