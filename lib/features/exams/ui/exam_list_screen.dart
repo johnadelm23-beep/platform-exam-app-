@@ -44,12 +44,11 @@ class _ExamsScreenState extends State<ExamsScreen> {
         size: 36.r,
       ),
       iconColor: AppColors.heartRed,
-      title: "Delete Exam?",
-      description:
-          "Are you sure you want to delete this exam? This action cannot be undone.",
-      confirmText: "Delete",
+      title: "delete_exam".tr(),
+      description: "delete_exam_desc".tr(),
+      confirmText: "delete".tr(),
       confirmButtonColor: AppColors.heartRed,
-      cancelText: "Cancel",
+      cancelText: "cancel".tr(),
       onConfirm: () {
         Navigator.pop(context);
         deleteExam(examId);
@@ -146,69 +145,62 @@ class _ExamsScreenState extends State<ExamsScreen> {
                     if (!snapshot.hasData) {
                       return const LoadingState();
                     }
-                    final exams = snapshot.data!.docs;
-                    if (exams.isEmpty) {
+                    final rawExams = snapshot.data!.docs;
+                    if (rawExams.isEmpty) {
                       return EmptyState(
                         title: "no_exams".tr(),
                         hugeIcon: HugeIcons.strokeRoundedFile01,
                       );
                     }
+
+                    // Deterministic Sorting:
+                    // 1. "order" field ascending (if explicitly defined)
+                    // 2. "createdAt" timestamp descending (newer exams first)
+                    // 3. Document ID ascending tiebreaker
+                    final exams = rawExams.toList()
+                      ..sort((a, b) {
+                        final dataA = a.data() as Map<String, dynamic>;
+                        final dataB = b.data() as Map<String, dynamic>;
+
+                        final orderA = dataA["order"] as num?;
+                        final orderB = dataB["order"] as num?;
+
+                        if (orderA != null && orderB != null) {
+                          final cmp = orderA.compareTo(orderB);
+                          if (cmp != 0) return cmp;
+                        } else if (orderA != null) {
+                          return -1;
+                        } else if (orderB != null) {
+                          return 1;
+                        }
+
+                        final timeA = dataA["createdAt"] as Timestamp?;
+                        final timeB = dataB["createdAt"] as Timestamp?;
+
+                        if (timeA != null && timeB != null) {
+                          final cmp = timeB.compareTo(timeA);
+                          if (cmp != 0) return cmp;
+                        } else if (timeA != null) {
+                          return -1;
+                        } else if (timeB != null) {
+                          return 1;
+                        }
+
+                        final titleA = (dataA["title"] ?? "").toString();
+                        final titleB = (dataB["title"] ?? "").toString();
+                        return titleA.compareTo(titleB);
+                      });
+
                     return ListView.separated(
                       physics: const BouncingScrollPhysics(),
                       itemCount: exams.length,
                       separatorBuilder: (_, _) => SizedBox(height: 12.h),
                       itemBuilder: (context, index) {
-                        final exam = exams[index];
-                        return GlassCard(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              AppPageRoute(
-                                child: ExamDetailsScreen(
-                                  examId: exam.id,
-                                  title: exam["title"],
-                                  time: exam["time"],
-                                ),
-                              ),
-                            );
-                          },
-                          padding: EdgeInsets.all(16.r),
-                          borderRadius: 20.r,
-                          child: Row(
-                            children: [
-                              Container(
-                                padding: EdgeInsets.all(10.r),
-                                decoration: BoxDecoration(
-                                  color: AppColors.softGold.withOpacity(0.15),
-                                  shape: BoxShape.circle,
-                                ),
-                                child: HugeIcon(
-                                  icon: HugeIcons.strokeRoundedFile01,
-                                  color: AppColors.softGold,
-                                  size: 24.r,
-                                ),
-                              ),
-                              SizedBox(width: 12.w),
-                              Expanded(
-                                child: Text(
-                                  exam["title"],
-                                  style: GoogleFonts.cairo(
-                                    fontSize: 16.sp,
-                                    fontWeight: FontWeight.bold,
-                                    color: textColor,
-                                  ),
-                                ),
-                              ),
-                              if (widget.user.isAdmin == true)
-                                IconButton(
-                                  onPressed: () => showDeleteExamDialog(exam.id),
-                                  icon: const HugeIcon(
-                                    icon: HugeIcons.strokeRoundedDelete01,
-                                    color: AppColors.softRed,
-                                  ),
-                                ),
-                            ],
-                          ),
+                        final examDoc = exams[index];
+                        return _ExamCardItem(
+                          examDoc: examDoc,
+                          isAdmin: widget.user.isAdmin == true,
+                          onDelete: () => showDeleteExamDialog(examDoc.id),
                         );
                       },
                     );
@@ -218,6 +210,176 @@ class _ExamsScreenState extends State<ExamsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _ExamCardItem extends StatelessWidget {
+  final QueryDocumentSnapshot examDoc;
+  final bool isAdmin;
+  final VoidCallback onDelete;
+
+  const _ExamCardItem({
+    required this.examDoc,
+    required this.isAdmin,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final data = examDoc.data() as Map<String, dynamic>;
+    final title = (data["title"] ?? "").toString();
+    final timeMinutes = (data["time"] as num?)?.toInt() ?? 0;
+
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+
+    return GlassCard(
+      onTap: () {
+        Navigator.push(
+          context,
+          AppPageRoute(
+            child: ExamDetailsScreen(
+              examId: examDoc.id,
+              title: title,
+              time: timeMinutes,
+            ),
+          ),
+        );
+      },
+      padding: EdgeInsets.all(16.r),
+      borderRadius: 20.r,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: EdgeInsets.all(10.r),
+                decoration: BoxDecoration(
+                  color: AppColors.softGold.withOpacity(0.15),
+                  shape: BoxShape.circle,
+                ),
+                child: HugeIcon(
+                  icon: HugeIcons.strokeRoundedFile01,
+                  color: AppColors.softGold,
+                  size: 24.r,
+                ),
+              ),
+              SizedBox(width: 12.w),
+              Expanded(
+                child: Text(
+                  title,
+                  style: GoogleFonts.cairo(
+                    fontSize: 16.sp,
+                    fontWeight: FontWeight.bold,
+                    color: textColor,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (isAdmin)
+                IconButton(
+                  onPressed: onDelete,
+                  icon: const HugeIcon(
+                    icon: HugeIcons.strokeRoundedDelete01,
+                    color: AppColors.softRed,
+                  ),
+                ),
+            ],
+          ),
+
+          SizedBox(height: 12.h),
+
+          /// Badges Row: Questions count & Duration
+          StreamBuilder<QuerySnapshot>(
+            stream: examDoc.reference.collection("questions").snapshots(),
+            builder: (context, qSnap) {
+              final qCount = qSnap.hasData ? qSnap.data!.docs.length : null;
+              final qText = qCount == null
+                  ? "..."
+                  : "exam_questions_count".tr(args: [qCount.toString()]);
+              final timeText =
+                  "exam_duration".tr(args: [timeMinutes.toString()]);
+
+              return Row(
+                children: [
+                  /// Questions Badge
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: isDark
+                          ? Colors.white.withOpacity(0.06)
+                          : Colors.black.withOpacity(0.04),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: isDark
+                            ? AppColors.darkBorder
+                            : AppColors.lightBorder,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedHelpCircle,
+                          size: 14.r,
+                          color: AppColors.softGold,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          qText,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.w600,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  SizedBox(width: 8.w),
+
+                  /// Duration Badge
+                  Container(
+                    padding:
+                        EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                    decoration: BoxDecoration(
+                      color: AppColors.softGold.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(10.r),
+                      border: Border.all(
+                        color: AppColors.softGold.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        HugeIcon(
+                          icon: HugeIcons.strokeRoundedClock01,
+                          size: 14.r,
+                          color: AppColors.softGold,
+                        ),
+                        SizedBox(width: 6.w),
+                        Text(
+                          timeText,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.sp,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.softGold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
       ),
     );
   }

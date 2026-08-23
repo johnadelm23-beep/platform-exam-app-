@@ -267,6 +267,8 @@
   "bonus_deleted_success": "تم حذف سجل البونص!",
   "delete_bonus_confirm": "هل أنت متأكد من حذف سجل البونص ده؟",
   "edit_bonus": "تعديل البونص",
-  "invalid_amount": "يرجى كتابة رقم صحيح موجب"
+  "invalid_amount": "يرجى كتابة رقم صحيح موجب",
+  "exam_duration": "مدة الامتحان: {} دقيقة",
+  "exam_questions_count": "عدد الأسئلة: {}"
 }
 
