@@ -6,6 +6,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:share_plus/share_plus.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class FollowUpExportService {
@@ -84,11 +85,11 @@ class FollowUpExportService {
                   _buildPdfSummaryTile('Total Users', '${users.length}'),
                   _buildPdfSummaryTile(
                     'Need Follow-up',
-                    '${users.where((u) => u.followUpStatus == "Needs Follow-up" || (u.attendancePercentage ?? 0) < 50).length}',
+                    '${users.where((u) => AdminFollowUpHelper.isNeedingFollowUp(u.attendancePercentage ?? 0.0)).length}',
                   ),
                   _buildPdfSummaryTile(
                     'Urgent Cases',
-                    '${users.where((u) => u.followUpStatus == "Urgent").length}',
+                    '${users.where((u) => AdminFollowUpHelper.getDynamicStatusKey(u.attendancePercentage ?? 0.0) == "Urgent").length}',
                   ),
                 ],
               ),
@@ -121,11 +122,12 @@ class FollowUpExportService {
                 cellStyle: const pw.TextStyle(fontSize: 9),
                 cellAlignment: pw.Alignment.centerLeft,
                 data: users.map((u) {
+                  final pct = u.attendancePercentage ?? 0.0;
                   return [
                     u.name ?? 'No Name',
                     u.phone ?? 'N/A',
-                    u.followUpStatus ?? 'Regular',
-                    '${(u.attendancePercentage ?? 0.0).toStringAsFixed(0)}%',
+                    AdminFollowUpHelper.getDynamicStatusText(pct, isArabic: false),
+                    '${pct.toStringAsFixed(0)}%',
                     _formatDate(u.lastCallDate),
                     _formatDate(u.lastVisitDate),
                     u.notes ?? '-',
@@ -223,7 +225,12 @@ class FollowUpExportService {
           TextCellValue(u.phone ?? ''),
           TextCellValue(u.fatherPhone ?? ''),
           TextCellValue(u.motherPhone ?? ''),
-          TextCellValue(u.followUpStatus ?? 'Regular'),
+          TextCellValue(
+            AdminFollowUpHelper.getDynamicStatusText(
+              u.attendancePercentage ?? 0.0,
+              isArabic: false,
+            ),
+          ),
           TextCellValue(
             '${(u.attendancePercentage ?? 0.0).toStringAsFixed(1)}%',
           ),

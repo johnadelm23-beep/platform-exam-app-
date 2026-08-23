@@ -6,6 +6,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/theme/app_page_route.dart';
+import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
@@ -32,6 +33,28 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
   Future<void> deleteExam(String examId) async {
     await FirebaseFirestore.instance.collection("exams").doc(examId).delete();
+  }
+
+  void showDeleteExamDialog(String examId) {
+    AppDialog.show(
+      context: context,
+      iconWidget: HugeIcon(
+        icon: HugeIcons.strokeRoundedDelete01,
+        color: AppColors.heartRed,
+        size: 36.r,
+      ),
+      iconColor: AppColors.heartRed,
+      title: "Delete Exam?",
+      description:
+          "Are you sure you want to delete this exam? This action cannot be undone.",
+      confirmText: "Delete",
+      confirmButtonColor: AppColors.heartRed,
+      cancelText: "Cancel",
+      onConfirm: () {
+        Navigator.pop(context);
+        deleteExam(examId);
+      },
+    );
   }
 
   @override
@@ -178,7 +201,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
                               ),
                               if (widget.user.isAdmin == true)
                                 IconButton(
-                                  onPressed: () => deleteExam(exam.id),
+                                  onPressed: () => showDeleteExamDialog(exam.id),
                                   icon: const HugeIcon(
                                     icon: HugeIcons.strokeRoundedDelete01,
                                     color: AppColors.softRed,

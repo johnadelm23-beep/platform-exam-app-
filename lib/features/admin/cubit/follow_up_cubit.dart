@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:platformexamapp/features/admin/cubit/follow_up_state.dart';
 import 'package:platformexamapp/features/admin/data/follow_up_repository.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 
 class FollowUpCubit extends Cubit<FollowUpState> {
@@ -42,15 +43,15 @@ class FollowUpCubit extends Cubit<FollowUpState> {
 
     for (var u in users) {
       final pct = u.attendancePercentage ?? 0.0;
-      final status = u.followUpStatus ?? "Regular";
+      final dynamicStatus = AdminFollowUpHelper.getDynamicStatusKey(pct);
 
       if (pct > 0 || (u.totalAttendance ?? 0) > 0) {
         active++;
       }
-      if (status == "Needs Follow-up" || pct < 50.0 || (u.needVisit == true)) {
+      if (AdminFollowUpHelper.isNeedingFollowUp(pct)) {
         needFollowUp++;
       }
-      if (status == "Urgent") {
+      if (dynamicStatus == "Urgent") {
         urgent++;
       }
       calls += (u.callsCount ?? 0);
@@ -177,10 +178,11 @@ class FollowUpCubit extends Cubit<FollowUpState> {
       if (needVisitFilter == 'Yes' && u.needVisit != true) return false;
       if (needVisitFilter == 'No' && u.needVisit == true) return false;
 
-      // 5. Follow-up Status Filter
-      if (statusFilter != 'All' &&
-          (u.followUpStatus ?? 'Regular') != statusFilter)
+      // 5. Dynamic Follow-up Status Filter
+      final dynamicStatus = AdminFollowUpHelper.getDynamicStatusKey(pct);
+      if (statusFilter != 'All' && dynamicStatus != statusFilter) {
         return false;
+      }
 
       return true;
     }).toList();

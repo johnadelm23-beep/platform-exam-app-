@@ -34,24 +34,30 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           for (var doc in snap.docs) {
             final data = doc.data();
 
-            final userId = data["userId"];
-            final score = (data["score"] ?? 0) as int;
-            final createdAt = data["createdAt"] as Timestamp?;
+            // Skip abandoned attempts
+            if (data["abandoned"] == true) continue;
+
+            final userId = data["userId"] as String?;
+            if (userId == null || userId.isEmpty) continue;
+
+            final scoreRaw = data["score"];
+            final score = scoreRaw is num ? scoreRaw.toInt() : 0;
+            final timestamp = data["timestamp"] as Timestamp? ?? data["createdAt"] as Timestamp?;
 
             if (!users.containsKey(userId)) {
               users[userId] = {
                 "userId": userId,
                 "totalScore": 0,
-                "firstTime": createdAt,
+                "firstTime": timestamp,
               };
             }
 
-            users[userId]!["totalScore"] += score;
+            users[userId]!["totalScore"] = (users[userId]!["totalScore"] as int) + score;
 
-            if (createdAt != null) {
+            if (timestamp != null) {
               final old = users[userId]!["firstTime"] as Timestamp?;
-              if (old == null || createdAt.compareTo(old) < 0) {
-                users[userId]!["firstTime"] = createdAt;
+              if (old == null || timestamp.compareTo(old) < 0) {
+                users[userId]!["firstTime"] = timestamp;
               }
             }
           }
@@ -59,19 +65,31 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           final list = users.values.toList();
 
           list.sort((a, b) {
-            final scoreA = a["totalScore"] as int;
-            final scoreB = b["totalScore"] as int;
+            final scoreA = (a["totalScore"] ?? 0) as int;
+            final scoreB = (b["totalScore"] ?? 0) as int;
 
+            // 1. Sort by total score descending
             if (scoreA != scoreB) {
               return scoreB.compareTo(scoreA);
             }
 
+            // 2. Submission priority: Earlier submission timestamp ranks higher
             final timeA = a["firstTime"] as Timestamp?;
             final timeB = b["firstTime"] as Timestamp?;
 
-            if (timeA == null || timeB == null) return 0;
+            if (timeA != null && timeB != null) {
+              final cmp = timeA.compareTo(timeB);
+              if (cmp != 0) return cmp;
+            } else if (timeA != null) {
+              return -1;
+            } else if (timeB != null) {
+              return 1;
+            }
 
-            return timeA.compareTo(timeB);
+            // 3. Deterministic fallback: userId comparison
+            final idA = (a["userId"] ?? "").toString();
+            final idB = (b["userId"] ?? "").toString();
+            return idA.compareTo(idB);
           });
 
           return list;

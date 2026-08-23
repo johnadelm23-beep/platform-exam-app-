@@ -98,6 +98,7 @@ class UserData {
   bool get canAccessGradeStates => isAdminVal || subAdmin;
   bool get canAccessContentHistory => isAdminVal || subAdmin;
   bool get canAccessTopInteractions => isAdminVal || subAdmin;
+  bool get canManageBonus => isAdminVal || subAdmin;
 
   bool get canAccessDashboard =>
       canAccessScanner ||
@@ -106,7 +107,8 @@ class UserData {
       canAccessAttendanceState ||
       canAccessGradeStates ||
       canAccessContentHistory ||
-      canAccessTopInteractions;
+      canAccessTopInteractions ||
+      canManageBonus;
 
   bool get canCreateContent => isAdminVal;
   bool get canCreatePost => isAdminVal;

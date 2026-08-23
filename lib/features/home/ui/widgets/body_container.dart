@@ -17,6 +17,7 @@ import 'package:platformexamapp/features/home/ui/widgets/post_container.dart';
 import 'package:platformexamapp/features/profile/ui/profile_screen.dart';
 import 'package:platformexamapp/features/states/ui/states_screen.dart';
 import 'package:platformexamapp/features/home/ui/daily_content_screen.dart';
+import 'package:platformexamapp/features/bonus/ui/user_bonus_screen.dart';
 
 class BodyContainer extends StatefulWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
@@ -82,6 +83,7 @@ class _BodyContainerState extends State<BodyContainer> {
       "exams",
       if (hasDashboardAccess) "dashboard",
       "results",
+      "bonus",
       "profile",
       "today_content",
     ];
@@ -210,6 +212,20 @@ class _BodyContainerState extends State<BodyContainer> {
                             Navigator.push(
                               context,
                               AppPageRoute(child: LeaderboardScreen()),
+                            );
+                          },
+                        );
+                      }
+
+                      if (item == "bonus") {
+                        return CustomContainer(
+                          title: "bonus".tr(),
+                          icon: HugeIcons.strokeRoundedAward01,
+                          color: AppColors.softGold,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              AppPageRoute(child: const UserBonusScreen()),
                             );
                           },
                         );

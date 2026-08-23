@@ -3,13 +3,34 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/custom_text_form_field.dart';
 
+class QuestionDraft {
+  String question;
+  List<String> options;
+  int correctAnswer;
+
+  QuestionDraft({
+    required this.question,
+    required this.options,
+    required this.correctAnswer,
+  });
+}
+
 class AddQuestionScreen extends StatefulWidget {
-  final String examId;
-  const AddQuestionScreen({super.key, required this.examId});
+  final String examTitle;
+  final int examTime;
+  final String? examId;
+
+  const AddQuestionScreen({
+    super.key,
+    required this.examTitle,
+    required this.examTime,
+    this.examId,
+  });
 
   @override
   State<AddQuestionScreen> createState() => _AddQuestionScreenState();
@@ -24,8 +45,12 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
   final option4 = TextEditingController();
 
   int correctIndex = 0;
+  int? editingIndex;
+  bool isPublishing = false;
 
-  Future<void> addQuestion() async {
+  final List<QuestionDraft> draftQuestions = [];
+
+  void addOrUpdateQuestion() {
     final question = questionController.text.trim();
     final op1 = option1.text.trim();
     final op2 = option2.text.trim();
@@ -37,59 +62,122 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         op2.isEmpty ||
         op3.isEmpty ||
         op4.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text("Please fill all fields", style: GoogleFonts.cairo()),
-          backgroundColor: AppColors.heartRed,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+      _showSnackBar("Please fill all fields", isError: true);
       return;
     }
 
     if (correctIndex < 0 || correctIndex > 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "Please select correct answer",
-            style: GoogleFonts.cairo(),
-          ),
-          backgroundColor: AppColors.heartRed,
-        ),
-      );
+      _showSnackBar("Please select correct answer", isError: true);
       return;
     }
 
-    await FirebaseFirestore.instance
-        .collection("exams")
-        .doc(widget.examId)
-        .collection("questions")
-        .add({
-          "question": question,
-          "options": [op1, op2, op3, op4],
-          "correctAnswer": correctIndex,
-        });
+    final draft = QuestionDraft(
+      question: question,
+      options: [op1, op2, op3, op4],
+      correctAnswer: correctIndex,
+    );
 
+    setState(() {
+      if (editingIndex != null) {
+        draftQuestions[editingIndex!] = draft;
+        editingIndex = null;
+      } else {
+        draftQuestions.add(draft);
+      }
+    });
+
+    _clearInputs();
+
+    _showSnackBar("✅ Question saved to draft", isError: false);
+  }
+
+  void editQuestion(int index) {
+    final q = draftQuestions[index];
+    setState(() {
+      editingIndex = index;
+      questionController.text = q.question;
+      option1.text = q.options[0];
+      option2.text = q.options[1];
+      option3.text = q.options[2];
+      option4.text = q.options[3];
+      correctIndex = q.correctAnswer;
+    });
+  }
+
+  void deleteQuestion(int index) {
+    setState(() {
+      if (editingIndex == index) {
+        editingIndex = null;
+        _clearInputs();
+      }
+      draftQuestions.removeAt(index);
+    });
+  }
+
+  void _clearInputs() {
     questionController.clear();
     option1.clear();
     option2.clear();
     option3.clear();
     option4.clear();
+    setState(() {
+      correctIndex = 0;
+    });
+  }
 
-    setState(() => correctIndex = 0);
-
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            "✅ Question added successfully",
-            style: GoogleFonts.cairo(),
-          ),
-          backgroundColor: AppColors.successGreen,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
+  Future<void> finishAndPublishExam() async {
+    if (draftQuestions.isEmpty) {
+      _showSnackBar("Please add at least one question before publishing", isError: true);
+      return;
     }
+
+    setState(() => isPublishing = true);
+
+    try {
+      final examRef = await FirebaseFirestore.instance.collection("exams").add({
+        "title": widget.examTitle,
+        "time": widget.examTime,
+        "createdAt": FieldValue.serverTimestamp(),
+      });
+
+      final batch = FirebaseFirestore.instance.batch();
+      for (var q in draftQuestions) {
+        final qRef = examRef.collection("questions").doc();
+        batch.set(qRef, {
+          "question": q.question,
+          "options": q.options,
+          "correctAnswer": q.correctAnswer,
+        });
+      }
+
+      await batch.commit();
+
+      if (!mounted) return;
+
+      _showSnackBar("✅ Exam published successfully!", isError: false);
+
+      // Pop back to exams list screen (pop twice: AddQuestionScreen & AddExamScreen)
+      Navigator.of(context).pop();
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (mounted) {
+        _showSnackBar("Failed to publish exam: $e", isError: true);
+      }
+    } finally {
+      if (mounted) {
+        setState(() => isPublishing = false);
+      }
+    }
+  }
+
+  void _showSnackBar(String msg, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg, style: GoogleFonts.cairo()),
+        backgroundColor: isError ? AppColors.heartRed : AppColors.successGreen,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Widget optionTile(TextEditingController controller, int index) {
@@ -105,7 +193,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         padding: EdgeInsets.all(14.r),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.softGold.withOpacity(0.18)
+              ? AppColors.softGold.withValues(alpha: 0.18)
               : isDark
               ? AppColors.darkGlassSurface
               : AppColors.lightGlassSurface,
@@ -156,6 +244,9 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
         ? AppColors.darkSurface
         : AppColors.lightSurface;
     final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
+    final mutedColor = isDark
+        ? AppColors.darkTextMuted
+        : AppColors.lightTextMuted;
 
     return Scaffold(
       backgroundColor: pageBg,
@@ -172,8 +263,8 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.black.withOpacity(0.05),
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -184,12 +275,28 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  Text(
-                    "add_questions".tr(),
-                    style: GoogleFonts.cairo(
-                      fontSize: 22.sp,
-                      color: textColor,
-                      fontWeight: FontWeight.bold,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "add_questions".tr(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 20.sp,
+                            color: textColor,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          widget.examTitle,
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.sp,
+                            color: AppColors.softGold,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -213,7 +320,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        "question".tr(),
+                        editingIndex != null ? "تعديل السؤال" : "question".tr(),
                         style: GoogleFonts.cairo(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
@@ -270,33 +377,169 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       SizedBox(height: 4.h),
                       optionTile(option4, 3),
 
-                      SizedBox(height: 20.h),
+                      SizedBox(height: 16.h),
 
                       AppButton(
-                        onPressed: addQuestion,
-                        text: "add_question".tr(),
+                        onPressed: addOrUpdateQuestion,
+                        text: editingIndex != null
+                            ? "تحديث السؤال"
+                            : "add_question".tr(),
                       ),
 
+                      if (editingIndex != null) ...[
+                        SizedBox(height: 8.h),
+                        Center(
+                          child: TextButton(
+                            onPressed: () {
+                              setState(() {
+                                editingIndex = null;
+                                _clearInputs();
+                              });
+                            },
+                            child: Text(
+                              "إلغاء التعديل",
+                              style: GoogleFonts.cairo(color: AppColors.heartRed),
+                            ),
+                          ),
+                        ),
+                      ],
+
+                      SizedBox(height: 24.h),
+                      Divider(color: borderColor),
                       SizedBox(height: 12.h),
 
-                      OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: borderColor),
+                      // Draft Questions Review Section
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "الأسئلة المضافة (${draftQuestions.length})",
+                            style: GoogleFonts.cairo(
+                              fontSize: 16.sp,
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 8.h),
+
+                      if (draftQuestions.isEmpty)
+                        Padding(
+                          padding: EdgeInsets.symmetric(vertical: 16.h),
+                          child: Center(
+                            child: Text(
+                              "لم يتم إضافة أسئلة بعد",
+                              style: GoogleFonts.cairo(
+                                color: mutedColor,
+                                fontSize: 13.sp,
+                              ),
+                            ),
+                          ),
+                        )
+                      else
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: draftQuestions.length,
+                          itemBuilder: (context, index) {
+                            final q = draftQuestions[index];
+                            return Container(
+                              margin: EdgeInsets.only(bottom: 10.h),
+                              padding: EdgeInsets.all(12.r),
+                              decoration: BoxDecoration(
+                                color: isDark
+                                    ? AppColors.darkGlassSurface
+                                    : AppColors.lightGlassSurface,
+                                borderRadius: BorderRadius.circular(14.r),
+                                border: Border.all(color: borderColor),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  CircleAvatar(
+                                    radius: 14.r,
+                                    backgroundColor: AppColors.softGold,
+                                    child: Text(
+                                      "${index + 1}",
+                                      style: GoogleFonts.cairo(
+                                        color: Colors.black,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 12.sp,
+                                      ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 10.w),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          q.question,
+                                          style: GoogleFonts.cairo(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 14.sp,
+                                            color: textColor,
+                                          ),
+                                        ),
+                                        SizedBox(height: 4.h),
+                                        Text(
+                                          "الإجابة الصحيحة: ${q.options[q.correctAnswer]}",
+                                          style: GoogleFonts.cairo(
+                                            fontSize: 12.sp,
+                                            color: AppColors.successGreen,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  IconButton(
+                                    icon: const HugeIcon(
+                                      icon: HugeIcons.strokeRoundedEdit02,
+                                      color: Colors.blue,
+                                    ),
+                                    onPressed: () => editQuestion(index),
+                                  ),
+                                  IconButton(
+                                    icon: const HugeIcon(
+                                      icon: HugeIcons.strokeRoundedDelete01,
+                                      color: AppColors.heartRed,
+                                    ),
+                                    onPressed: () => deleteQuestion(index),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                        ),
+
+                      SizedBox(height: 24.h),
+
+                      // Final Publish Button
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.successGreen,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16.r),
                           ),
-                          minimumSize: Size(double.infinity, 50.h),
+                          minimumSize: Size(double.infinity, 52.h),
                         ),
-                        onPressed: () => Navigator.pop(context),
-                        child: Text(
-                          "finish".tr(),
-                          style: GoogleFonts.cairo(
-                            fontSize: 16.sp,
-                            fontWeight: FontWeight.bold,
-                            color: textColor,
-                          ),
-                        ),
+                        onPressed: isPublishing ? null : finishAndPublishExam,
+                        child: isPublishing
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : Text(
+                                "إنهاء ونشر الامتحان",
+                                style: GoogleFonts.cairo(
+                                  fontSize: 16.sp,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
+                              ),
                       ),
+
+                      SizedBox(height: 20.h),
                     ],
                   ),
                 ),

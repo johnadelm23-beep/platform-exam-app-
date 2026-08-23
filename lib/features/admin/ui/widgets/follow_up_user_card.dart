@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/user_avatar.dart';
 
@@ -48,39 +49,6 @@ class FollowUpUserCard extends StatelessWidget {
     }
   }
 
-  Color _getStatusColor(String status) {
-    switch (status) {
-      case "Excellent":
-      case "ممتاز":
-        return const Color(0xFF2E7D32);
-      case "Regular":
-      case "منتظم":
-        return const Color(0xFF1976D2);
-      case "Needs Follow-up":
-      case "بحاجة لافتقاد":
-        return const Color(0xFFED6C02);
-      case "Urgent":
-      case "حالة عاجلة":
-        return const Color(0xFFD32F2F);
-      default:
-        return const Color(0xFF0288D1);
-    }
-  }
-
-  String _getLocalizedStatus(String status) {
-    switch (status) {
-      case "Excellent":
-        return "status_excellent".tr();
-      case "Needs Follow-up":
-        return "status_needs_follow_up".tr();
-      case "Urgent":
-        return "status_urgent".tr();
-      case "Regular":
-      default:
-        return "status_regular".tr();
-    }
-  }
-
   String _formatDate(DateTime? date) {
     if (date == null) return "not_set".tr();
     return DateFormat("yyyy/MM/dd").format(date);
@@ -89,10 +57,13 @@ class FollowUpUserCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final statusKey = user.followUpStatus ?? "Regular";
-    final localizedStatus = _getLocalizedStatus(statusKey);
-    final statusColor = _getStatusColor(statusKey);
     final attPct = user.attendancePercentage ?? 0.0;
+    final isArabic = EasyLocalization.of(context)?.locale.languageCode == 'ar';
+    final localizedStatus = AdminFollowUpHelper.getDynamicStatusText(
+      attPct,
+      isArabic: isArabic,
+    );
+    final statusColor = AdminFollowUpHelper.getStatusColor(attPct);
     final lastCallStr = user.lastCallDate != null
         ? _formatDate(user.lastCallDate)
         : null;

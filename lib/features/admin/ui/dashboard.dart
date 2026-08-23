@@ -20,6 +20,7 @@ import 'package:platformexamapp/features/admin/ui/daily_content_management.dart'
 import 'package:platformexamapp/features/admin/ui/daily_content_history.dart';
 import 'package:platformexamapp/features/admin/ui/seasons_management.dart';
 import 'package:platformexamapp/features/admin/ui/admin_follow_up_screen.dart';
+import 'package:platformexamapp/features/admin/ui/admin_bonus_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key, required this.user});
@@ -283,6 +284,20 @@ class AdminDashboardScreen extends StatelessWidget {
                             context,
                             AppPageRoute(
                               child: const SeasonsManagementScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                    if (user.canManageBonus)
+                      CustomContainer(
+                        title: "bonus_management".tr(),
+                        icon: HugeIcons.strokeRoundedAward01,
+                        color: AppColors.softGold,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            AppPageRoute(
+                              child: AdminBonusScreen(user: user),
                             ),
                           );
                         },

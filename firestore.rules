@@ -20,11 +20,16 @@ service cloud.firestore {
       return isAdmin() || isSubAdmin();
     }
 
-    // Users collection
+    // Users collection - Prevent users from escalating privileges (isAdmin/subAdmin/isBlocked)
     match /users/{userId} {
       allow read: if request.auth != null;
-      allow create: if request.auth != null;
-      allow update: if request.auth != null && (request.auth.uid == userId || isAnyAdmin());
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if request.auth != null && (
+        isAnyAdmin() || (
+          request.auth.uid == userId && 
+          !(request.resource.data.diff(resource.data).affectedKeys().hasAny(['isAdmin', 'subAdmin', 'isSubAdmin', 'isBlocked']))
+        )
+      );
       allow delete: if isAdmin();
     }
 
@@ -34,15 +39,78 @@ service cloud.firestore {
       allow create, update, delete: if isAnyAdmin();
     }
 
-    // Attendance collection
+    // Attendance collection - Write restricted to Admins
     match /attendance/{attendanceId} {
       allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
     }
 
-    // Default rule for other collections
+    // Exams & questions
+    match /exams/{examId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
+
+      match /questions/{questionId} {
+        allow read: if request.auth != null;
+        allow create, update, delete: if isAnyAdmin();
+      }
+    }
+
+    // Exam attempts - Strictly enforced document ID (userId_examId), non-overwriteable once submitted
+    match /examAttempts/{attemptId} {
+      allow read: if request.auth != null;
+      
+      allow create: if request.auth != null
+        && attemptId == request.auth.uid + "_" + request.resource.data.examId
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0;
+
+      allow update: if request.auth != null
+        && attemptId == request.auth.uid + "_" + request.resource.data.examId
+        && request.resource.data.userId == request.auth.uid
+        && resource.data.done != true
+        && request.resource.data.score is int
+        && request.resource.data.score >= 0;
+
+      allow delete: if isAnyAdmin();
+    }
+
+    // Bonus collection - Users can ONLY read their own bonus records. Admin has full rights.
+    match /bonuses/{bonusId} {
+      allow read: if request.auth != null && (
+        isAnyAdmin() || resource.data.userId == request.auth.uid
+      );
+      allow create, update, delete: if isAnyAdmin();
+    }
+
+    // Posts & community updates
+    match /posts/{postId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
+    }
+
+    // Events & seasons
+    match /events/{eventId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
+    }
+
+    match /seasons/{seasonId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
+    }
+
+    // Daily content
+    match /daily_content/{contentId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if isAnyAdmin();
+    }
+
+    // Default fallback rule - Read allowed for auth users, Write strictly blocked for non-admins
     match /{document=**} {
-      allow read, write: if request.auth != null;
+      allow read: if request.auth != null;
+      allow write: if isAnyAdmin();
     }
   }
 }

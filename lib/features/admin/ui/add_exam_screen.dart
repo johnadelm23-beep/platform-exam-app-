@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
@@ -57,40 +56,21 @@ class _AddExamScreenState extends State<AddExamScreen> {
     );
   }
 
-  Future<void> createExam() async {
+  void createExam() {
     if (!validate()) return;
 
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
-    final userDoc = await FirebaseFirestore.instance
-        .collection("users")
-        .doc(currentUser.uid)
-        .get();
-    if (userDoc.data()?["isAdmin"] != true) {
-      _showError("Permission denied: Main Admin only.");
-      return;
-    }
 
-    setState(() => isLoading = true);
-
-    try {
-      final examRef = await FirebaseFirestore.instance.collection("exams").add({
-        "title": titleController.text.trim(),
-        "time": int.parse(timeController.text.trim()),
-        "createdAt": FieldValue.serverTimestamp(),
-      });
-
-      if (!mounted) return;
-
-      Navigator.push(
-        context,
-        AppPageRoute(child: AddQuestionScreen(examId: examRef.id)),
-      );
-    } catch (e) {
-      _showError("Something went wrong");
-    }
-
-    setState(() => isLoading = false);
+    Navigator.push(
+      context,
+      AppPageRoute(
+        child: AddQuestionScreen(
+          examTitle: titleController.text.trim(),
+          examTime: int.parse(timeController.text.trim()),
+        ),
+      ),
+    );
   }
 
   @override

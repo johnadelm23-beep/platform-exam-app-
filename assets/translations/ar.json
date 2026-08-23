@@ -246,6 +246,27 @@
   "personal_info": "البيانات الشخصية",
   "not_set": "غير محدد",
   "select_date": "اختر التاريخ",
-  "saving_to_firestore": "جاري الحفظ في الفايرستور..."
+  "saving_to_firestore": "جاري الحفظ في الفايرستور...",
+  "bonus": "البونص 🌟",
+  "bonus_management": "إدارة البونص",
+  "bonus_stats": "إحصائيات البونص",
+  "total_bonus": "إجمالي البونص",
+  "total_spent": "إجمالي المستهلك",
+  "remaining_bonus": "البونص المتبقي",
+  "add_bonus": "إضافة بونص",
+  "record_spent": "تسجيل استهلاك",
+  "bonus_amount": "قيمة البونص",
+  "spent_amount": "القيمة المستهلكة",
+  "reason_optional": "السبب / العنوان (اختياري)",
+  "users_with_bonus": "الأعضاء بالحافز",
+  "total_transactions": "إجمالي العمليات",
+  "user_breakdown": "تفاصيل الأعضاء",
+  "no_bonus_records": "لا توجد سجلات بونص.",
+  "bonus_added_success": "تمت إضافة البونص بنجاح!",
+  "bonus_spent_success": "تم تسجيل استهلاك البونص بنجاح!",
+  "bonus_deleted_success": "تم حذف سجل البونص!",
+  "delete_bonus_confirm": "هل أنت متأكد من حذف سجل البونص ده؟",
+  "edit_bonus": "تعديل البونص",
+  "invalid_amount": "يرجى كتابة رقم صحيح موجب"
 }
 

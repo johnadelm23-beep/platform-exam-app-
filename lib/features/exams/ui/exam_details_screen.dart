@@ -105,11 +105,14 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
         .doc("${uid}_${widget.examId}")
         .get();
 
-    if (doc.exists && mounted) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        showAlreadyTakenDialog();
-      });
-      return true;
+    if (doc.exists) {
+      final data = doc.data();
+      if (data != null && data["done"] == true && mounted) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          showAlreadyTakenDialog();
+        });
+        return true;
+      }
     }
 
     return false;
@@ -213,13 +216,17 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
         .set({
           "userId": uid,
           "examId": widget.examId,
+          "examTitle": widget.title,
           "score": score,
           "done": true,
           "abandoned": false,
           "timestamp": FieldValue.serverTimestamp(),
-        });
+          "createdAt": FieldValue.serverTimestamp(),
+        }, SetOptions(merge: true));
 
-    showResultDialog();
+    if (mounted) {
+      showResultDialog();
+    }
   }
 
   // ================= UI =================

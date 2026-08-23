@@ -6,6 +6,7 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/features/admin/cubit/follow_up_cubit.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/user_avatar.dart';
 
@@ -57,7 +58,7 @@ class _FollowUpDetailsDialogState extends State<FollowUpDetailsDialog> {
     _notesController = TextEditingController(text: u.notes ?? '');
     _servantNotesController = TextEditingController(text: u.servantNotes ?? '');
 
-    _followUpStatus = u.followUpStatus ?? "Regular";
+    _followUpStatus = AdminFollowUpHelper.getDynamicStatusKey(u.attendancePercentage ?? 0.0);
     _needVisit = u.needVisit ?? false;
     _lastCallDate = u.lastCallDate;
     _lastVisitDate = u.lastVisitDate;

@@ -8,6 +8,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/services/offline_sync_service.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 
@@ -885,7 +886,13 @@ class _AttendanceAnalyticsDashboardState
             a.attendancePercentage ?? 0.0,
           ),
         );
-      final lowestSorted = List<UserData>.from(usersList)
+      final lowestSorted = usersList
+          .where(
+            (u) => AdminFollowUpHelper.isNeedingFollowUp(
+              u.attendancePercentage ?? 0.0,
+            ),
+          )
+          .toList()
         ..sort(
           (a, b) => (a.attendancePercentage ?? 0.0).compareTo(
             b.attendancePercentage ?? 0.0,

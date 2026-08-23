@@ -226,6 +226,27 @@
   "personal_info": "Personal Information",
   "not_set": "Not Set",
   "select_date": "Select Date",
-  "saving_to_firestore": "Saving to Firestore..."
+  "saving_to_firestore": "Saving to Firestore...",
+  "bonus": "Bonus",
+  "bonus_management": "Bonus Management",
+  "bonus_stats": "Bonus Statistics",
+  "total_bonus": "Total Bonus",
+  "total_spent": "Total Spent",
+  "remaining_bonus": "Remaining Bonus",
+  "add_bonus": "Add Bonus",
+  "record_spent": "Record Spent",
+  "bonus_amount": "Bonus Amount",
+  "spent_amount": "Spent Amount",
+  "reason_optional": "Reason / Title (Optional)",
+  "users_with_bonus": "Users with Bonus",
+  "total_transactions": "Total Transactions",
+  "user_breakdown": "User Breakdown",
+  "no_bonus_records": "No bonus records found",
+  "bonus_added_success": "Bonus added successfully!",
+  "bonus_spent_success": "Spent bonus recorded!",
+  "bonus_deleted_success": "Bonus record deleted!",
+  "delete_bonus_confirm": "Are you sure you want to delete this bonus record?",
+  "edit_bonus": "Edit Bonus",
+  "invalid_amount": "Please enter a valid positive number"
 }
 

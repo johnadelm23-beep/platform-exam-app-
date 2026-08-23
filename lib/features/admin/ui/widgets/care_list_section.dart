@@ -5,6 +5,7 @@ import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
+import 'package:platformexamapp/features/admin/utils/admin_follow_up_helper.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/profile/ui/widgets/user_avatar.dart';
 
@@ -34,8 +35,6 @@ class CareListSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final now = DateTime.now();
-
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -91,18 +90,8 @@ class CareListSection extends StatelessWidget {
 
               final pct = user.attendancePercentage ?? 0.0;
 
-              bool isAbsentOver14Days = false;
-              if (user.lastAttendanceDate != null) {
-                final diff = now.difference(user.lastAttendanceDate!).inDays;
-                if (diff > 14) {
-                  isAbsentOver14Days = true;
-                }
-              } else {
-                isAbsentOver14Days = true; // Never attended
-              }
-
-              // Filter rule: Attendance < 50% OR Absent > 14 days
-              if (pct < 50.0 || isAbsentOver14Days) {
+              // Filter rule: Attendance <= 70%
+              if (AdminFollowUpHelper.isNeedingFollowUp(pct)) {
                 needyMembers.add(user);
               }
             }
