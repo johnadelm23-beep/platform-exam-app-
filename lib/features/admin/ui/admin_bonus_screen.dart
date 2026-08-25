@@ -6,12 +6,29 @@ import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
-import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
+
+class AdminBonusUserBreakdown {
+  final String userId;
+  final String userName;
+  double totalGranted;
+  double totalSpent;
+  final List<String> reasons;
+
+  double get remaining => totalGranted - totalSpent;
+
+  AdminBonusUserBreakdown({
+    required this.userId,
+    required this.userName,
+    required this.totalGranted,
+    required this.totalSpent,
+    required this.reasons,
+  });
+}
 
 class AdminBonusScreen extends StatefulWidget {
   const AdminBonusScreen({super.key, required this.user});
@@ -26,26 +43,31 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
   late TabController _tabController;
   final TextEditingController _searchController = TextEditingController();
 
-  Stream<QuerySnapshot>? _bonusStream;
-  Stream<QuerySnapshot>? _usersStream;
-
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
+    debugPrint("[BonusStatistics] Screen initialized");
     _tabController = TabController(length: 2, vsync: this);
+    _tabController.addListener(() {
+      if (!_tabController.indexIsChanging) {
+        debugPrint("[BonusStatistics] Active tab index: ${_tabController.index}");
+      }
+    });
+  }
 
-    _bonusStream = FirebaseFirestore.instance
-        .collection("bonuses")
-        .orderBy("createdAt", descending: true)
-        .snapshots();
+  Stream<QuerySnapshot> _getBonusStream() {
+    return FirebaseFirestore.instance.collection("bonuses").snapshots();
+  }
 
-    _usersStream = FirebaseFirestore.instance.collection("users").snapshots();
+  Stream<QuerySnapshot> _getUsersStream() {
+    return FirebaseFirestore.instance.collection("users").snapshots();
   }
 
   @override
   void dispose() {
+    debugPrint("[BonusStatistics] Screen disposed");
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -67,7 +89,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           title: Text(
-            "add_bonus".tr() + ": ${targetUser.name}",
+            "${"add_bonus".tr()}: ${targetUser.name}",
             style: GoogleFonts.cairo(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
@@ -127,7 +149,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
                   "userName": targetUser.name,
                   "amount": amount,
                   "spent": 0.0,
-                  "reason": reason,
+                  "reason": reason.isEmpty ? "Outstanding Participation" : reason,
                   "createdAt": FieldValue.serverTimestamp(),
                   "createdBy": adminUid,
                   "updatedAt": FieldValue.serverTimestamp(),
@@ -165,7 +187,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
           backgroundColor: isDark ? AppColors.darkSurface : AppColors.lightSurface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
           title: Text(
-            "record_spent".tr() + ": ${targetUser.name}",
+            "${"record_spent".tr()}: ${targetUser.name}",
             style: GoogleFonts.cairo(
               fontSize: 18.sp,
               fontWeight: FontWeight.bold,
@@ -178,7 +200,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
               mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  "Available: ${currentRemaining.toStringAsFixed(1)} pts",
+                  "Available: ${_formatNum(currentRemaining)} pts",
                   style: GoogleFonts.cairo(
                     fontSize: 13.sp,
                     color: AppColors.softGold,
@@ -370,7 +392,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
     );
   }
 
-  /// Delete bonus document
+  /// Delete bonus document with confirmation dialog
   void _deleteBonusDoc(String docId) {
     AppDialog.show(
       context: context,
@@ -380,21 +402,32 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
         size: 36.r,
       ),
       iconColor: AppColors.heartRed,
-      title: "delete".tr(),
+      title: "delete_bonus_title".tr(),
       description: "delete_bonus_confirm".tr(),
       confirmText: "delete".tr(),
       confirmButtonColor: AppColors.heartRed,
       cancelText: "cancel".tr(),
       onConfirm: () async {
         Navigator.pop(context);
-        await FirebaseFirestore.instance.collection("bonuses").doc(docId).delete();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text("bonus_deleted_success".tr(), style: GoogleFonts.cairo()),
-              backgroundColor: AppColors.successGreen,
-            ),
-          );
+        try {
+          await FirebaseFirestore.instance.collection("bonuses").doc(docId).delete();
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("bonus_deleted_success".tr(), style: GoogleFonts.cairo()),
+                backgroundColor: AppColors.successGreen,
+              ),
+            );
+          }
+        } catch (e) {
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text("Failed to delete bonus: $e", style: GoogleFonts.cairo()),
+                backgroundColor: AppColors.heartRed,
+              ),
+            );
+          }
         }
       },
     );
@@ -548,10 +581,32 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
 
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
-            stream: _usersStream,
+            stream: _getUsersStream(),
             builder: (context, userSnap) {
-              if (userSnap.hasError) return const Center(child: Text("Error"));
-              if (userSnap.connectionState == ConnectionState.waiting) return const LoadingState();
+              if (userSnap.hasError) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Error loading users: ${userSnap.error}",
+                        style: GoogleFonts.cairo(color: AppColors.heartRed, fontSize: 14.sp),
+                        textAlign: TextAlign.center,
+                      ),
+                      SizedBox(height: 12.h),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: AppColors.softGold),
+                        onPressed: () => setState(() {}),
+                        child: Text("retry".tr(), style: GoogleFonts.cairo(color: Colors.black87, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              if (!userSnap.hasData && userSnap.connectionState == ConnectionState.waiting) {
+                return const LoadingState();
+              }
 
               final userDocs = userSnap.data?.docs ?? [];
               final filteredUsers = userDocs.map((doc) => UserData.fromJson(doc.data() as Map<String, dynamic>, doc.id)).where((u) {
@@ -569,8 +624,21 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
               }
 
               return StreamBuilder<QuerySnapshot>(
-                stream: _bonusStream,
+                stream: _getBonusStream(),
                 builder: (context, bonusSnap) {
+                  if (bonusSnap.hasError) {
+                    return Center(
+                      child: Text(
+                        "Error loading bonus records: ${bonusSnap.error}",
+                        style: GoogleFonts.cairo(color: AppColors.heartRed, fontSize: 13.sp),
+                      ),
+                    );
+                  }
+
+                  if (!bonusSnap.hasData && bonusSnap.connectionState == ConnectionState.waiting) {
+                    return const LoadingState();
+                  }
+
                   final bonusDocs = bonusSnap.data?.docs ?? [];
 
                   // Map totals per user
@@ -626,7 +694,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
                                         ),
                                       ),
                                       Text(
-                                        "Remaining: ${remaining.toStringAsFixed(remaining.truncateToDouble() == remaining ? 0 : 1)} pts",
+                                        "Granted: ${_formatNum(granted)} | Remaining: ${_formatNum(remaining)} pts",
                                         style: GoogleFonts.cairo(
                                           fontSize: 12.sp,
                                           color: AppColors.successGreen,
@@ -662,45 +730,134 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
     );
   }
 
-  /// STATISTICS TAB: Aggregated Cards + Transactions & User Breakdown Table
+  /// STATISTICS TAB: Aggregated Summary + Per-User Breakdown Table + History Log
   Widget _buildStatisticsTab(bool isDark, Color textColor, Color mutedColor, Color borderColor) {
+    debugPrint("[BonusStatistics] Building Statistics Tab UI");
     return StreamBuilder<QuerySnapshot>(
-      stream: _bonusStream,
+      stream: _getBonusStream(),
       builder: (context, snapshot) {
-        if (snapshot.hasError) return const Center(child: Text("Error"));
-        if (snapshot.connectionState == ConnectionState.waiting) return const LoadingState();
+        debugPrint("[BonusStatistics] StreamBuilder update: connectionState=${snapshot.connectionState}, hasData=${snapshot.hasData}, hasError=${snapshot.hasError}");
 
-        final docs = snapshot.data?.docs ?? [];
-
-        double totalGranted = 0.0;
-        double totalSpent = 0.0;
-        final Set<String> usersWithBonus = {};
-        final Map<String, double> userGrantedMap = {};
-        final Map<String, double> userSpentMap = {};
-
-        for (var doc in docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          final uId = data["userId"] as String? ?? "";
-          final amt = (data["amount"] as num?)?.toDouble() ?? 0.0;
-          final spnt = (data["spent"] as num?)?.toDouble() ?? 0.0;
-
-          totalGranted += amt;
-          totalSpent += spnt;
-
-          if (uId.isNotEmpty) {
-            usersWithBonus.add(uId);
-            userGrantedMap[uId] = (userGrantedMap[uId] ?? 0.0) + amt;
-            userSpentMap[uId] = (userSpentMap[uId] ?? 0.0) + spnt;
-          }
+        // 1. Error state with Retry button
+        if (snapshot.hasError) {
+          debugPrint("[BonusStatistics][ERROR] Firestore snapshot error: ${snapshot.error}");
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "failed_load_bonus_stats".tr() + "\n(${snapshot.error})",
+                  style: GoogleFonts.cairo(color: AppColors.heartRed, fontSize: 14.sp),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.softGold),
+                  onPressed: () {
+                    debugPrint("[BonusStatistics] Retry button pressed");
+                    setState(() {});
+                  },
+                  child: Text("retry".tr(), style: GoogleFonts.cairo(color: Colors.black87, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
         }
 
-        final double totalRemaining = totalGranted - totalSpent;
-        final int transactionsCount = docs.length;
+        // 2. Loading state ONLY when no data exists yet
+        if (!snapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
+          debugPrint("[BonusStatistics] Loading started... waiting for initial snapshot");
+          return const LoadingState();
+        }
+
+        // 3. Data exists or stream snapshot active
+        final rawDocs = snapshot.data?.docs ?? [];
+        debugPrint("[BonusStatistics] Raw bonus documents retrieved from Firestore = ${rawDocs.length}");
+
+        // 4. Empty State
+        if (rawDocs.isEmpty) {
+          debugPrint("[BonusStatistics] Empty state: 0 bonus documents in collection");
+          return EmptyState(
+            title: "no_bonus_records".tr(),
+            hugeIcon: HugeIcons.strokeRoundedAward01,
+          );
+        }
+
+        try {
+          // Sort documents safely client-side by createdAt DESC
+          final docs = rawDocs.toList()
+            ..sort((a, b) {
+              final dataA = a.data() as Map<String, dynamic>? ?? {};
+              final dataB = b.data() as Map<String, dynamic>? ?? {};
+              final tA = _parseTimestamp(dataA["createdAt"]);
+              final tB = _parseTimestamp(dataB["createdAt"]);
+              if (tA != null && tB != null) return tB.compareTo(tA);
+              if (tA != null) return -1;
+              if (tB != null) return 1;
+              return 0;
+            });
+
+          double totalGranted = 0.0;
+          double totalSpent = 0.0;
+          final Set<String> usersWithBonus = {};
+          final Map<String, AdminBonusUserBreakdown> userAggMap = {};
+
+          for (var doc in docs) {
+            final data = doc.data() as Map<String, dynamic>? ?? {};
+            final uId = _parseString(data["userId"] ?? data["uid"] ?? data["user_id"] ?? data["id"]);
+            final uName = _parseString(data["userName"] ?? data["name"] ?? data["user_name"] ?? "Member");
+            final amt = _parseDouble(data["amount"] ?? data["points"] ?? data["bonus"]);
+            final spnt = _parseDouble(data["spent"] ?? data["spentAmount"] ?? data["spent_amount"]);
+            final reason = _parseString(data["reason"] ?? data["note"]);
+
+            totalGranted += amt;
+            totalSpent += spnt;
+
+            final effectiveKey = uId.isNotEmpty ? uId : (uName.isNotEmpty ? uName : doc.id);
+            final effectiveName = uName.isNotEmpty ? uName : "Member ($effectiveKey)";
+
+            if (!userAggMap.containsKey(effectiveKey)) {
+              userAggMap[effectiveKey] = AdminBonusUserBreakdown(
+                userId: effectiveKey,
+                userName: effectiveName,
+                totalGranted: 0.0,
+                totalSpent: 0.0,
+                reasons: [],
+              );
+            }
+
+            final userAgg = userAggMap[effectiveKey]!;
+            userAgg.totalGranted += amt;
+            userAgg.totalSpent += spnt;
+
+            if (userAgg.totalGranted > 0) {
+              usersWithBonus.add(effectiveKey);
+            }
+
+            if (reason.isNotEmpty && !userAgg.reasons.contains(reason)) {
+              userAgg.reasons.add(reason);
+            }
+          }
+
+          final double totalRemaining = totalGranted - totalSpent;
+          final int transactionsCount = docs.length;
+
+          final userBreakdownList = userAggMap.values.toList()
+            ..sort((a, b) => b.totalGranted.compareTo(a.totalGranted));
+
+          debugPrint("[BonusStatistics] Statistics calculated successfully:");
+          debugPrint("[BonusStatistics] - Total Granted: $totalGranted");
+          debugPrint("[BonusStatistics] - Total Spent: $totalSpent");
+          debugPrint("[BonusStatistics] - Total Remaining: $totalRemaining");
+          debugPrint("[BonusStatistics] - Users with Bonus: ${usersWithBonus.length}");
+          debugPrint("[BonusStatistics] - Total Transactions: $transactionsCount");
+          debugPrint("[BonusStatistics] - Breakdown Rows: ${userBreakdownList.length}");
+          debugPrint("[BonusStatistics] UI received Loaded state");
 
         return ListView(
           physics: const BouncingScrollPhysics(),
           children: [
-            /// Grid Summary Cards
+            /// 1. Overall Summary Statistics Grid Cards
             GridView.count(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
@@ -709,9 +866,9 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
               mainAxisSpacing: 10.h,
               childAspectRatio: 1.6,
               children: [
-                _buildStatCard("total_bonus".tr(), totalGranted.toStringAsFixed(totalGranted.truncateToDouble() == totalGranted ? 0 : 1), AppColors.softGold, HugeIcons.strokeRoundedAward01, isDark, textColor),
-                _buildStatCard("total_spent".tr(), totalSpent.toStringAsFixed(totalSpent.truncateToDouble() == totalSpent ? 0 : 1), AppColors.heartRed, HugeIcons.strokeRoundedMinusSignCircle, isDark, textColor),
-                _buildStatCard("remaining_bonus".tr(), totalRemaining.toStringAsFixed(totalRemaining.truncateToDouble() == totalRemaining ? 0 : 1), AppColors.successGreen, HugeIcons.strokeRoundedCheckmarkCircle02, isDark, textColor),
+                _buildStatCard("total_bonus".tr(), _formatNum(totalGranted), AppColors.softGold, HugeIcons.strokeRoundedAward01, isDark, textColor),
+                _buildStatCard("total_spent".tr(), _formatNum(totalSpent), AppColors.heartRed, HugeIcons.strokeRoundedMinusSignCircle, isDark, textColor),
+                _buildStatCard("remaining_bonus".tr(), _formatNum(totalRemaining), AppColors.successGreen, HugeIcons.strokeRoundedCheckmarkCircle02, isDark, textColor),
                 _buildStatCard("users_with_bonus".tr(), "${usersWithBonus.length}", AppColors.primaryLightNavy, HugeIcons.strokeRoundedUserGroup, isDark, textColor),
               ],
             ),
@@ -743,7 +900,7 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
 
             SizedBox(height: 20.h),
 
-            /// Section Header: Transaction History & Breakdown
+            /// 2. Per-User Bonus Statistics Breakdown Table
             Text(
               "user_breakdown".tr(),
               style: GoogleFonts.cairo(fontSize: 16.sp, fontWeight: FontWeight.bold, color: textColor),
@@ -751,85 +908,190 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
 
             SizedBox(height: 10.h),
 
-            if (docs.isEmpty)
-              EmptyState(
-                title: "no_bonus_records".tr(),
-                hugeIcon: HugeIcons.strokeRoundedAward01,
-              )
-            else
-              ListView.separated(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                itemCount: docs.length,
-                separatorBuilder: (_, __) => SizedBox(height: 8.h),
-                itemBuilder: (context, index) {
-                  final doc = docs[index];
-                  final data = doc.data() as Map<String, dynamic>;
-                  final userName = (data["userName"] ?? "User").toString();
-                  final amount = (data["amount"] as num?)?.toDouble() ?? 0.0;
-                  final spent = (data["spent"] as num?)?.toDouble() ?? 0.0;
-                  final reason = (data["reason"] ?? "").toString();
-
-                  final bool isGrant = amount > 0;
-
-                  return GlassCard(
-                    padding: EdgeInsets.all(12.r),
-                    borderRadius: 14.r,
+            GlassCard(
+              padding: EdgeInsets.all(12.r),
+              borderRadius: 18.r,
+              child: Column(
+                children: [
+                  /// Table Header
+                  Container(
+                    padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 8.w),
+                    decoration: BoxDecoration(
+                      color: isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(12.r),
+                    ),
                     child: Row(
                       children: [
-                        Icon(
-                          isGrant ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
-                          color: isGrant ? AppColors.successGreen : AppColors.heartRed,
-                        ),
-                        SizedBox(width: 10.w),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                userName,
-                                style: GoogleFonts.cairo(
-                                  fontSize: 14.sp,
-                                  fontWeight: FontWeight.bold,
-                                  color: textColor,
-                                ),
-                              ),
-                              if (reason.isNotEmpty)
-                                Text(
-                                  reason,
-                                  style: GoogleFonts.cairo(fontSize: 11.sp, color: mutedColor),
-                                ),
-                            ],
-                          ),
-                        ),
-                        Text(
-                          isGrant ? "+${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 1)}" : "-${spent.toStringAsFixed(spent.truncateToDouble() == spent ? 0 : 1)}",
-                          style: GoogleFonts.cairo(
-                            fontSize: 14.sp,
-                            fontWeight: FontWeight.w900,
-                            color: isGrant ? AppColors.successGreen : AppColors.heartRed,
-                          ),
-                        ),
-                        SizedBox(width: 6.w),
-                        IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.all(4.r),
-                          icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.softGold),
-                          onPressed: () => _showEditBonusDialog(doc),
-                        ),
-                        IconButton(
-                          constraints: const BoxConstraints(),
-                          padding: EdgeInsets.all(4.r),
-                          icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.heartRed),
-                          onPressed: () => _deleteBonusDoc(doc.id),
-                        ),
+                        Expanded(flex: 3, child: Text("User", style: GoogleFonts.cairo(fontSize: 12.sp, fontWeight: FontWeight.bold, color: textColor))),
+                        Expanded(flex: 2, child: Text("Granted", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.softGold))),
+                        Expanded(flex: 2, child: Text("Spent", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.heartRed))),
+                        Expanded(flex: 2, child: Text("Remaining", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.successGreen))),
                       ],
                     ),
-                  );
-                },
+                  ),
+
+                  SizedBox(height: 6.h),
+
+                  /// User Table Rows
+                  ...userBreakdownList.map((userAgg) {
+                    final primaryReason = userAgg.reasons.isNotEmpty ? userAgg.reasons.first : "";
+
+                    return Container(
+                      padding: EdgeInsets.symmetric(vertical: 8.h, horizontal: 6.w),
+                      decoration: BoxDecoration(
+                        border: Border(bottom: BorderSide(color: borderColor.withOpacity(0.5))),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(
+                                flex: 3,
+                                child: Text(
+                                  userAgg.userName,
+                                  style: GoogleFonts.cairo(fontSize: 13.sp, fontWeight: FontWeight.bold, color: textColor),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                              Expanded(flex: 2, child: Text(_formatNum(userAgg.totalGranted), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.softGold))),
+                              Expanded(flex: 2, child: Text(_formatNum(userAgg.totalSpent), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.heartRed))),
+                              Expanded(flex: 2, child: Text(_formatNum(userAgg.remaining), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 13.sp, fontWeight: FontWeight.bold, color: AppColors.successGreen))),
+                            ],
+                          ),
+                          if (primaryReason.isNotEmpty) ...[
+                            SizedBox(height: 2.h),
+                            Row(
+                              children: [
+                                Icon(Icons.star_rounded, size: 12.r, color: AppColors.softGold),
+                                SizedBox(width: 4.w),
+                                Expanded(
+                                  child: Text(
+                                    primaryReason,
+                                    style: GoogleFonts.cairo(fontSize: 11.sp, color: mutedColor),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ],
+                      ),
+                    );
+                  }),
+                ],
               ),
+            ),
+
+            SizedBox(height: 20.h),
+
+            /// 3. All Bonus Transaction Log with Edit & Delete Actions
+            Text(
+              "total_transactions".tr(),
+              style: GoogleFonts.cairo(fontSize: 16.sp, fontWeight: FontWeight.bold, color: textColor),
+            ),
+
+            SizedBox(height: 10.h),
+
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: docs.length,
+              separatorBuilder: (_, __) => SizedBox(height: 8.h),
+              itemBuilder: (context, index) {
+                final doc = docs[index];
+                final data = doc.data() as Map<String, dynamic>;
+                final userName = (data["userName"] ?? "User").toString();
+                final amount = (data["amount"] as num?)?.toDouble() ?? 0.0;
+                final spent = (data["spent"] as num?)?.toDouble() ?? 0.0;
+                final reason = (data["reason"] ?? "").toString();
+
+                final bool isGrant = amount > 0;
+
+                return GlassCard(
+                  padding: EdgeInsets.all(12.r),
+                  borderRadius: 14.r,
+                  child: Row(
+                    children: [
+                      Icon(
+                        isGrant ? Icons.arrow_upward_rounded : Icons.arrow_downward_rounded,
+                        color: isGrant ? AppColors.successGreen : AppColors.heartRed,
+                      ),
+                      SizedBox(width: 10.w),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              userName,
+                              style: GoogleFonts.cairo(
+                                fontSize: 14.sp,
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                            ),
+                            if (reason.isNotEmpty)
+                              Text(
+                                reason,
+                                style: GoogleFonts.cairo(fontSize: 11.sp, color: mutedColor),
+                              ),
+                          ],
+                        ),
+                      ),
+                      Text(
+                        isGrant ? "+${_formatNum(amount)}" : "-${_formatNum(spent)}",
+                        style: GoogleFonts.cairo(
+                          fontSize: 14.sp,
+                          fontWeight: FontWeight.w900,
+                          color: isGrant ? AppColors.successGreen : AppColors.heartRed,
+                        ),
+                      ),
+                      SizedBox(width: 6.w),
+                      IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.all(4.r),
+                        icon: const Icon(Icons.edit_outlined, size: 18, color: AppColors.softGold),
+                        onPressed: () => _showEditBonusDialog(doc),
+                      ),
+                      IconButton(
+                        constraints: const BoxConstraints(),
+                        padding: EdgeInsets.all(4.r),
+                        icon: const Icon(Icons.delete_outline_rounded, size: 18, color: AppColors.heartRed),
+                        onPressed: () => _deleteBonusDoc(doc.id),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
           ],
         );
+        } catch (e, st) {
+          debugPrint("[BONUS_STATS][ERROR] Calculation failed: $e\n$st");
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  "Error calculating statistics: $e",
+                  style: GoogleFonts.cairo(color: AppColors.heartRed, fontSize: 14.sp),
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 12.h),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: AppColors.softGold),
+                  onPressed: () {
+                    debugPrint("[BonusStatistics] Retry button pressed after exception");
+                    setState(() {});
+                  },
+                  child: Text("retry".tr(), style: GoogleFonts.cairo(color: Colors.black87, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
+          );
+        }
       },
     );
   }
@@ -868,5 +1130,34 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
         ],
       ),
     );
+  }
+
+  String _formatNum(double val) {
+    if (val.truncateToDouble() == val) {
+      return val.truncate().toString();
+    }
+    return val.toStringAsFixed(1);
+  }
+
+  static double _parseDouble(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val.trim()) ?? 0.0;
+    return 0.0;
+  }
+
+  static String _parseString(dynamic val) {
+    if (val == null) return "";
+    return val.toString().trim();
+  }
+
+  static Timestamp? _parseTimestamp(dynamic val) {
+    if (val is Timestamp) return val;
+    if (val is String) {
+      final dt = DateTime.tryParse(val.trim());
+      if (dt != null) return Timestamp.fromDate(dt);
+    }
+    if (val is int) return Timestamp.fromMillisecondsSinceEpoch(val);
+    return null;
   }
 }

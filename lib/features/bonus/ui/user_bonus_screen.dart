@@ -10,6 +10,26 @@ import 'package:platformexamapp/core/widgets/empty_state.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
 
+class UserBonusAggregate {
+  final String userId;
+  final String userName;
+  double totalGranted;
+  double totalSpent;
+  final List<String> reasons;
+  Timestamp? latestTimestamp;
+
+  double get remaining => totalGranted - totalSpent;
+
+  UserBonusAggregate({
+    required this.userId,
+    required this.userName,
+    required this.totalGranted,
+    required this.totalSpent,
+    required this.reasons,
+    this.latestTimestamp,
+  });
+}
+
 class UserBonusScreen extends StatefulWidget {
   const UserBonusScreen({super.key});
 
@@ -24,11 +44,20 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
   @override
   void initState() {
     super.initState();
-    // Strictly fetch only the current user's bonus records for privacy & security compliance
-    _bonusStream = FirebaseFirestore.instance
-        .collection("bonuses")
-        .where("userId", isEqualTo: _currentUid)
-        .snapshots();
+    // Public recognition stream for all bonus records
+    _bonusStream = FirebaseFirestore.instance.collection("bonuses").snapshots();
+
+    // Mark current bonus notifications as viewed for current user
+    _markBonusAsViewed();
+  }
+
+  Future<void> _markBonusAsViewed() async {
+    if (_currentUid.isEmpty) return;
+    try {
+      await FirebaseFirestore.instance.collection("users").doc(_currentUid).set({
+        "lastBonusViewed": FieldValue.serverTimestamp(),
+      }, SetOptions(merge: true));
+    } catch (_) {}
   }
 
   @override
@@ -68,12 +97,27 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
                     ),
                   ),
                   SizedBox(width: 12.w),
-                  Text(
-                    "bonus".tr(),
-                    style: GoogleFonts.cairo(
-                      fontSize: 22.sp,
-                      color: textColor,
-                      fontWeight: FontWeight.w900,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          "bonus".tr(),
+                          style: GoogleFonts.cairo(
+                            fontSize: 22.sp,
+                            color: textColor,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        Text(
+                          "Honoring Outstanding Achievements 🏆",
+                          style: GoogleFonts.cairo(
+                            fontSize: 12.sp,
+                            color: AppColors.softGold,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -103,267 +147,235 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
                       );
                     }
 
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    if (!snapshot.hasData && snapshot.connectionState == ConnectionState.waiting) {
                       return const LoadingState();
                     }
 
                     final docs = snapshot.data?.docs ?? [];
 
-                    double myGranted = 0.0;
-                    double mySpent = 0.0;
-
-                    for (var doc in docs) {
-                      final data = doc.data() as Map<String, dynamic>;
-                      final amount = (data["amount"] as num?)?.toDouble() ?? 0.0;
-                      final spent = (data["spent"] as num?)?.toDouble() ?? 0.0;
-
-                      myGranted += amount;
-                      mySpent += spent;
+                    if (docs.isEmpty) {
+                      return EmptyState(
+                        title: "no_bonus_records".tr(),
+                        hugeIcon: HugeIcons.strokeRoundedAward01,
+                      );
                     }
 
-                    final double myRemaining = myGranted - mySpent;
+                    // Process and aggregate bonus records by user
+                    final Map<String, UserBonusAggregate> userMap = {};
 
-                    return CustomScrollView(
+                    for (var doc in docs) {
+                      final data = doc.data() as Map<String, dynamic>? ?? {};
+                      final uId = _parseString(data["userId"] ?? data["uid"] ?? data["user_id"] ?? data["id"]);
+                      final uName = _parseString(data["userName"] ?? data["name"] ?? data["user_name"] ?? "Member");
+                      final amt = _parseDouble(data["amount"] ?? data["points"] ?? data["bonus"]);
+                      final spnt = _parseDouble(data["spent"] ?? data["spentAmount"] ?? data["spent_amount"]);
+                      final reason = _parseString(data["reason"] ?? data["note"]);
+                      final timestamp = _parseTimestamp(data["createdAt"]);
+
+                      final effectiveKey = uId.isNotEmpty ? uId : (uName.isNotEmpty ? uName : doc.id);
+                      final effectiveName = uName.isNotEmpty ? uName : "Member ($effectiveKey)";
+
+                      if (!userMap.containsKey(effectiveKey)) {
+                        userMap[effectiveKey] = UserBonusAggregate(
+                          userId: effectiveKey,
+                          userName: effectiveName,
+                          totalGranted: 0.0,
+                          totalSpent: 0.0,
+                          reasons: [],
+                          latestTimestamp: timestamp,
+                        );
+                      }
+
+                      final userAgg = userMap[effectiveKey]!;
+                      userAgg.totalGranted += amt;
+                      userAgg.totalSpent += spnt;
+
+                      if (reason.isNotEmpty && !userAgg.reasons.contains(reason)) {
+                        userAgg.reasons.add(reason);
+                      }
+
+                      if (timestamp != null) {
+                        if (userAgg.latestTimestamp == null ||
+                            timestamp.compareTo(userAgg.latestTimestamp!) > 0) {
+                          userAgg.latestTimestamp = timestamp;
+                        }
+                      }
+                    }
+
+                    final sortedUsers = userMap.values.toList()
+                      ..sort((a, b) {
+                        // 1. Primary Sort: Total Bonus Granted DESCENDING
+                        if (a.totalGranted != b.totalGranted) {
+                          return b.totalGranted.compareTo(a.totalGranted);
+                        }
+                        // 2. Secondary Sort: Remaining Bonus DESCENDING
+                        if (a.remaining != b.remaining) {
+                          return b.remaining.compareTo(a.remaining);
+                        }
+                        // 3. Tertiary Sort: User Name ASCENDING (deterministic tie-breaker)
+                        return a.userName.compareTo(b.userName);
+                      });
+
+                    return ListView.separated(
                       physics: const BouncingScrollPhysics(),
-                      slivers: [
-                        /// Personal Bonus Summary Card
-                        SliverToBoxAdapter(
-                          child: GlassCard(
-                            padding: EdgeInsets.all(18.r),
-                            borderRadius: 24.r,
-                            child: Column(
-                              children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      padding: EdgeInsets.all(12.r),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.softGold.withOpacity(0.2),
-                                        shape: BoxShape.circle,
-                                      ),
-                                      child: HugeIcon(
-                                        icon: HugeIcons.strokeRoundedAward01,
-                                        color: AppColors.softGold,
-                                        size: 28.r,
-                                      ),
-                                    ),
-                                    SizedBox(width: 14.w),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            "my_profile".tr(),
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 13.sp,
-                                              color: mutedColor,
-                                              fontWeight: FontWeight.w600,
-                                            ),
-                                          ),
-                                          Text(
-                                            "remaining_bonus".tr(),
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 18.sp,
-                                              fontWeight: FontWeight.w900,
-                                              color: textColor,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      padding: EdgeInsets.symmetric(
-                                        horizontal: 14.w,
-                                        vertical: 8.h,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: AppColors.softGold.withOpacity(0.15),
-                                        borderRadius: BorderRadius.circular(16.r),
-                                        border: Border.all(
-                                          color: AppColors.softGold.withOpacity(0.4),
-                                        ),
-                                      ),
-                                      child: Text(
-                                        "${myRemaining.toStringAsFixed(myRemaining.truncateToDouble() == myRemaining ? 0 : 1)} pts",
-                                        style: GoogleFonts.cairo(
-                                          color: AppColors.softGold,
-                                          fontWeight: FontWeight.w900,
-                                          fontSize: 18.sp,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                SizedBox(height: 16.h),
-                                Divider(color: borderColor),
-                                SizedBox(height: 12.h),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            "total_bonus".tr(),
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 12.sp,
-                                              color: mutedColor,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2.h),
-                                          Text(
-                                            "${myGranted.toStringAsFixed(myGranted.truncateToDouble() == myGranted ? 0 : 1)}",
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.successGreen,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Container(
-                                      width: 1.w,
-                                      height: 30.h,
-                                      color: borderColor,
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        children: [
-                                          Text(
-                                            "total_spent".tr(),
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 12.sp,
-                                              color: mutedColor,
-                                            ),
-                                          ),
-                                          SizedBox(height: 2.h),
-                                          Text(
-                                            "${mySpent.toStringAsFixed(mySpent.truncateToDouble() == mySpent ? 0 : 1)}",
-                                            style: GoogleFonts.cairo(
-                                              fontSize: 16.sp,
-                                              fontWeight: FontWeight.bold,
-                                              color: AppColors.heartRed,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
+                      itemCount: sortedUsers.length,
+                      separatorBuilder: (_, __) => SizedBox(height: 14.h),
+                      itemBuilder: (context, index) {
+                        final userAgg = sortedUsers[index];
+                        final rank = index + 1;
+                        final isMe = userAgg.userId == _currentUid;
 
-                        SizedBox(height: 24.h).toSliver(),
+                        Color rankBadgeColor;
+                        if (rank == 1) {
+                          rankBadgeColor = AppColors.softGold;
+                        } else if (rank == 2) {
+                          rankBadgeColor = const Color(0xFFC0C0C0);
+                        } else if (rank == 3) {
+                          rankBadgeColor = const Color(0xFFCD7F32);
+                        } else {
+                          rankBadgeColor = isDark
+                              ? AppColors.darkTextMuted
+                              : AppColors.lightTextMuted;
+                        }
 
-                        /// Section Header: Transaction History
-                        SliverToBoxAdapter(
-                          child: Padding(
-                            padding: EdgeInsets.only(bottom: 12.h),
-                            child: Text(
-                              "meeting_history".tr(),
-                              style: GoogleFonts.cairo(
-                                fontSize: 18.sp,
-                                fontWeight: FontWeight.bold,
-                                color: textColor,
-                              ),
-                            ),
-                          ),
-                        ),
+                        final primaryReason = userAgg.reasons.isNotEmpty
+                            ? userAgg.reasons.first
+                            : "Outstanding Participation";
 
-                        /// Personal History Transactions
-                        if (docs.isEmpty)
-                          SliverToBoxAdapter(
-                            child: EmptyState(
-                              title: "no_bonus_records".tr(),
-                              hugeIcon: HugeIcons.strokeRoundedAward01,
-                            ),
-                          )
-                        else
-                          SliverList(
-                            delegate: SliverChildBuilderDelegate(
-                              (context, index) {
-                                final doc = docs[index];
-                                final data = doc.data() as Map<String, dynamic>;
-                                final amount = (data["amount"] as num?)?.toDouble() ?? 0.0;
-                                final spent = (data["spent"] as num?)?.toDouble() ?? 0.0;
-                                final reason = (data["reason"] ?? "").toString();
-                                final isGrant = amount > 0;
-
-                                return Container(
-                                  margin: EdgeInsets.only(bottom: 10.h),
-                                  child: GlassCard(
-                                    padding: EdgeInsets.symmetric(
-                                      horizontal: 16.w,
-                                      vertical: 12.h,
+                        return GlassCard(
+                          padding: EdgeInsets.all(16.r),
+                          borderRadius: 20.r,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  /// Rank / Trophy Badge
+                                  Container(
+                                    width: 40.r,
+                                    height: 40.r,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      color: rankBadgeColor.withOpacity(0.18),
+                                      border: Border.all(
+                                        color: rankBadgeColor,
+                                        width: 1.5,
+                                      ),
                                     ),
-                                    borderRadius: 18.r,
-                                    child: Row(
+                                    child: Center(
+                                      child: rank <= 3
+                                          ? Icon(
+                                              Icons.emoji_events_rounded,
+                                              color: rankBadgeColor,
+                                              size: 20.r,
+                                            )
+                                          : Text(
+                                              "#$rank",
+                                              style: GoogleFonts.cairo(
+                                                color: textColor,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14.sp,
+                                              ),
+                                            ),
+                                    ),
+                                  ),
+                                  SizedBox(width: 12.w),
+
+                                  /// User Name (Public display ONLY, no email/phone)
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        Container(
-                                          padding: EdgeInsets.all(8.r),
-                                          decoration: BoxDecoration(
-                                            color: isGrant
-                                                ? AppColors.successGreen.withOpacity(0.15)
-                                                : AppColors.heartRed.withOpacity(0.15),
-                                            shape: BoxShape.circle,
-                                          ),
-                                          child: Icon(
-                                            isGrant
-                                                ? Icons.arrow_upward_rounded
-                                                : Icons.arrow_downward_rounded,
-                                            color: isGrant
-                                                ? AppColors.successGreen
-                                                : AppColors.heartRed,
-                                            size: 20.r,
-                                          ),
-                                        ),
-                                        SizedBox(width: 12.w),
-                                        Expanded(
-                                          child: Column(
-                                            crossAxisAlignment: CrossAxisAlignment.start,
-                                            children: [
-                                              Text(
-                                                isGrant ? "add_bonus".tr() : "record_spent".tr(),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                userAgg.userName + (isMe ? " (You)" : ""),
                                                 style: GoogleFonts.cairo(
-                                                  fontSize: 14.sp,
-                                                  fontWeight: FontWeight.bold,
+                                                  fontSize: 16.sp,
+                                                  fontWeight: FontWeight.w900,
                                                   color: textColor,
                                                 ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
                                               ),
-                                              if (reason.isNotEmpty)
-                                                Text(
-                                                  reason,
-                                                  style: GoogleFonts.cairo(
-                                                    fontSize: 12.sp,
-                                                    color: mutedColor,
-                                                  ),
-                                                ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
-                                        Text(
-                                          isGrant
-                                              ? "+${amount.toStringAsFixed(amount.truncateToDouble() == amount ? 0 : 1)}"
-                                              : "-${spent.toStringAsFixed(spent.truncateToDouble() == spent ? 0 : 1)}",
-                                          style: GoogleFonts.cairo(
-                                            color: isGrant
-                                                ? AppColors.successGreen
-                                                : AppColors.heartRed,
-                                            fontWeight: FontWeight.w900,
-                                            fontSize: 15.sp,
-                                          ),
+                                        SizedBox(height: 2.h),
+                                        Row(
+                                          children: [
+                                            Icon(
+                                              Icons.star_rounded,
+                                              color: AppColors.softGold,
+                                              size: 14.r,
+                                            ),
+                                            SizedBox(width: 4.w),
+                                            Expanded(
+                                              child: Text(
+                                                primaryReason,
+                                                style: GoogleFonts.cairo(
+                                                  fontSize: 12.sp,
+                                                  color: AppColors.softGold,
+                                                  fontWeight: FontWeight.w600,
+                                                ),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                          ],
                                         ),
                                       ],
                                     ),
                                   ),
-                                );
-                              },
-                              childCount: docs.length,
-                            ),
+                                ],
+                              ),
+
+                              SizedBox(height: 12.h),
+                              Divider(color: borderColor),
+                              SizedBox(height: 8.h),
+
+                              /// Stats Breakdown Row
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  /// Total Bonus Granted
+                                  _buildStatColumn(
+                                    label: "total_bonus".tr(),
+                                    value: _formatNumber(userAgg.totalGranted),
+                                    color: AppColors.softGold,
+                                    mutedColor: mutedColor,
+                                  ),
+                                  Container(
+                                    width: 1.w,
+                                    height: 24.h,
+                                    color: borderColor,
+                                  ),
+                                  /// Total Spent
+                                  _buildStatColumn(
+                                    label: "total_spent".tr(),
+                                    value: _formatNumber(userAgg.totalSpent),
+                                    color: AppColors.heartRed,
+                                    mutedColor: mutedColor,
+                                  ),
+                                  Container(
+                                    width: 1.w,
+                                    height: 24.h,
+                                    color: borderColor,
+                                  ),
+                                  /// Remaining Bonus
+                                  _buildStatColumn(
+                                    label: "remaining_bonus".tr(),
+                                    value: _formatNumber(userAgg.remaining),
+                                    color: AppColors.successGreen,
+                                    mutedColor: mutedColor,
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
-                      ],
+                        );
+                      },
                     );
                   },
                 ),
@@ -374,8 +386,61 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
       ),
     );
   }
-}
 
-extension SizedBoxToSliver on SizedBox {
-  Widget toSliver() => SliverToBoxAdapter(child: this);
+  Widget _buildStatColumn({
+    required String label,
+    required String value,
+    required Color color,
+    required Color mutedColor,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 11.sp,
+            color: mutedColor,
+          ),
+        ),
+        SizedBox(height: 2.h),
+        Text(
+          value,
+          style: GoogleFonts.cairo(
+            fontSize: 15.sp,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+      ],
+    );
+  }
+
+  String _formatNumber(double val) {
+    if (val.truncateToDouble() == val) {
+      return val.truncate().toString();
+    }
+    return val.toStringAsFixed(1);
+  }
+
+  static double _parseDouble(dynamic val) {
+    if (val == null) return 0.0;
+    if (val is num) return val.toDouble();
+    if (val is String) return double.tryParse(val.trim()) ?? 0.0;
+    return 0.0;
+  }
+
+  static String _parseString(dynamic val) {
+    if (val == null) return "";
+    return val.toString().trim();
+  }
+
+  static Timestamp? _parseTimestamp(dynamic val) {
+    if (val is Timestamp) return val;
+    if (val is String) {
+      final dt = DateTime.tryParse(val.trim());
+      if (dt != null) return Timestamp.fromDate(dt);
+    }
+    if (val is int) return Timestamp.fromMillisecondsSinceEpoch(val);
+    return null;
+  }
 }

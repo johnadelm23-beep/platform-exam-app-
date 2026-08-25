@@ -18,6 +18,7 @@ import 'package:platformexamapp/features/profile/ui/profile_screen.dart';
 import 'package:platformexamapp/features/states/ui/states_screen.dart';
 import 'package:platformexamapp/features/home/ui/daily_content_screen.dart';
 import 'package:platformexamapp/features/bonus/ui/user_bonus_screen.dart';
+import 'package:platformexamapp/features/games/ui/games_home_screen.dart';
 
 class BodyContainer extends StatefulWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
@@ -31,6 +32,7 @@ class BodyContainer extends StatefulWidget {
 
 class _BodyContainerState extends State<BodyContainer> {
   late final Stream<int> _unattemptedExamsStream;
+  late final Stream<int> _unviewedBonusStream;
   late final Stream<QuerySnapshot> _postsStream;
   static final RegExp _arabicRegex = RegExp(r'[\u0600-\u06FF]');
 
@@ -38,6 +40,7 @@ class _BodyContainerState extends State<BodyContainer> {
   void initState() {
     super.initState();
     _unattemptedExamsStream = getUnattemptedExamsCount();
+    _unviewedBonusStream = getUnviewedBonusCount();
     _postsStream = FirebaseFirestore.instance
         .collection("posts")
         .orderBy("createdAt", descending: true)
@@ -56,13 +59,45 @@ class _BodyContainerState extends State<BodyContainer> {
           .where("userId", isEqualTo: widget.uid)
           .get();
 
-      final attemptedExamIds = attempts.docs.map((e) => e["examId"]).toSet();
+      final attemptedExamIds = attempts.docs
+          .where((e) => (e.data())["done"] == true)
+          .map((e) => e["examId"])
+          .toSet();
 
       int count = 0;
 
       for (var exam in exams) {
         if (!attemptedExamIds.contains(exam.id)) {
           count++;
+        }
+      }
+
+      return count;
+    });
+  }
+
+  /// 🌟 عدد إشعارات البونص الجديدة التي لم يشاهدها المستخدم بعد
+  Stream<int> getUnviewedBonusCount() {
+    return FirebaseFirestore.instance
+        .collection("bonuses")
+        .snapshots()
+        .asyncMap((bonusesSnap) async {
+      final userDoc = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(widget.uid)
+          .get();
+
+      final userData = userDoc.data();
+      final lastViewed = userData?["lastBonusViewed"] as Timestamp?;
+
+      int count = 0;
+      for (var doc in bonusesSnap.docs) {
+        final data = doc.data();
+        final createdAt = data["createdAt"] as Timestamp?;
+        if (createdAt != null) {
+          if (lastViewed == null || createdAt.compareTo(lastViewed) > 0) {
+            count++;
+          }
         }
       }
 
@@ -81,6 +116,7 @@ class _BodyContainerState extends State<BodyContainer> {
     final bool hasDashboardAccess = widget.user.canAccessDashboard;
     final gridItems = [
       "exams",
+      // "games", // Temporarily disabled for Kahoot stage pause
       if (hasDashboardAccess) "dashboard",
       "results",
       "bonus",
@@ -203,6 +239,20 @@ class _BodyContainerState extends State<BodyContainer> {
                         );
                       }
 
+                      if (item == "games") {
+                        return CustomContainer(
+                          title: "games".tr(),
+                          icon: HugeIcons.strokeRoundedGameController01,
+                          color: AppColors.softGold,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              AppPageRoute(child: const GamesHomeScreen()),
+                            );
+                          },
+                        );
+                      }
+
                       if (item == "results") {
                         return CustomContainer(
                           title: "results".tr(),
@@ -218,14 +268,55 @@ class _BodyContainerState extends State<BodyContainer> {
                       }
 
                       if (item == "bonus") {
-                        return CustomContainer(
-                          title: "bonus".tr(),
-                          icon: HugeIcons.strokeRoundedAward01,
-                          color: AppColors.softGold,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              AppPageRoute(child: const UserBonusScreen()),
+                        return StreamBuilder<int>(
+                          stream: _unviewedBonusStream,
+                          builder: (context, snapshot) {
+                            final unviewedCount = snapshot.data ?? 0;
+
+                            return Stack(
+                              fit: StackFit.expand,
+                              children: [
+                                CustomContainer(
+                                  title: "bonus".tr(),
+                                  icon: HugeIcons.strokeRoundedAward01,
+                                  color: AppColors.softGold,
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      AppPageRoute(
+                                        child: const UserBonusScreen(),
+                                      ),
+                                    );
+                                  },
+                                ),
+                                if (unviewedCount > 0)
+                                  Positioned(
+                                    right: 8.w,
+                                    top: 8.h,
+                                    child: Container(
+                                      padding: EdgeInsets.all(6.r),
+                                      decoration: const BoxDecoration(
+                                        color: AppColors.heartRed,
+                                        shape: BoxShape.circle,
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: Color(0x66DC3545),
+                                            blurRadius: 8,
+                                            offset: Offset(0, 2),
+                                          ),
+                                        ],
+                                      ),
+                                      child: Text(
+                                        "$unviewedCount",
+                                        style: GoogleFonts.cairo(
+                                          color: Colors.white,
+                                          fontSize: 12.sp,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             );
                           },
                         );

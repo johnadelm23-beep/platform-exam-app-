@@ -23,6 +23,7 @@ class UserData {
   String? humanReadableId;
 
   DateTime? lastAttendanceDate;
+  DateTime? lastBonusViewed;
 
   // Personal Information
   String? phone;
@@ -81,6 +82,7 @@ class UserData {
     this.servantNotes,
     this.callsCount,
     this.visitsCount,
+    this.lastBonusViewed,
   });
 
   /// Role getters and permission checks
@@ -194,6 +196,7 @@ class UserData {
     lastContact = _parseDate(json["lastContact"]);
     lastCallDate = _parseDate(json["lastCallDate"]);
     lastVisitDate = _parseDate(json["lastVisitDate"]);
+    lastBonusViewed = _parseDate(json["lastBonusViewed"]);
   }
 
   static DateTime? _parseDate(dynamic value) {
