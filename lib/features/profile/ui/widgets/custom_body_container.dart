@@ -154,8 +154,7 @@ class CustomBodyContainer extends StatelessWidget {
           final data = doc.data() as Map<String, dynamic>;
           final done = data["done"] == true;
           final abandoned = data["abandoned"] == true;
-          final hasScore = data.containsKey("score") && data["score"] != null;
-          return !abandoned && (done || hasScore);
+          return !abandoned && done;
         }).toList();
 
         debugPrint("=== EXAM RESULTS DEBUG LOGS ===");

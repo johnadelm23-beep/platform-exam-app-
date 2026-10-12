@@ -70,11 +70,13 @@ dependencies:
 
 
 dependency_overrides:
-   archive: ^3.6.1
+    archive: 3.6.1
+    image: 4.5.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
 
   # The "flutter_lints" package below contains a set of recommended lints to
   # encourage good coding practices. The lint set provided by the package is

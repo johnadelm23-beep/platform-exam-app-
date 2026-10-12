@@ -99,7 +99,8 @@ class _ScoresStatisticsScreenState extends State<ScoresStatisticsScreen> {
         final data = doc.data() as Map<String, dynamic>;
 
         final abandoned = data["abandoned"] == true;
-        if (abandoned) continue;
+        final done = data["done"] == true;
+        if (abandoned || !done) continue;
 
         final userId = data["userId"] as String?;
         if (userId == null || userId.isEmpty) continue;

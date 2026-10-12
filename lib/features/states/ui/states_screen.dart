@@ -34,8 +34,8 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
           for (var doc in snap.docs) {
             final data = doc.data();
 
-            // Skip abandoned attempts
-            if (data["abandoned"] == true) continue;
+            // Skip abandoned or incomplete attempts
+            if (data["abandoned"] == true || data["done"] != true) continue;
 
             final userId = data["userId"] as String?;
             if (userId == null || userId.isEmpty) continue;

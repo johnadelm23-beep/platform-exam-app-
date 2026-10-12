@@ -18,7 +18,6 @@ import 'package:platformexamapp/features/profile/ui/profile_screen.dart';
 import 'package:platformexamapp/features/states/ui/states_screen.dart';
 import 'package:platformexamapp/features/home/ui/daily_content_screen.dart';
 import 'package:platformexamapp/features/bonus/ui/user_bonus_screen.dart';
-import 'package:platformexamapp/features/games/ui/games_home_screen.dart';
 
 class BodyContainer extends StatefulWidget {
   const BodyContainer({super.key, required this.uid, required this.user});
@@ -244,12 +243,12 @@ class _BodyContainerState extends State<BodyContainer> {
                           title: "games".tr(),
                           icon: HugeIcons.strokeRoundedGameController01,
                           color: AppColors.softGold,
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              AppPageRoute(child: const GamesHomeScreen()),
-                            );
-                          },
+                          // onTap: () {
+                          //   Navigator.push(
+                          //     context
+                          //     // AppPageRoute(child: const GamesHomeScreen()),
+                          //   );
+                          // },
                         );
                       }
 

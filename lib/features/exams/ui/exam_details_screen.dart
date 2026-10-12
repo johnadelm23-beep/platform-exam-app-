@@ -12,6 +12,7 @@ import 'package:platformexamapp/core/widgets/app_button.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
 import 'package:platformexamapp/core/widgets/loading_state.dart';
+import 'package:platformexamapp/features/exams/data/exam_service.dart';
 import 'package:platformexamapp/features/home/ui/home_screen.dart';
 
 class ExamDetailsScreen extends StatefulWidget {
@@ -40,6 +41,8 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
 
   bool isLoaded = false;
   bool isSubmitting = false;
+  bool isTerminating = false;
+  bool isTerminated = false;
 
   List<QueryDocumentSnapshot> questions = [];
   Map<int, int> selectedAnswers = {};
@@ -54,24 +57,22 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
   // ================= LIFECYCLE CONTROL =================
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    if (isSubmitting || isTerminated || !isLoaded) return;
 
+    // Detect when the user minimizes the app, moves to background, or switches tasks
     if (state == AppLifecycleState.paused ||
-        state == AppLifecycleState.inactive ||
-        state == AppLifecycleState.detached) {
-      FirebaseFirestore.instance
-          .collection("examAttempts")
-          .doc("${uid}_${widget.examId}")
-          .set({
-            "userId": uid,
-            "examId": widget.examId,
-            "abandoned": true,
-            "timestamp": FieldValue.serverTimestamp(),
-          }, SetOptions(merge: true));
+        state == AppLifecycleState.detached ||
+        state == AppLifecycleState.hidden) {
+      terminateExam(
+        reason: "App moved to background or student switched applications",
+        violationType: "app_backgrounded",
+      );
     }
 
     if (state == AppLifecycleState.resumed) {
-      checkIfAbandoned();
+      if (isTerminated) {
+        showTerminatedDialog("exam_terminated_desc".tr());
+      }
     }
   }
 
@@ -84,84 +85,151 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
 
   // ================= INIT =================
   Future<void> initExam() async {
-    final blocked = await checkIfUserAlreadyTookExam();
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) Navigator.pop(context);
+      return;
+    }
 
-    if (blocked) return;
+    final attemptResult = await ExamService.getAttemptStatus(
+      userId: user.uid,
+      examId: widget.examId,
+      durationMinutes: widget.time,
+    );
+
+    if (!mounted) return;
+
+    if (attemptResult.status == ExamAttemptStatus.terminated) {
+      isTerminated = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showTerminatedDialog(
+          attemptResult.terminationReason ?? "exam_terminated_desc".tr(),
+        );
+      });
+      return;
+    }
+
+    if (attemptResult.status == ExamAttemptStatus.completed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        showAlreadyTakenDialog();
+      });
+      return;
+    }
 
     await loadQuestions();
 
-    if (questions.isNotEmpty) {
-      startTimer(widget.time);
+    if (!mounted) return;
+
+    if (questions.isEmpty) {
+      setState(() => isLoaded = true);
+      return;
     }
 
-    setState(() => isLoaded = true);
-  }
+    if (attemptResult.status == ExamAttemptStatus.inProgress) {
+      // Restore previously saved draft answers
+      selectedAnswers = Map<int, int>.from(attemptResult.savedAnswers);
 
-  Future<bool> checkIfUserAlreadyTookExam() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    final doc = await FirebaseFirestore.instance
-        .collection("examAttempts")
-        .doc("${uid}_${widget.examId}")
-        .get();
-
-    if (doc.exists) {
-      final data = doc.data();
-      if (data != null && data["done"] == true && mounted) {
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          showAlreadyTakenDialog();
+      if (attemptResult.remainingSeconds <= 0) {
+        // Time expired while away -> auto-submit immediately
+        setState(() {
+          isLoaded = true;
+          remainingSeconds = 0;
         });
-        return true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          submitExam(isAutoSubmit: true);
+        });
+        return;
+      } else {
+        remainingSeconds = attemptResult.remainingSeconds;
       }
+    } else {
+      // Fresh start: Persist attempt on Firestore and locally
+      remainingSeconds = widget.time * 60;
+      await ExamService.startExamAttempt(
+        userId: user.uid,
+        examId: widget.examId,
+        title: widget.title,
+        durationMinutes: widget.time,
+      );
     }
 
-    return false;
-  }
+    startTimer();
 
-  Future<void> checkIfAbandoned() async {
-    final uid = FirebaseAuth.instance.currentUser!.uid;
-
-    final doc = await FirebaseFirestore.instance
-        .collection("examAttempts")
-        .doc("${uid}_${widget.examId}")
-        .get();
-
-    final data = doc.data();
-
-    if (data != null && data["abandoned"] == true && mounted) {
-      Navigator.pushAndRemoveUntil(
-        context,
-        AppPageRoute(child: const HomeScreen()),
-        (route) => false,
-      );
+    if (mounted) {
+      setState(() => isLoaded = true);
     }
   }
 
   // ================= LOAD QUESTIONS =================
   Future<void> loadQuestions() async {
-    final snap = await FirebaseFirestore.instance
-        .collection("exams")
-        .doc(widget.examId)
-        .collection("questions")
-        .get();
+    try {
+      final snap = await FirebaseFirestore.instance
+          .collection("exams")
+          .doc(widget.examId)
+          .collection("questions")
+          .get();
 
-    questions = snap.docs;
+      final docs = snap.docs.toList();
+      // Deterministic order if questions have order index, otherwise doc order
+      docs.sort((a, b) {
+        final dataA = a.data();
+        final dataB = b.data();
+        final orderA = dataA["order"] as num?;
+        final orderB = dataB["order"] as num?;
+        if (orderA != null && orderB != null) {
+          return orderA.compareTo(orderB);
+        }
+        return a.id.compareTo(b.id);
+      });
+
+      questions = docs;
+    } catch (e) {
+      debugPrint("Error loading questions: $e");
+      questions = [];
+    }
   }
 
   // ================= TIMER =================
-  void startTimer(int minutes) {
-    remainingSeconds = minutes * 60;
+  void startTimer() {
+    timer?.cancel();
 
     timer = Timer.periodic(const Duration(seconds: 1), (t) {
-      if (!mounted) return;
-
-      if (remainingSeconds <= 0) {
+      if (!mounted) {
         t.cancel();
-        submitExam();
+        return;
+      }
+
+      if (isSubmitting || isTerminated) {
+        t.cancel();
+        return;
+      }
+
+      if (remainingSeconds <= 1) {
+        t.cancel();
+        remainingSeconds = 0;
+        setState(() {});
+        autoSubmitOnTimeout();
       } else {
         setState(() => remainingSeconds--);
       }
     });
+  }
+
+  void autoSubmitOnTimeout() {
+    if (!mounted || isSubmitting || isTerminated) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          "time_expired".tr(),
+          style: GoogleFonts.cairo(color: Colors.white),
+        ),
+        backgroundColor: AppColors.heartRed,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+
+    submitExam(isAutoSubmit: true);
   }
 
   String formatTime(int seconds) {
@@ -172,9 +240,20 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
 
   // ================= ANSWERS =================
   void selectAnswer(int index) {
+    if (isSubmitting || isTerminated) return;
+
     setState(() {
       selectedAnswers[currentIndex] = index;
     });
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      ExamService.saveDraftAnswers(
+        userId: user.uid,
+        examId: widget.examId,
+        answers: selectedAnswers,
+      );
+    }
   }
 
   void next() {
@@ -191,42 +270,114 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
 
   void calculateScore() {
     score = 0;
-
     for (int i = 0; i < questions.length; i++) {
-      if (selectedAnswers[i] == questions[i]["correctAnswer"]) {
+      final qData = questions[i].data() as Map<String, dynamic>;
+      final correct = qData["correctAnswer"];
+      if (selectedAnswers[i] == correct) {
         score++;
       }
     }
   }
 
   // ================= SUBMIT =================
-  Future<void> submitExam() async {
-    if (isSubmitting) return;
+  Future<void> submitExam({bool isAutoSubmit = false}) async {
+    if (isSubmitting || isTerminated) return;
 
     setState(() => isSubmitting = true);
     timer?.cancel();
 
     calculateScore();
 
-    final uid = FirebaseAuth.instance.currentUser!.uid;
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) {
+      if (mounted) setState(() => isSubmitting = false);
+      return;
+    }
 
-    await FirebaseFirestore.instance
-        .collection("examAttempts")
-        .doc("${uid}_${widget.examId}")
-        .set({
-          "userId": uid,
-          "examId": widget.examId,
-          "examTitle": widget.title,
-          "score": score,
-          "done": true,
-          "abandoned": false,
-          "timestamp": FieldValue.serverTimestamp(),
-          "createdAt": FieldValue.serverTimestamp(),
-        }, SetOptions(merge: true));
+    try {
+      await ExamService.submitExamAttempt(
+        userId: user.uid,
+        examId: widget.examId,
+        title: widget.title,
+        score: score,
+        totalQuestions: questions.length,
+      );
+
+      if (mounted) {
+        showResultDialog();
+      }
+    } catch (e) {
+      debugPrint("Error submitting exam: $e");
+      if (mounted) {
+        setState(() => isSubmitting = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              "${'submission_error'.tr()}: $e",
+              style: GoogleFonts.cairo(),
+            ),
+            backgroundColor: AppColors.heartRed,
+            action: SnackBarAction(
+              label: "retry".tr(),
+              textColor: Colors.white,
+              onPressed: () => submitExam(isAutoSubmit: isAutoSubmit),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
+  // ================= TERMINATE FOR VIOLATION =================
+  Future<void> terminateExam({
+    required String reason,
+    required String violationType,
+  }) async {
+    if (isTerminating || isSubmitting || isTerminated) return;
+
+    isTerminating = true;
+    isTerminated = true;
+    timer?.cancel();
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user != null) {
+      await ExamService.terminateExamAttempt(
+        userId: user.uid,
+        examId: widget.examId,
+        title: widget.title,
+        reason: reason,
+        violationType: violationType,
+      );
+    }
 
     if (mounted) {
-      showResultDialog();
+      showTerminatedDialog("exam_terminated_desc".tr());
     }
+  }
+
+  // ================= POP INTERCEPTION =================
+  void _handleExitAttempt() {
+    AppDialog.show(
+      context: context,
+      iconWidget: Icon(
+        Icons.warning_amber_rounded,
+        color: AppColors.heartRed,
+        size: 36.r,
+      ),
+      iconColor: AppColors.heartRed,
+      title: "exit_exam_title".tr(),
+      description: "exit_exam_desc".tr(),
+      confirmText: "leave_exam".tr(),
+      confirmButtonColor: AppColors.heartRed,
+      cancelText: "continue_exam".tr(),
+      onConfirm: () {
+        Navigator.pop(context); // close dialog
+        terminateExam(
+          reason: "Student voluntarily exited exam screen",
+          violationType: "navigation_pop",
+        );
+      },
+    );
   }
 
   // ================= UI =================
@@ -263,11 +414,16 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
       );
     }
 
-    final q = questions[currentIndex];
+    final q = questions[currentIndex].data() as Map<String, dynamic>;
     final options = (q["options"] ?? []) as List;
 
-    return WillPopScope(
-      onWillPop: () async => false,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        if (isSubmitting || isTerminated || !isLoaded) return;
+        _handleExitAttempt();
+      },
       child: Scaffold(
         backgroundColor: pageBg,
         appBar: AppBar(
@@ -287,9 +443,11 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
               margin: EdgeInsets.only(right: 16.w, left: 16.w),
               padding: EdgeInsets.symmetric(horizontal: 12.w, vertical: 6.h),
               decoration: BoxDecoration(
-                color: AppColors.softGold.withOpacity(0.15),
+                color: AppColors.softGold.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(20.r),
-                border: Border.all(color: AppColors.softGold.withOpacity(0.3)),
+                border: Border.all(
+                  color: AppColors.softGold.withValues(alpha: 0.3),
+                ),
               ),
               child: Row(
                 children: [
@@ -321,8 +479,8 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                 child: LinearProgressIndicator(
                   color: AppColors.softGold,
                   backgroundColor: isDark
-                      ? Colors.white.withOpacity(0.08)
-                      : Colors.black.withOpacity(0.05),
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : Colors.black.withValues(alpha: 0.05),
                   value: (currentIndex + 1) / questions.length,
                   minHeight: 6.h,
                 ),
@@ -358,7 +516,7 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                     ),
                     SizedBox(height: 12.h),
                     Text(
-                      q["question"],
+                      q["question"]?.toString() ?? "",
                       style: GoogleFonts.cairo(
                         fontSize: 17.sp,
                         fontWeight: FontWeight.bold,
@@ -386,7 +544,7 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                         padding: EdgeInsets.all(16.r),
                         decoration: BoxDecoration(
                           color: selected
-                              ? AppColors.softGold.withOpacity(0.18)
+                              ? AppColors.softGold.withValues(alpha: 0.18)
                               : isDark
                               ? AppColors.darkGlassSurface
                               : AppColors.lightGlassSurface,
@@ -460,13 +618,13 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                         ),
                         padding: EdgeInsets.symmetric(vertical: 14.h),
                       ),
-                      onPressed: prev,
+                      onPressed: isSubmitting ? null : prev,
                       child: Text(
                         "previous".tr(),
                         style: GoogleFonts.cairo(
                           fontSize: 15.sp,
                           fontWeight: FontWeight.bold,
-                          color: textColor,
+                          color: isSubmitting ? mutedColor : textColor,
                         ),
                       ),
                     ),
@@ -474,12 +632,16 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
                   SizedBox(width: 12.w),
                   Expanded(
                     child: AppButton(
-                      text: currentIndex == questions.length - 1
-                          ? "submit".tr()
-                          : "next".tr(),
-                      onPressed: currentIndex == questions.length - 1
-                          ? submitExam
-                          : next,
+                      text: isSubmitting
+                          ? "..."
+                          : (currentIndex == questions.length - 1
+                              ? "submit".tr()
+                              : "next".tr()),
+                      onPressed: isSubmitting
+                          ? null
+                          : (currentIndex == questions.length - 1
+                              ? submitExam
+                              : next),
                     ),
                   ),
                 ],
@@ -504,6 +666,29 @@ class _ExamDetailsScreenState extends State<ExamDetailsScreen>
       title: "not_allowed".tr(),
       description: "already_took_exam".tr(),
       confirmText: "ok".tr(),
+      confirmButtonColor: AppColors.heartRed,
+      onConfirm: () {
+        Navigator.pushAndRemoveUntil(
+          context,
+          AppPageRoute(child: const HomeScreen()),
+          (route) => false,
+        );
+      },
+    );
+  }
+
+  void showTerminatedDialog(String reason) {
+    AppDialog.show(
+      context: context,
+      iconWidget: Icon(
+        Icons.block_rounded,
+        color: AppColors.heartRed,
+        size: 36.r,
+      ),
+      iconColor: AppColors.heartRed,
+      title: "exam_terminated".tr(),
+      description: reason.isNotEmpty ? reason : "exam_terminated_desc".tr(),
+      confirmText: "back_to_home".tr(),
       confirmButtonColor: AppColors.heartRed,
       onConfirm: () {
         Navigator.pushAndRemoveUntil(

@@ -297,6 +297,18 @@
   "teams": "Teams",
   "max_members": "Max Members per Team",
   "max_teams": "Max Teams",
-  "answered_teams": "Answered Teams"
+  "answered_teams": "Answered Teams",
+  "exam_terminated": "Exam Terminated",
+  "exam_terminated_desc": "Your exam was terminated due to leaving the application or navigating away. Re-taking is not allowed.",
+  "exit_exam_title": "Exit Exam?",
+  "exit_exam_desc": "Leaving the exam now will terminate your attempt with a score of 0. Are you sure you want to exit?",
+  "continue_exam": "Continue Exam",
+  "leave_exam": "Leave",
+  "submission_error": "Failed to submit exam",
+  "exam_status_completed": "Completed",
+  "exam_status_terminated": "Terminated",
+  "time_expired": "Time Expired! Submitting your answers...",
+  "exam_already_completed": "You have already completed this exam.",
+  "exam_already_terminated": "This exam was terminated due to a violation and cannot be retaken."
 }
 

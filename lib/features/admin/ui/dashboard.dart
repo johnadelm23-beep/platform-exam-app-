@@ -12,7 +12,6 @@ import 'package:platformexamapp/features/admin/ui/top_user_interact.dart';
 import 'package:platformexamapp/features/admin/ui/users_screen.dart';
 import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/home/ui/widgets/custom_container.dart';
-
 import 'package:platformexamapp/features/admin/ui/scanner_screen.dart';
 import 'package:platformexamapp/features/admin/ui/events_screen.dart';
 import 'package:platformexamapp/features/admin/ui/attendance_analytics_dashboard.dart';
@@ -21,7 +20,6 @@ import 'package:platformexamapp/features/admin/ui/daily_content_history.dart';
 import 'package:platformexamapp/features/admin/ui/seasons_management.dart';
 import 'package:platformexamapp/features/admin/ui/admin_follow_up_screen.dart';
 import 'package:platformexamapp/features/admin/ui/admin_bonus_screen.dart';
-import 'package:platformexamapp/features/admin/ui/admin_games_screen.dart';
 
 class AdminDashboardScreen extends StatelessWidget {
   const AdminDashboardScreen({super.key, required this.user});

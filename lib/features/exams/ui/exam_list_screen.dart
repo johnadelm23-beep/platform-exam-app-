@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -24,11 +25,17 @@ class ExamsScreen extends StatefulWidget {
 
 class _ExamsScreenState extends State<ExamsScreen> {
   late final Stream<QuerySnapshot> _examsStream;
+  late final Stream<QuerySnapshot> _attemptsStream;
 
   @override
   void initState() {
     super.initState();
+    final uid = FirebaseAuth.instance.currentUser?.uid ?? widget.user.uid;
     _examsStream = FirebaseFirestore.instance.collection("exams").snapshots();
+    _attemptsStream = FirebaseFirestore.instance
+        .collection("examAttempts")
+        .where("userId", isEqualTo: uid)
+        .snapshots();
   }
 
   Future<void> deleteExam(String examId) async {
@@ -91,8 +98,8 @@ class _ExamsScreenState extends State<ExamsScreen> {
                       padding: EdgeInsets.all(10.r),
                       decoration: BoxDecoration(
                         color: isDark
-                            ? Colors.white.withOpacity(0.08)
-                            : Colors.black.withOpacity(0.05),
+                            ? Colors.white.withValues(alpha: 0.08)
+                            : Colors.black.withValues(alpha: 0.05),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -140,67 +147,84 @@ class _ExamsScreenState extends State<ExamsScreen> {
                   border: Border(top: BorderSide(color: borderColor, width: 1)),
                 ),
                 child: StreamBuilder<QuerySnapshot>(
-                  stream: _examsStream,
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData) {
-                      return const LoadingState();
+                  stream: _attemptsStream,
+                  builder: (context, attemptsSnap) {
+                    final Map<String, Map<String, dynamic>> userAttempts = {};
+                    if (attemptsSnap.hasData) {
+                      for (var doc in attemptsSnap.data!.docs) {
+                        final d = doc.data() as Map<String, dynamic>;
+                        final eid = (d["examId"] as String?) ?? "";
+                        if (eid.isNotEmpty) {
+                          userAttempts[eid] = d;
+                        }
+                      }
                     }
-                    final rawExams = snapshot.data!.docs;
-                    if (rawExams.isEmpty) {
-                      return EmptyState(
-                        title: "no_exams".tr(),
-                        hugeIcon: HugeIcons.strokeRoundedFile01,
-                      );
-                    }
 
-                    // Deterministic Sorting:
-                    // 1. "order" field ascending (if explicitly defined)
-                    // 2. "createdAt" timestamp descending (newer exams first)
-                    // 3. Document ID ascending tiebreaker
-                    final exams = rawExams.toList()
-                      ..sort((a, b) {
-                        final dataA = a.data() as Map<String, dynamic>;
-                        final dataB = b.data() as Map<String, dynamic>;
-
-                        final orderA = dataA["order"] as num?;
-                        final orderB = dataB["order"] as num?;
-
-                        if (orderA != null && orderB != null) {
-                          final cmp = orderA.compareTo(orderB);
-                          if (cmp != 0) return cmp;
-                        } else if (orderA != null) {
-                          return -1;
-                        } else if (orderB != null) {
-                          return 1;
+                    return StreamBuilder<QuerySnapshot>(
+                      stream: _examsStream,
+                      builder: (context, snapshot) {
+                        if (!snapshot.hasData) {
+                          return const LoadingState();
+                        }
+                        final rawExams = snapshot.data!.docs;
+                        if (rawExams.isEmpty) {
+                          return EmptyState(
+                            title: "no_exams".tr(),
+                            hugeIcon: HugeIcons.strokeRoundedFile01,
+                          );
                         }
 
-                        final timeA = dataA["createdAt"] as Timestamp?;
-                        final timeB = dataB["createdAt"] as Timestamp?;
+                        // Deterministic Sorting:
+                        // 1. "order" field ascending (if explicitly defined)
+                        // 2. "createdAt" timestamp descending (newer exams first)
+                        // 3. Document ID ascending tiebreaker
+                        final exams = rawExams.toList()
+                          ..sort((a, b) {
+                            final dataA = a.data() as Map<String, dynamic>;
+                            final dataB = b.data() as Map<String, dynamic>;
 
-                        if (timeA != null && timeB != null) {
-                          final cmp = timeB.compareTo(timeA);
-                          if (cmp != 0) return cmp;
-                        } else if (timeA != null) {
-                          return -1;
-                        } else if (timeB != null) {
-                          return 1;
-                        }
+                            final orderA = dataA["order"] as num?;
+                            final orderB = dataB["order"] as num?;
 
-                        final titleA = (dataA["title"] ?? "").toString();
-                        final titleB = (dataB["title"] ?? "").toString();
-                        return titleA.compareTo(titleB);
-                      });
+                            if (orderA != null && orderB != null) {
+                              final cmp = orderA.compareTo(orderB);
+                              if (cmp != 0) return cmp;
+                            } else if (orderA != null) {
+                              return -1;
+                            } else if (orderB != null) {
+                              return 1;
+                            }
 
-                    return ListView.separated(
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: exams.length,
-                      separatorBuilder: (_, _) => SizedBox(height: 12.h),
-                      itemBuilder: (context, index) {
-                        final examDoc = exams[index];
-                        return _ExamCardItem(
-                          examDoc: examDoc,
-                          isAdmin: widget.user.isAdmin == true,
-                          onDelete: () => showDeleteExamDialog(examDoc.id),
+                            final timeA = dataA["createdAt"] as Timestamp?;
+                            final timeB = dataB["createdAt"] as Timestamp?;
+
+                            if (timeA != null && timeB != null) {
+                              final cmp = timeB.compareTo(timeA);
+                              if (cmp != 0) return cmp;
+                            } else if (timeA != null) {
+                              return -1;
+                            } else if (timeB != null) {
+                              return 1;
+                            }
+
+                            final titleA = (dataA["title"] ?? "").toString();
+                            final titleB = (dataB["title"] ?? "").toString();
+                            return titleA.compareTo(titleB);
+                          });
+
+                        return ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          itemCount: exams.length,
+                          separatorBuilder: (_, _) => SizedBox(height: 12.h),
+                          itemBuilder: (context, index) {
+                            final examDoc = exams[index];
+                            return _ExamCardItem(
+                              examDoc: examDoc,
+                              isAdmin: widget.user.isAdmin == true,
+                              attemptData: userAttempts[examDoc.id],
+                              onDelete: () => showDeleteExamDialog(examDoc.id),
+                            );
+                          },
                         );
                       },
                     );
@@ -218,11 +242,13 @@ class _ExamsScreenState extends State<ExamsScreen> {
 class _ExamCardItem extends StatelessWidget {
   final QueryDocumentSnapshot examDoc;
   final bool isAdmin;
+  final Map<String, dynamic>? attemptData;
   final VoidCallback onDelete;
 
   const _ExamCardItem({
     required this.examDoc,
     required this.isAdmin,
+    this.attemptData,
     required this.onDelete,
   });
 
@@ -235,8 +261,52 @@ class _ExamCardItem extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
 
+    final isDone = attemptData?["done"] == true;
+    final isAbandoned = attemptData?["abandoned"] == true;
+    final status = (attemptData?["status"] as String?) ?? "";
+    final score = (attemptData?["score"] as num?)?.toInt() ?? 0;
+
+    final isTerminated = isAbandoned || status == "terminated";
+    final isCompleted = isDone && !isAbandoned;
+
     return GlassCard(
       onTap: () {
+        if (isTerminated) {
+          AppDialog.show(
+            context: context,
+            iconWidget: Icon(
+              Icons.block_rounded,
+              color: AppColors.heartRed,
+              size: 36.r,
+            ),
+            iconColor: AppColors.heartRed,
+            title: "exam_terminated".tr(),
+            description: "exam_already_terminated".tr(),
+            confirmText: "ok".tr(),
+            confirmButtonColor: AppColors.heartRed,
+            onConfirm: () => Navigator.pop(context),
+          );
+          return;
+        }
+
+        if (isCompleted) {
+          AppDialog.show(
+            context: context,
+            iconWidget: Icon(
+              Icons.lock_rounded,
+              color: AppColors.heartRed,
+              size: 36.r,
+            ),
+            iconColor: AppColors.heartRed,
+            title: "not_allowed".tr(),
+            description: "exam_already_completed".tr(),
+            confirmText: "ok".tr(),
+            confirmButtonColor: AppColors.heartRed,
+            onConfirm: () => Navigator.pop(context),
+          );
+          return;
+        }
+
         Navigator.push(
           context,
           AppPageRoute(
@@ -258,12 +328,22 @@ class _ExamCardItem extends StatelessWidget {
               Container(
                 padding: EdgeInsets.all(10.r),
                 decoration: BoxDecoration(
-                  color: AppColors.softGold.withOpacity(0.15),
+                  color: isTerminated
+                      ? AppColors.heartRed.withValues(alpha: 0.15)
+                      : isCompleted
+                      ? AppColors.successGreen.withValues(alpha: 0.15)
+                      : AppColors.softGold.withValues(alpha: 0.15),
                   shape: BoxShape.circle,
                 ),
                 child: HugeIcon(
-                  icon: HugeIcons.strokeRoundedFile01,
-                  color: AppColors.softGold,
+                  icon: isTerminated
+                      ? HugeIcons.strokeRoundedAlertCircle
+                      : HugeIcons.strokeRoundedFile01,
+                  color: isTerminated
+                      ? AppColors.heartRed
+                      : isCompleted
+                      ? AppColors.successGreen
+                      : AppColors.softGold,
                   size: 24.r,
                 ),
               ),
@@ -293,7 +373,7 @@ class _ExamCardItem extends StatelessWidget {
 
           SizedBox(height: 12.h),
 
-          /// Badges Row: Questions count & Duration
+          /// Badges Row: Questions count, Duration, Status
           StreamBuilder<QuerySnapshot>(
             stream: examDoc.reference.collection("questions").snapshots(),
             builder: (context, qSnap) {
@@ -304,7 +384,9 @@ class _ExamCardItem extends StatelessWidget {
               final timeText =
                   "exam_duration".tr(args: [timeMinutes.toString()]);
 
-              return Row(
+              return Wrap(
+                spacing: 8.w,
+                runSpacing: 6.h,
                 children: [
                   /// Questions Badge
                   Container(
@@ -312,8 +394,8 @@ class _ExamCardItem extends StatelessWidget {
                         EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
                       color: isDark
-                          ? Colors.white.withOpacity(0.06)
-                          : Colors.black.withOpacity(0.04),
+                          ? Colors.white.withValues(alpha: 0.06)
+                          : Colors.black.withValues(alpha: 0.04),
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
                         color: isDark
@@ -342,17 +424,15 @@ class _ExamCardItem extends StatelessWidget {
                     ),
                   ),
 
-                  SizedBox(width: 8.w),
-
                   /// Duration Badge
                   Container(
                     padding:
                         EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
                     decoration: BoxDecoration(
-                      color: AppColors.softGold.withOpacity(0.12),
+                      color: AppColors.softGold.withValues(alpha: 0.12),
                       borderRadius: BorderRadius.circular(10.r),
                       border: Border.all(
-                        color: AppColors.softGold.withOpacity(0.3),
+                        color: AppColors.softGold.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Row(
@@ -375,6 +455,71 @@ class _ExamCardItem extends StatelessWidget {
                       ],
                     ),
                   ),
+
+                  /// Status Badge (Terminated or Completed)
+                  if (isTerminated)
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.heartRed.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: AppColors.heartRed.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.block_rounded,
+                            size: 13.r,
+                            color: AppColors.heartRed,
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            "exam_status_terminated".tr(),
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.heartRed,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                  if (isCompleted)
+                    Container(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
+                      decoration: BoxDecoration(
+                        color: AppColors.successGreen.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(10.r),
+                        border: Border.all(
+                          color: AppColors.successGreen.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.check_circle_rounded,
+                            size: 13.r,
+                            color: AppColors.successGreen,
+                          ),
+                          SizedBox(width: 5.w),
+                          Text(
+                            "${'exam_status_completed'.tr()} ($score)",
+                            style: GoogleFonts.cairo(
+                              fontSize: 12.sp,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.successGreen,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
                 ],
               );
             },
