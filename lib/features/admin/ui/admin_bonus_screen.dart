@@ -922,10 +922,10 @@ class _AdminBonusScreenState extends State<AdminBonusScreen>
                     ),
                     child: Row(
                       children: [
-                        Expanded(flex: 3, child: Text("User", style: GoogleFonts.cairo(fontSize: 12.sp, fontWeight: FontWeight.bold, color: textColor))),
-                        Expanded(flex: 2, child: Text("Granted", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.softGold))),
-                        Expanded(flex: 2, child: Text("Spent", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.heartRed))),
-                        Expanded(flex: 2, child: Text("Remaining", textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.successGreen))),
+                        Expanded(flex: 3, child: Text("user_label".tr(), style: GoogleFonts.cairo(fontSize: 12.sp, fontWeight: FontWeight.bold, color: textColor))),
+                        Expanded(flex: 2, child: Text("granted".tr(), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.softGold))),
+                        Expanded(flex: 2, child: Text("spent".tr(), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.heartRed))),
+                        Expanded(flex: 2, child: Text("remaining".tr(), textAlign: TextAlign.center, style: GoogleFonts.cairo(fontSize: 11.sp, fontWeight: FontWeight.bold, color: AppColors.successGreen))),
                       ],
                     ),
                   ),

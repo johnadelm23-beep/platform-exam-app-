@@ -148,8 +148,8 @@ class _DailyContentManagementScreenState
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Permission denied: Main Admin only."),
+        SnackBar(
+          content: Text("permission_denied_admin".tr()),
           backgroundColor: AppColors.heartRed,
         ),
       );
@@ -245,8 +245,8 @@ class _DailyContentManagementScreenState
       await batch.commit();
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Content activated successfully!"),
+        SnackBar(
+          content: Text("content_activated_success".tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -302,8 +302,8 @@ class _DailyContentManagementScreenState
 
       await docRef.set(clonedData);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Content duplicated successfully!"),
+        SnackBar(
+          content: Text("content_duplicated_success".tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -322,12 +322,11 @@ class _DailyContentManagementScreenState
       context: context,
       icon: Icons.delete_forever,
       iconColor: AppColors.heartRed,
-      title: "Delete Content",
-      description:
-          "This action cannot be undone. Are you sure you want to delete this content item?",
-      confirmText: "Delete",
+      title: "delete_content".tr(),
+      description: "delete_content_confirm".tr(),
+      confirmText: "delete".tr(),
       confirmButtonColor: AppColors.heartRed,
-      cancelText: "Cancel",
+      cancelText: "cancel".tr(),
       onConfirm: () async {
         Navigator.pop(context); // Close dialog
         try {
@@ -337,8 +336,8 @@ class _DailyContentManagementScreenState
               .delete();
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Content deleted successfully!"),
+              SnackBar(
+                content: Text("content_deleted_success".tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -762,8 +761,8 @@ class _DailyContentManagementScreenState
                           ),
                           child: Text(
                             editDocId == null
-                                ? "Create Content"
-                                : "Update Content",
+                                ? "create_content".tr()
+                                : "update_content".tr(),
                             style: GoogleFonts.cairo(
                               fontWeight: FontWeight.bold,
                               fontSize: 16.sp,
@@ -926,7 +925,7 @@ class _DailyContentManagementScreenState
           ),
         ),
         title: Text(
-          "Daily Content Manager",
+          "daily_content_manager".tr(),
           style: GoogleFonts.cairo(
             color: textColor,
             fontWeight: FontWeight.bold,
@@ -961,7 +960,7 @@ class _DailyContentManagementScreenState
                   child: TextField(
                     style: GoogleFonts.cairo(color: textColor, fontSize: 14.sp),
                     decoration: InputDecoration(
-                      hintText: "Search content...",
+                      hintText: "search_content".tr(),
                       hintStyle: GoogleFonts.cairo(
                         color: mutedColor,
                         fontSize: 13.sp,
@@ -1018,15 +1017,15 @@ class _DailyContentManagementScreenState
                         fontSize: 13.sp,
                         fontWeight: FontWeight.bold,
                       ),
-                      items: const [
-                        DropdownMenuItem(value: 'all', child: Text('All')),
+                      items: [
+                        DropdownMenuItem(value: 'all', child: Text("all".tr())),
                         DropdownMenuItem(
                           value: 'active',
-                          child: Text('Active'),
+                          child: Text("active".tr()),
                         ),
                         DropdownMenuItem(
                           value: 'archived',
-                          child: Text('Archived'),
+                          child: Text("archived".tr()),
                         ),
                       ],
                       onChanged: (val) {

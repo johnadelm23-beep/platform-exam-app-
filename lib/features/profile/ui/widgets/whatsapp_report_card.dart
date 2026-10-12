@@ -143,13 +143,13 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
 
         await Share.shareXFiles([
           XFile(file.path),
-        ], text: "Save Attendance Report Image");
+        ], text: "save_attendance_report".tr());
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
-                "Report exported successfully!",
+                "report_exported_success".tr(),
                 style: GoogleFonts.cairo(),
               ),
               backgroundColor: AppColors.successGreen,
@@ -161,7 +161,10 @@ class _WhatsappReportCardState extends State<WhatsappReportCard> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text("Error saving image: $e", style: GoogleFonts.cairo()),
+            content: Text(
+              "error_saving_image".tr(args: [e.toString()]),
+              style: GoogleFonts.cairo(),
+            ),
             backgroundColor: AppColors.heartRed,
           ),
         );

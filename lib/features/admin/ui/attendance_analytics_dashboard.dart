@@ -64,8 +64,8 @@ class _AttendanceAnalyticsDashboardState
           if (mounted) {
             Navigator.pop(context); // Pop loading
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("Attendance reset successfully!"),
+              SnackBar(
+                content: Text("attendance_reset_success".tr()),
                 backgroundColor: Colors.green,
               ),
             );
@@ -168,7 +168,7 @@ class _AttendanceAnalyticsDashboardState
                       fontWeight: FontWeight.w600,
                     ),
                     decoration: InputDecoration(
-                      labelText: "Selected Season",
+                      labelText: "selected_season".tr(),
                       labelStyle: GoogleFonts.cairo(color: AppColors.softGold),
                       fillColor: cardBg,
                       filled: true,

@@ -12,18 +12,19 @@ class ThemeCubit extends Cubit<ThemeMode> {
   Future<void> _loadThemeMode() async {
     try {
       final prefs = await SharedPreferences.getInstance();
+      if (isClosed) return;
       final savedTheme = prefs.getString(_themeKey);
       if (savedTheme == 'light') {
         emit(ThemeMode.light);
       } else if (savedTheme == 'dark') {
         emit(ThemeMode.dark);
+      } else if (savedTheme == 'system') {
+        emit(ThemeMode.system);
       } else {
-        emit(
-          ThemeMode.dark,
-        ); // Default to dark cinematic theme per Egtma3na spec
+        emit(ThemeMode.dark);
       }
     } catch (_) {
-      emit(ThemeMode.dark);
+      if (!isClosed) emit(ThemeMode.dark);
     }
   }
 
@@ -45,10 +46,19 @@ class ThemeCubit extends Cubit<ThemeMode> {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setString(
         _themeKey,
-        mode == ThemeMode.light ? 'light' : 'dark',
+        mode == ThemeMode.light
+            ? 'light'
+            : (mode == ThemeMode.system ? 'system' : 'dark'),
       );
     } catch (_) {}
   }
 
   bool get isDark => state == ThemeMode.dark;
+
+  bool isDarkMode(BuildContext context) {
+    if (state == ThemeMode.system) {
+      return MediaQuery.platformBrightnessOf(context) == Brightness.dark;
+    }
+    return state == ThemeMode.dark;
+  }
 }

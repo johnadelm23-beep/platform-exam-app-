@@ -16,8 +16,9 @@ import 'package:platformexamapp/features/auth/data/models/user_data.dart';
 import 'package:platformexamapp/features/exams/ui/exam_details_screen.dart';
 
 class ExamsScreen extends StatefulWidget {
-  const ExamsScreen({super.key, required this.user});
+  const ExamsScreen({super.key, required this.user, this.isTab = false});
   final UserData user;
+  final bool isTab;
 
   @override
   State<ExamsScreen> createState() => _ExamsScreenState();
@@ -92,23 +93,24 @@ class _ExamsScreenState extends State<ExamsScreen> {
                       ),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: Container(
-                      padding: EdgeInsets.all(10.r),
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? Colors.white.withValues(alpha: 0.08)
-                            : Colors.black.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Icon(
-                        Icons.arrow_back_ios,
-                        color: textColor,
-                        size: 18.r,
+                  if (!widget.isTab && Navigator.canPop(context))
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: Container(
+                        padding: EdgeInsets.all(10.r),
+                        decoration: BoxDecoration(
+                          color: isDark
+                              ? Colors.white.withValues(alpha: 0.08)
+                              : Colors.black.withValues(alpha: 0.05),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.arrow_back_ios,
+                          color: textColor,
+                          size: 18.r,
+                        ),
                       ),
                     ),
-                  ),
 
                   if (widget.user.isAdmin == true) SizedBox(width: 8.w),
 
@@ -214,6 +216,7 @@ class _ExamsScreenState extends State<ExamsScreen> {
 
                         return ListView.separated(
                           physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(bottom: 80.h),
                           itemCount: exams.length,
                           separatorBuilder: (_, _) => SizedBox(height: 12.h),
                           itemBuilder: (context, index) {

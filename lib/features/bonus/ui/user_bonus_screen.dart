@@ -110,7 +110,7 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
                           ),
                         ),
                         Text(
-                          "Honoring Outstanding Achievements 🏆",
+                          "honoring_achievements".tr(),
                           style: GoogleFonts.cairo(
                             fontSize: 12.sp,
                             color: AppColors.softGold,
@@ -290,7 +290,10 @@ class _UserBonusScreenState extends State<UserBonusScreen> {
                                           children: [
                                             Expanded(
                                               child: Text(
-                                                userAgg.userName + (isMe ? " (You)" : ""),
+                                                userAgg.userName +
+                                                    (isMe
+                                                        ? " (${"you".tr()})"
+                                                        : ""),
                                                 style: GoogleFonts.cairo(
                                                   fontSize: 16.sp,
                                                   fontWeight: FontWeight.w900,

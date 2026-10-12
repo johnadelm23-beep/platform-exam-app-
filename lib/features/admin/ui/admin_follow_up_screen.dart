@@ -2,6 +2,7 @@ import 'package:easy_localization/easy_localization.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:lottie/lottie.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -152,23 +153,25 @@ class _AdminFollowUpView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final pageBg = isDark ? AppColors.darkPageBg : AppColors.warmIvory;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.classicNavy;
 
     return Scaffold(
-      backgroundColor: isDark ? Colors.black : AppColors.primaryColor,
+      backgroundColor: pageBg,
       appBar: AppBar(
-        backgroundColor: isDark ? Colors.black : AppColors.primaryColor,
+        backgroundColor: pageBg,
         elevation: 0,
         leading: IconButton(
           onPressed: () => Navigator.pop(context),
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
         title: Text(
           "follow_up".tr(),
-          style: TextStyle(
-            color: Colors.white,
+          style: GoogleFonts.cairo(
+            color: textColor,
             fontSize: 20.sp,
             fontWeight: FontWeight.bold,
           ),
@@ -179,7 +182,7 @@ class _AdminFollowUpView extends StatelessWidget {
         margin: EdgeInsets.only(top: 8.h),
         width: double.infinity,
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF121212) : const Color(0xFFF9FAFB),
+          color: isDark ? AppColors.darkSurface : AppColors.lightPageBg,
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(24.r),
             topRight: Radius.circular(24.r),
@@ -291,7 +294,7 @@ class _AdminFollowUpView extends StatelessWidget {
       floatingActionButton: BlocBuilder<FollowUpCubit, FollowUpState>(
         builder: (context, state) {
           return FloatingActionButton.extended(
-            backgroundColor: AppColors.primaryColor,
+            backgroundColor: isDark ? AppColors.accentTeal : AppColors.classicNavy,
             elevation: 4,
             onPressed: state.isLoading
                 ? null
@@ -302,7 +305,7 @@ class _AdminFollowUpView extends StatelessWidget {
             ),
             label: Text(
               "export_report".tr(),
-              style: TextStyle(
+              style: GoogleFonts.cairo(
                 fontSize: 14.sp,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/widgets/app_dialog.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -205,7 +206,7 @@ class _ScoresStatisticsScreenState extends State<ScoresStatisticsScreen> {
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Deleted successfully", style: GoogleFonts.cairo()),
+          content: Text("deleted_successfully".tr(), style: GoogleFonts.cairo()),
           backgroundColor: AppColors.successGreen,
           behavior: SnackBarBehavior.floating,
         ),

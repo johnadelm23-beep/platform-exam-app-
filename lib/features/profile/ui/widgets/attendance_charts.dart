@@ -1,6 +1,7 @@
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 
@@ -28,19 +29,27 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.slate200;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.classicNavy;
+    final subtitleColor = isDark ? AppColors.darkTextMuted : AppColors.slate500;
+
     return Container(
       padding: EdgeInsets.all(16.r),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(24.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 15,
-            offset: const Offset(0, 5),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+        boxShadow: isDark
+            ? []
+            : [
+                BoxShadow(
+                  color: AppColors.classicNavy.withValues(alpha: 0.04),
+                  blurRadius: 15,
+                  offset: const Offset(0, 5),
+                ),
+              ],
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -51,22 +60,24 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
             children: [
               Text(
                 "attendance_analytics".tr(),
-                style: TextStyle(
+                style: GoogleFonts.cairo(
                   fontSize: 16.sp,
                   fontWeight: FontWeight.bold,
-                  color: Colors.black87,
+                  color: textColor,
                 ),
               ),
               Container(
-                padding: EdgeInsets.all(2.r),
+                padding: EdgeInsets.all(3.r),
                 decoration: BoxDecoration(
-                  color: Colors.grey[100],
+                  color: isDark
+                      ? Colors.white.withValues(alpha: 0.08)
+                      : AppColors.slate100,
                   borderRadius: BorderRadius.circular(12.r),
                 ),
                 child: Row(
                   children: [
-                    _buildTabButton(0, "Pie Chart"),
-                    _buildTabButton(1, "Bar Chart"),
+                    _buildTabButton(0, "pie_chart".tr(), isDark),
+                    _buildTabButton(1, "bar_chart".tr(), isDark),
                   ],
                 ),
               ),
@@ -79,30 +90,34 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
           AnimatedSwitcher(
             duration: const Duration(milliseconds: 300),
             child: _selectedChartTab == 0
-                ? _buildPieChartSection()
-                : _buildBarChartSection(),
+                ? _buildPieChartSection(isDark, subtitleColor)
+                : _buildBarChartSection(isDark, subtitleColor),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTabButton(int index, String label) {
+  Widget _buildTabButton(int index, String label, bool isDark) {
     final isSelected = _selectedChartTab == index;
     return GestureDetector(
       onTap: () => setState(() => _selectedChartTab = index),
       child: Container(
         padding: EdgeInsets.symmetric(horizontal: 10.w, vertical: 4.h),
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.primaryColor : Colors.transparent,
+          color: isSelected
+              ? AppColors.accentTeal
+              : Colors.transparent,
           borderRadius: BorderRadius.circular(10.r),
         ),
         child: Text(
           label,
-          style: TextStyle(
+          style: GoogleFonts.cairo(
             fontSize: 11.sp,
             fontWeight: FontWeight.bold,
-            color: isSelected ? Colors.white : Colors.grey[600],
+            color: isSelected
+                ? Colors.white
+                : (isDark ? AppColors.darkTextCaption : AppColors.slate500),
           ),
         ),
       ),
@@ -110,9 +125,9 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
   }
 
   // ================= PIE CHART =================
-  Widget _buildPieChartSection() {
+  Widget _buildPieChartSection(bool isDark, Color subtitleColor) {
     final attPct = widget.attendancePct.clamp(0.0, 100.0);
-    final absPct = (100.0 - attPct).clamp(0.0, 100.0);
+    final absPct = widget.absencePct.clamp(0.0, 100.0);
 
     return Column(
       key: const ValueKey("pie_chart_view"),
@@ -140,22 +155,22 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
               centerSpaceRadius: 40.r,
               sections: [
                 PieChartSectionData(
-                  color: AppColors.primaryColor,
+                  color: AppColors.accentTeal,
                   value: attPct > 0 ? attPct : 1,
                   title: "${attPct.toStringAsFixed(0)}%",
                   radius: touchedPieIndex == 0 ? 55.r : 48.r,
-                  titleStyle: TextStyle(
+                  titleStyle: GoogleFonts.cairo(
                     fontSize: touchedPieIndex == 0 ? 16.sp : 13.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
                 ),
                 PieChartSectionData(
-                  color: Colors.redAccent.shade100,
+                  color: AppColors.heartRed.withValues(alpha: 0.8),
                   value: absPct > 0 ? absPct : 1,
                   title: "${absPct.toStringAsFixed(0)}%",
                   radius: touchedPieIndex == 1 ? 55.r : 48.r,
-                  titleStyle: TextStyle(
+                  titleStyle: GoogleFonts.cairo(
                     fontSize: touchedPieIndex == 1 ? 16.sp : 13.sp,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -173,16 +188,24 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            _buildLegendItem("Attended".tr(), AppColors.primaryColor),
+            _buildLegendItem(
+              "Attended".tr(),
+              AppColors.accentTeal,
+              subtitleColor,
+            ),
             SizedBox(width: 24.w),
-            _buildLegendItem("Absent".tr(), Colors.redAccent.shade100),
+            _buildLegendItem(
+              "Absent".tr(),
+              AppColors.heartRed.withValues(alpha: 0.8),
+              subtitleColor,
+            ),
           ],
         ),
       ],
     );
   }
 
-  Widget _buildLegendItem(String title, Color color) {
+  Widget _buildLegendItem(String title, Color color, Color subtitleColor) {
     return Row(
       children: [
         Container(
@@ -193,10 +216,10 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
         SizedBox(width: 6.w),
         Text(
           title,
-          style: TextStyle(
+          style: GoogleFonts.cairo(
             fontSize: 12.sp,
             fontWeight: FontWeight.w600,
-            color: Colors.grey[700],
+            color: subtitleColor,
           ),
         ),
       ],
@@ -204,8 +227,7 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
   }
 
   // ================= BAR CHART =================
-  Widget _buildBarChartSection() {
-    // Default fallback months data if empty
+  Widget _buildBarChartSection(bool isDark, Color subtitleColor) {
     final map = widget.monthlyData.isNotEmpty
         ? widget.monthlyData
         : {1: 4, 2: 6, 3: 5, 4: 8, 5: 7, 6: 9, 7: 6, 8: 8};
@@ -226,12 +248,12 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
               barTouchData: BarTouchData(
                 enabled: true,
                 touchTooltipData: BarTouchTooltipData(
-                  getTooltipColor: (_) => AppColors.primaryColor,
+                  getTooltipColor: (_) => AppColors.classicNavy,
                   tooltipRoundedRadius: 8.r,
                   getTooltipItem: (group, groupIndex, rod, rodIndex) {
                     return BarTooltipItem(
                       "${rod.toY.toInt()} attended",
-                      TextStyle(
+                      GoogleFonts.cairo(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                         fontSize: 12.sp,
@@ -266,9 +288,9 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
                           padding: EdgeInsets.only(top: 6.h),
                           child: Text(
                             monthNames[index],
-                            style: TextStyle(
+                            style: GoogleFonts.cairo(
                               fontSize: 10.sp,
-                              color: Colors.grey[600],
+                              color: subtitleColor,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -293,7 +315,10 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
                 show: true,
                 drawVerticalLine: false,
                 getDrawingHorizontalLine: (value) {
-                  return FlLine(color: Colors.grey[200]!, strokeWidth: 1);
+                  return FlLine(
+                    color: isDark ? AppColors.darkBorder : AppColors.slate200,
+                    strokeWidth: 1,
+                  );
                 },
               ),
               borderData: FlBorderData(show: false),
@@ -303,7 +328,7 @@ class _AttendanceChartsState extends State<AttendanceCharts> {
                   barRods: [
                     BarChartRodData(
                       toY: entry.value.toDouble(),
-                      color: AppColors.primaryColor,
+                      color: AppColors.accentTeal,
                       width: 14.w,
                       borderRadius: BorderRadius.only(
                         topLeft: Radius.circular(6.r),

@@ -320,7 +320,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        editingIndex != null ? "تعديل السؤال" : "question".tr(),
+                        editingIndex != null ? "edit_question".tr() : "question".tr(),
                         style: GoogleFonts.cairo(
                           fontSize: 16.sp,
                           fontWeight: FontWeight.bold,
@@ -382,7 +382,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                       AppButton(
                         onPressed: addOrUpdateQuestion,
                         text: editingIndex != null
-                            ? "تحديث السؤال"
+                            ? "update_question".tr()
                             : "add_question".tr(),
                       ),
 
@@ -397,7 +397,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                               });
                             },
                             child: Text(
-                              "إلغاء التعديل",
+                              "cancel_edit".tr(),
                               style: GoogleFonts.cairo(color: AppColors.heartRed),
                             ),
                           ),
@@ -413,7 +413,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            "الأسئلة المضافة (${draftQuestions.length})",
+                            "added_questions".tr(args: [draftQuestions.length.toString()]),
                             style: GoogleFonts.cairo(
                               fontSize: 16.sp,
                               fontWeight: FontWeight.bold,
@@ -429,7 +429,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                           padding: EdgeInsets.symmetric(vertical: 16.h),
                           child: Center(
                             child: Text(
-                              "لم يتم إضافة أسئلة بعد",
+                              "no_questions_added_yet".tr(),
                               style: GoogleFonts.cairo(
                                 color: mutedColor,
                                 fontSize: 13.sp,
@@ -485,7 +485,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                                         ),
                                         SizedBox(height: 4.h),
                                         Text(
-                                          "الإجابة الصحيحة: ${q.options[q.correctAnswer]}",
+                                          "correct_answer_label".tr(args: [q.options[q.correctAnswer]]),
                                           style: GoogleFonts.cairo(
                                             fontSize: 12.sp,
                                             color: AppColors.successGreen,
@@ -530,7 +530,7 @@ class _AddQuestionScreenState extends State<AddQuestionScreen> {
                         child: isPublishing
                             ? const CircularProgressIndicator(color: Colors.white)
                             : Text(
-                                "إنهاء ونشر الامتحان",
+                                "finish_and_publish_exam".tr(),
                                 style: GoogleFonts.cairo(
                                   fontSize: 16.sp,
                                   fontWeight: FontWeight.bold,

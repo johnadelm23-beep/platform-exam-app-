@@ -113,8 +113,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Permission denied: Main Admin only."),
+        SnackBar(
+          content: Text("permission_denied_admin".tr()),
           backgroundColor: AppColors.heartRed,
         ),
       );
@@ -169,8 +169,8 @@ class _EventsManagementScreenState extends State<EventsManagementScreen> {
       if (mounted) {
         Navigator.pop(context); // Close sheet
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Event created successfully!"),
+          SnackBar(
+            content: Text("event_created_success".tr()),
             backgroundColor: Colors.green,
           ),
         );

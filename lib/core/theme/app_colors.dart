@@ -11,6 +11,18 @@ class AppColors {
   static const Color goldLight = Color(0xFFF5D470);
   static const Color goldDark = Color(0xFFB3922E);
 
+  // --- REDESIGN PALETTE TOKENS ---
+  static const Color classicNavy = Color(0xFF172B4D); // Deep Navy (#172B4D)
+  static const Color accentTeal = Color(0xFF16A6A1); // Accent Teal (#16A6A1)
+  static const Color warmIvory = Color(0xFFF5F3EE); // Warm Ivory (#F5F3EE)
+  static const Color tealLight = Color(0xFFE6F7F6);
+  static const Color slate50 = Color(0xFFF8FAFC);
+  static const Color slate100 = Color(0xFFF1F5F9);
+  static const Color slate200 = Color(0xFFE2E8F0);
+  static const Color slate500 = Color(0xFF64748B);
+  static const Color slate800 = Color(0xFF1E293B);
+  static const Color slate900 = Color(0xFF0F172A);
+
   // Backwards compatibility alias
   static const Color primaryColor = cinematicNavy;
   static const Color whiteColor = Colors.white;

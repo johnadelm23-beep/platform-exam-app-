@@ -23,7 +23,8 @@ import 'package:platformexamapp/features/profile/ui/widgets/profile_qr_dialog.da
 import 'package:share_plus/share_plus.dart';
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key});
+  const ProfileScreen({super.key, this.isTab = false});
+  final bool isTab;
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
@@ -151,10 +152,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         backgroundColor: pageBg,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
-        ),
+        leading: (!widget.isTab && Navigator.canPop(context))
+            ? IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
+              )
+            : null,
         title: Text(
           "my_profile".tr(),
           style: GoogleFonts.cairo(
@@ -600,8 +603,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         await Clipboard.setData(ClipboardData(text: token));
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('FCM Token copied to clipboard!'),
+                            SnackBar(
+                              content: Text("fcm_token_copied".tr()),
                               backgroundColor: Colors.green,
                             ),
                           );
@@ -609,8 +612,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       } else {
                         if (context.mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(
-                              content: Text('FCM Token not yet generated.'),
+                            SnackBar(
+                              content: Text("fcm_token_not_generated".tr()),
                               backgroundColor: AppColors.heartRed,
                             ),
                           );

@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/glass_card.dart';
@@ -63,8 +64,8 @@ class _AdminPrivilegesSheetState extends State<AdminPrivilegesSheet> {
       if (mounted) {
         Navigator.pop(context);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("User privileges updated successfully!"),
+          SnackBar(
+            content: Text("user_privileges_updated".tr()),
             backgroundColor: Colors.green,
           ),
         );

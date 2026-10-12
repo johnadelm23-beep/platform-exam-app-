@@ -224,12 +224,12 @@ class _AddGameScreenState extends State<AddGameScreen> {
                   child: Column(
                     children: [
                       CustomTextFormField(
-                        hintText: "Game Title (e.g. Bible Challenge 🔥)",
+                        hintText: "game_title_hint".tr(),
                         controller: _titleController,
                       ),
                       SizedBox(height: 10.h),
                       CustomTextFormField(
-                        hintText: "Description (Optional)",
+                        hintText: "description_optional".tr(),
                         controller: _descController,
                       ),
                       SizedBox(height: 10.h),
@@ -237,7 +237,7 @@ class _AddGameScreenState extends State<AddGameScreen> {
                         children: [
                           Expanded(
                             child: CustomTextFormField(
-                              hintText: "Time Limit (s)",
+                              hintText: "time_limit_s".tr(),
                               controller: _timeController,
                               keyboardType: TextInputType.number,
                             ),
@@ -309,12 +309,12 @@ class _AddGameScreenState extends State<AddGameScreen> {
                                 ),
                                 SizedBox(height: 8.h),
                                 CustomTextFormField(
-                                  hintText: "Enter question text...",
+                                  hintText: "enter_question_text".tr(),
                                   controller: q.questionController,
                                 ),
                                 SizedBox(height: 12.h),
                                 Text(
-                                  "Options & Correct Answer:",
+                                  "options_and_correct_answer".tr(),
                                   style: GoogleFonts.cairo(fontSize: 12.sp, color: textColor, fontWeight: FontWeight.w600),
                                 ),
                                 SizedBox(height: 8.h),

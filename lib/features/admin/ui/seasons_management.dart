@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:easy_localization/easy_localization.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
 import 'package:platformexamapp/core/widgets/empty_state.dart';
@@ -86,8 +87,8 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
     if (userDoc.data()?["isAdmin"] != true) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Permission denied: Main Admin only."),
+        SnackBar(
+          content: Text("permission_denied_admin".tr()),
           backgroundColor: AppColors.heartRed,
         ),
       );
@@ -187,8 +188,8 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
       }
 
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Season status updated successfully!"),
+        SnackBar(
+          content: Text("season_status_updated".tr()),
           backgroundColor: Colors.green,
         ),
       );
@@ -269,7 +270,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                 ),
                 SizedBox(height: 15.h),
                 Text(
-                  editId == null ? "Create New Season" : "Edit Season Details",
+                  editId == null ? "add_season".tr() : "edit_season".tr(),
                   style: GoogleFonts.cairo(
                     fontSize: 18.sp,
                     fontWeight: FontWeight.bold,
@@ -281,7 +282,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                   controller: _nameController,
                   style: GoogleFonts.cairo(color: textColor),
                   decoration: InputDecoration(
-                    labelText: "Season Name",
+                    labelText: "season_name".tr(),
                     labelStyle: GoogleFonts.cairo(color: mutedColor),
                     prefixIcon: HugeIcon(
                       icon: HugeIcons.strokeRoundedFile01,
@@ -307,7 +308,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                     ),
                   ),
                   validator: (value) => value == null || value.trim().isEmpty
-                      ? "Season name is required"
+                      ? "season_name_required".tr()
                       : null,
                 ),
                 SizedBox(height: 12.h),
@@ -369,7 +370,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                   builder: (context, setStateSheet) {
                     return SwitchListTile(
                       title: Text(
-                        "Set as Active Season",
+                        "set_active_season".tr(),
                         style: GoogleFonts.cairo(
                           fontSize: 15.sp,
                           color: textColor,
@@ -377,7 +378,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                         ),
                       ),
                       subtitle: Text(
-                        "This deactivates all other seasons",
+                        "deactivate_other_seasons_hint".tr(),
                         style: GoogleFonts.cairo(
                           fontSize: 12.sp,
                           color: mutedColor,
@@ -407,7 +408,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
                       ),
                     ),
                     child: Text(
-                      "Save Season",
+                      "save_season".tr(),
                       style: GoogleFonts.cairo(
                         fontWeight: FontWeight.bold,
                         fontSize: 16.sp,
@@ -451,7 +452,7 @@ class _SeasonsManagementScreenState extends State<SeasonsManagementScreen> {
           ),
         ),
         title: Text(
-          "Seasons Management",
+          "seasons_manager".tr(),
           style: GoogleFonts.cairo(
             color: textColor,
             fontWeight: FontWeight.bold,

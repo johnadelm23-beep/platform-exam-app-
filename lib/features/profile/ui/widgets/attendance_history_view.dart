@@ -19,10 +19,6 @@ class AttendanceHistoryView extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
-    final mutedColor = isDark
-        ? AppColors.darkTextMuted
-        : AppColors.lightTextMuted;
-    final borderColor = isDark ? AppColors.darkBorder : AppColors.lightBorder;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
@@ -190,7 +186,7 @@ class AttendanceHistoryView extends StatelessWidget {
                     padding: EdgeInsets.only(
                       left: 16.w,
                       right: 16.w,
-                      bottom: 24.h,
+                      bottom: 90.h,
                     ),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
@@ -404,7 +400,6 @@ class AttendanceHistoryView extends StatelessWidget {
     required String subtext,
   }) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
-    final textColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
     final mutedColor = isDark
         ? AppColors.darkTextMuted
         : AppColors.lightTextMuted;

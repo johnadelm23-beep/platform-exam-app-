@@ -24,7 +24,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
     if (_postController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Post cannot be empty", style: GoogleFonts.cairo()),
+          content: Text("post_cannot_be_empty".tr(), style: GoogleFonts.cairo()),
           backgroundColor: AppColors.heartRed,
           behavior: SnackBarBehavior.floating,
         ),
@@ -72,7 +72,7 @@ class _AddPostScreenState extends State<AddPostScreen> {
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text("Post added successfully", style: GoogleFonts.cairo()),
+          content: Text("post_added_success".tr(), style: GoogleFonts.cairo()),
           backgroundColor: AppColors.successGreen,
           behavior: SnackBarBehavior.floating,
         ),

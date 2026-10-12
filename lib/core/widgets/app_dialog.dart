@@ -67,7 +67,16 @@ class AppDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final dialogBg = isDark ? AppColors.darkSurface : AppColors.lightSurface;
+    final titleColor = isDark ? AppColors.darkTextMain : AppColors.lightTextMain;
+    final descColor = isDark ? AppColors.darkTextCaption : Colors.grey[700];
+    final cancelColor = isDark ? AppColors.darkTextMuted : Colors.grey[700];
+    final borderColor = isDark ? AppColors.darkBorder : Colors.grey[300]!;
+
     return Dialog(
+      backgroundColor: dialogBg,
+      surfaceTintColor: Colors.transparent,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20.r)),
       child: Padding(
         padding: EdgeInsets.all(20.r),
@@ -82,13 +91,17 @@ class AppDialog extends StatelessWidget {
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 20.sp, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20.sp,
+                fontWeight: FontWeight.bold,
+                color: titleColor,
+              ),
             ),
             SizedBox(height: 10.h),
             Text(
               description,
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16.sp),
+              style: TextStyle(fontSize: 16.sp, color: descColor),
             ),
             if (customContent != null) ...[
               SizedBox(height: 15.h),
@@ -101,7 +114,7 @@ class AppDialog extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       style: OutlinedButton.styleFrom(
-                        side: const BorderSide(color: Colors.grey),
+                        side: BorderSide(color: borderColor),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8.r),
                         ),
@@ -112,7 +125,7 @@ class AppDialog extends StatelessWidget {
                         cancelText!,
                         style: TextStyle(
                           fontSize: 15.sp,
-                          color: Colors.grey[700],
+                          color: cancelColor,
                           fontWeight: FontWeight.bold,
                         ),
                       ),

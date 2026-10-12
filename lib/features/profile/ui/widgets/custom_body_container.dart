@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:hugeicons/hugeicons.dart';
 import 'package:easy_localization/easy_localization.dart';
 import 'package:platformexamapp/core/theme/app_colors.dart';
@@ -65,7 +65,6 @@ class CustomBodyContainer extends StatelessWidget {
     List<QueryDocumentSnapshot> docs,
   ) async {
     List<Map<String, dynamic>> results = [];
-    final isArabic = EasyLocalization.of(context)?.locale.languageCode == 'ar';
 
     for (var doc in docs) {
       final data = doc.data() as Map<String, dynamic>;
@@ -81,120 +80,126 @@ class CustomBodyContainer extends StatelessWidget {
       final scorePercentage = (score / totalQuestions) * 100.0;
       final wrongAnswers = (totalQuestions - score).clamp(0, 9999);
 
-      debugPrint("Exam ID found: $examId");
-      debugPrint("Exam Title: ${details.title}");
-      debugPrint("Question Count: $totalQuestions");
-      debugPrint("Score: $score");
-      debugPrint(
-        "Calculated Percentage: ${scorePercentage.toStringAsFixed(1)}%",
-      );
-
       String gradeLabel;
       Color gradeColor;
       if (scorePercentage >= 85) {
-        gradeLabel = isArabic ? "ممتاز" : "Excellent";
-        gradeColor = Colors.green;
+        gradeLabel = "grade_excellent".tr();
+        gradeColor = AppColors.successGreen;
       } else if (scorePercentage >= 70) {
-        gradeLabel = isArabic ? "جيد جداً" : "Very Good";
+        gradeLabel = "grade_very_good".tr();
         gradeColor = Colors.blue;
       } else if (scorePercentage >= 50) {
-        gradeLabel = isArabic ? "جيد" : "Pass";
-        gradeColor = Colors.orange;
+        gradeLabel = "grade_good".tr();
+        gradeColor = Colors.amber.shade800;
       } else {
-        gradeLabel = isArabic ? "راسب" : "Fail";
-        gradeColor = Colors.red;
+        gradeLabel = "grade_needs_improvement".tr();
+        gradeColor = AppColors.heartRed;
       }
 
-      String submissionDate = "N/A";
-      if (timestamp is Timestamp) {
+      String submissionDate = "";
+      if (timestamp != null && timestamp is Timestamp) {
         final dt = timestamp.toDate();
-        submissionDate =
-            "${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')}";
+        submissionDate = DateFormat('yyyy-MM-dd').format(dt);
       }
 
       results.add({
-        "attemptDoc": doc,
         "examId": examId,
         "title": details.title,
-        "time": details.time,
-        "totalQuestions": totalQuestions,
         "score": score,
-        "wrongAnswers": wrongAnswers,
+        "totalQuestions": totalQuestions,
         "scorePercentage": scorePercentage,
+        "wrongAnswers": wrongAnswers,
         "gradeLabel": gradeLabel,
         "gradeColor": gradeColor,
         "submissionDate": submissionDate,
-        "timeTaken": "${details.time} min",
+        "timeTaken": "${details.time}m",
       });
     }
+
     return results;
   }
 
   @override
   Widget build(BuildContext context) {
-    final effectiveUid = uid.isNotEmpty
-        ? uid
-        : (FirebaseAuth.instance.currentUser?.uid ?? "");
-    final isArabic = EasyLocalization.of(context)?.locale.languageCode == 'ar';
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? AppColors.darkSurface : Colors.white;
+    final borderColor = isDark ? AppColors.darkBorder : AppColors.slate200;
+    final textColor = isDark ? AppColors.darkTextMain : AppColors.classicNavy;
+    final subtitleColor = isDark ? AppColors.darkTextMuted : AppColors.slate500;
 
     return StreamBuilder<QuerySnapshot>(
       stream: FirebaseFirestore.instance
           .collection("examAttempts")
-          .where("userId", isEqualTo: effectiveUid)
+          .where("userId", isEqualTo: uid)
           .snapshots(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(color: AppColors.primaryColor),
+          return const SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: CircularProgressIndicator(color: AppColors.softGold),
+            ),
           );
         }
 
-        final allDocs = snapshot.data?.docs ?? [];
-        final completedDocs = allDocs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          final done = data["done"] == true;
-          final abandoned = data["abandoned"] == true;
-          return !abandoned && done;
+        if (snapshot.hasError) {
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: Center(
+              child: Text(
+                "error".tr(),
+                style: GoogleFonts.cairo(color: AppColors.heartRed),
+              ),
+            ),
+          );
+        }
+
+        final docs = (snapshot.data?.docs ?? []).where((d) {
+          final m = d.data() as Map<String, dynamic>;
+          return m["done"] == true && m["abandoned"] != true;
         }).toList();
 
-        debugPrint("=== EXAM RESULTS DEBUG LOGS ===");
-        debugPrint("Current User UID: $effectiveUid");
-        debugPrint("Number of examAttempts: ${allDocs.length}");
-        debugPrint("Number of completed examAttempts: ${completedDocs.length}");
-
-        if (completedDocs.isEmpty) {
-          return _buildEmptyState(context);
+        if (docs.isEmpty) {
+          return SliverFillRemaining(
+            hasScrollBody: false,
+            child: _buildEmptyState(isDark, textColor, subtitleColor),
+          );
         }
 
         return FutureBuilder<List<Map<String, dynamic>>>(
-          future: _loadExamDetailsForAttempts(context, completedDocs),
-          builder: (context, detailsSnap) {
-            if (detailsSnap.connectionState == ConnectionState.waiting) {
-              return const Center(
-                child: CircularProgressIndicator(color: AppColors.primaryColor),
+          future: _loadExamDetailsForAttempts(context, docs),
+          builder: (context, detailsSnapshot) {
+            if (detailsSnapshot.connectionState == ConnectionState.waiting) {
+              return const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(
+                  child: CircularProgressIndicator(color: AppColors.softGold),
+                ),
               );
             }
 
-            final items = detailsSnap.data ?? [];
-            if (items.isEmpty) {
-              return _buildEmptyState(context);
+            final items = detailsSnapshot.data ?? [];
+
+            // Stats calculation
+            final completedCount = items.length;
+            double avgScore = 0.0;
+            double highestScore = 0.0;
+            if (completedCount > 0) {
+              final totalPct = items.fold<double>(
+                0.0,
+                (sum, e) => sum + (e["scorePercentage"] as double),
+              );
+              avgScore = totalPct / completedCount;
+              highestScore = items.fold<double>(
+                0.0,
+                (max, e) =>
+                    (e["scorePercentage"] as double) > max
+                        ? (e["scorePercentage"] as double)
+                        : max,
+              );
             }
 
-            final completedCount = items.length;
-            final double totalPct = items.fold(
-              0.0,
-              (total, i) => total + (i["scorePercentage"] as double),
-            );
-            final double avgScore = completedCount > 0
-                ? (totalPct / completedCount)
-                : 0.0;
-            final double highestScore = items.fold(0.0, (max, i) {
-              final pct = i["scorePercentage"] as double;
-              return pct > max ? pct : max;
-            });
-
-            return CustomScrollView(
-              physics: const BouncingScrollPhysics(),
+            return MultiSliverWrapper(
               slivers: [
                 SliverPadding(
                   padding: EdgeInsets.symmetric(
@@ -210,32 +215,37 @@ class CustomBodyContainer extends StatelessWidget {
                           children: [
                             Expanded(
                               child: _buildSummaryMetricCard(
-                                title: isArabic
-                                    ? "الامتحانات المكتملة"
-                                    : "Completed Exams",
+                                title: "completed_exams".tr(),
                                 value: "$completedCount",
                                 icon: HugeIcons.strokeRoundedFile01,
-                                color: AppColors.primaryColor,
+                                color: AppColors.accentTeal,
+                                cardBg: cardBg,
+                                borderColor: borderColor,
+                                subtitleColor: subtitleColor,
                               ),
                             ),
                             SizedBox(width: 8.w),
                             Expanded(
                               child: _buildSummaryMetricCard(
-                                title: isArabic
-                                    ? "متوسط الدرجات"
-                                    : "Average Score",
+                                title: "average_score".tr(),
                                 value: "${avgScore.toStringAsFixed(1)}%",
                                 icon: HugeIcons.strokeRoundedChart01,
                                 color: Colors.blue,
+                                cardBg: cardBg,
+                                borderColor: borderColor,
+                                subtitleColor: subtitleColor,
                               ),
                             ),
                             SizedBox(width: 8.w),
                             Expanded(
                               child: _buildSummaryMetricCard(
-                                title: isArabic ? "أعلى درجة" : "Highest Score",
+                                title: "highest_score".tr(),
                                 value: "${highestScore.toStringAsFixed(1)}%",
                                 icon: HugeIcons.strokeRoundedAward01,
-                                color: Colors.amber[800]!,
+                                color: Colors.amber.shade800,
+                                cardBg: cardBg,
+                                borderColor: borderColor,
+                                subtitleColor: subtitleColor,
                               ),
                             ),
                           ],
@@ -247,10 +257,10 @@ class CustomBodyContainer extends StatelessWidget {
                           children: [
                             Text(
                               "my_exams".tr(),
-                              style: TextStyle(
+                              style: GoogleFonts.cairo(
                                 fontSize: 18.sp,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.black87,
+                                color: textColor,
                               ),
                             ),
                             Container(
@@ -259,45 +269,51 @@ class CustomBodyContainer extends StatelessWidget {
                                 vertical: 4.h,
                               ),
                               decoration: BoxDecoration(
-                                color: AppColors.primaryColor.withValues(
-                                  alpha: 0.1,
+                                color: AppColors.accentTeal.withValues(
+                                  alpha: 0.12,
                                 ),
                                 borderRadius: BorderRadius.circular(12.r),
                               ),
                               child: Text(
                                 "$completedCount",
-                                style: TextStyle(
+                                style: GoogleFonts.cairo(
                                   fontSize: 12.sp,
                                   fontWeight: FontWeight.bold,
-                                  color: AppColors.primaryColor,
+                                  color: AppColors.accentTeal,
                                 ),
                               ),
                             ),
                           ],
                         ),
-                        SizedBox(height: 12.h),
                       ],
                     ),
                   ),
                 ),
 
-                // Completed Exam Cards List
+                // List of exam cards
                 SliverPadding(
-                  padding: EdgeInsets.only(
-                    left: 16.w,
-                    right: 16.w,
-                    bottom: 24.h,
-                  ),
+                  padding: EdgeInsets.symmetric(horizontal: 16.w),
                   sliver: SliverList(
-                    delegate: SliverChildBuilderDelegate((context, index) {
-                      final item = items[index];
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: 12.h),
-                        child: _buildExamCard(context, item, isArabic),
-                      );
-                    }, childCount: items.length),
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: 12.h),
+                          child: _buildExamCard(
+                            context,
+                            items[index],
+                            isDark,
+                            cardBg,
+                            borderColor,
+                            textColor,
+                            subtitleColor,
+                          ),
+                        );
+                      },
+                      childCount: items.length,
+                    ),
                   ),
                 ),
+                SliverToBoxAdapter(child: SizedBox(height: 30.h)),
               ],
             );
           },
@@ -309,22 +325,18 @@ class CustomBodyContainer extends StatelessWidget {
   Widget _buildSummaryMetricCard({
     required String title,
     required String value,
-    required List<List<dynamic>> icon,
+    required dynamic icon,
     required Color color,
+    required Color cardBg,
+    required Color borderColor,
+    required Color subtitleColor,
   }) {
     return Container(
       padding: EdgeInsets.symmetric(vertical: 14.h, horizontal: 8.w),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(18.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.12)),
+        border: Border.all(color: borderColor),
       ),
       child: Column(
         children: [
@@ -332,9 +344,9 @@ class CustomBodyContainer extends StatelessWidget {
           SizedBox(height: 6.h),
           Text(
             title,
-            style: TextStyle(
+            style: GoogleFonts.cairo(
               fontSize: 10.sp,
-              color: Colors.grey[600],
+              color: subtitleColor,
               fontWeight: FontWeight.w600,
             ),
             maxLines: 1,
@@ -344,7 +356,7 @@ class CustomBodyContainer extends StatelessWidget {
           SizedBox(height: 4.h),
           Text(
             value,
-            style: TextStyle(
+            style: GoogleFonts.cairo(
               fontSize: 15.sp,
               fontWeight: FontWeight.bold,
               color: color,
@@ -358,7 +370,11 @@ class CustomBodyContainer extends StatelessWidget {
   Widget _buildExamCard(
     BuildContext context,
     Map<String, dynamic> item,
-    bool isArabic,
+    bool isDark,
+    Color cardBg,
+    Color borderColor,
+    Color textColor,
+    Color subtitleColor,
   ) {
     final Color gradeColor = item["gradeColor"] as Color;
     final String gradeLabel = item["gradeLabel"] as String;
@@ -366,32 +382,24 @@ class CustomBodyContainer extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardBg,
         borderRadius: BorderRadius.circular(20.r),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
-          ),
-        ],
-        border: Border.all(color: Colors.grey.withValues(alpha: 0.15)),
+        border: Border.all(color: borderColor),
       ),
       child: Padding(
         padding: EdgeInsets.all(16.r),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Title + Grade Badge
             Row(
               children: [
                 Expanded(
                   child: Text(
                     item["title"] as String,
-                    style: TextStyle(
+                    style: GoogleFonts.cairo(
                       fontSize: 16.sp,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black87,
+                      color: textColor,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -406,57 +414,48 @@ class CustomBodyContainer extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: gradeColor.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12.r),
-                    border: Border.all(
-                      color: gradeColor.withValues(alpha: 0.3),
-                    ),
                   ),
                   child: Text(
                     gradeLabel,
-                    style: TextStyle(
-                      color: gradeColor,
-                      fontWeight: FontWeight.bold,
+                    style: GoogleFonts.cairo(
                       fontSize: 12.sp,
+                      fontWeight: FontWeight.bold,
+                      color: gradeColor,
                     ),
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 12.h),
 
-            // Date & Score %
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    HugeIcon(
-                      icon: HugeIcons.strokeRoundedCalendar01,
-                      size: 13.r,
-                      color: Colors.grey[500]!,
-                    ),
-                    SizedBox(width: 4.w),
-                    Text(
-                      item["submissionDate"] as String,
-                      style: TextStyle(
-                        fontSize: 12.sp,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
+                _buildInfoBadge(
+                  icon: HugeIcons.strokeRoundedCheckmarkCircle02,
+                  label: "${item["score"]}/${item["totalQuestions"]}",
+                  color: AppColors.successGreen,
+                  subtitleColor: subtitleColor,
                 ),
-                Text(
-                  "${scorePct.toStringAsFixed(1)}%",
-                  style: TextStyle(
-                    fontSize: 14.sp,
-                    fontWeight: FontWeight.bold,
-                    color: gradeColor,
+                SizedBox(width: 12.w),
+                _buildInfoBadge(
+                  icon: HugeIcons.strokeRoundedClock01,
+                  label: item["timeTaken"] as String,
+                  color: Colors.blue,
+                  subtitleColor: subtitleColor,
+                ),
+                if ((item["submissionDate"] as String).isNotEmpty) ...[
+                  SizedBox(width: 12.w),
+                  _buildInfoBadge(
+                    icon: HugeIcons.strokeRoundedCalendar01,
+                    label: item["submissionDate"] as String,
+                    color: Colors.amber.shade800,
+                    subtitleColor: subtitleColor,
                   ),
-                ),
+                ],
               ],
             ),
-            SizedBox(height: 10.h),
+            SizedBox(height: 14.h),
 
-            // Progress Indicator
             ClipRRect(
               borderRadius: BorderRadius.circular(6.r),
               child: LinearProgressIndicator(
@@ -468,7 +467,6 @@ class CustomBodyContainer extends StatelessWidget {
             ),
             SizedBox(height: 14.h),
 
-            // View Details Button
             Align(
               alignment: AlignmentDirectional.centerEnd,
               child: ElevatedButton.icon(
@@ -488,20 +486,21 @@ class CustomBodyContainer extends StatelessWidget {
                 icon: HugeIcon(
                   icon: HugeIcons.strokeRoundedView,
                   size: 14.r,
-                  color: AppColors.primaryColor,
+                  color: isDark ? AppColors.accentTeal : AppColors.classicNavy,
                 ),
                 label: Text(
-                  isArabic ? "عرض التفاصيل" : "View Details",
-                  style: TextStyle(
-                    fontSize: 13.sp,
+                  "view_details".tr(),
+                  style: GoogleFonts.cairo(
+                    fontSize: 12.sp,
                     fontWeight: FontWeight.bold,
+                    color: isDark ? AppColors.accentTeal : AppColors.classicNavy,
                   ),
                 ),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primaryColor.withValues(
-                    alpha: 0.08,
-                  ),
-                  foregroundColor: AppColors.primaryColor,
+                  backgroundColor: (isDark
+                          ? AppColors.accentTeal
+                          : AppColors.classicNavy)
+                      .withValues(alpha: 0.1),
                   elevation: 0,
                   padding: EdgeInsets.symmetric(
                     horizontal: 14.w,
@@ -519,45 +518,73 @@ class CustomBodyContainer extends StatelessWidget {
     );
   }
 
-  Widget _buildEmptyState(BuildContext context) {
-    final isArabic = EasyLocalization.of(context)?.locale.languageCode == 'ar';
+  Widget _buildInfoBadge({
+    required dynamic icon,
+    required String label,
+    required Color color,
+    required Color subtitleColor,
+  }) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        HugeIcon(icon: icon, size: 14.r, color: color),
+        SizedBox(width: 4.w),
+        Text(
+          label,
+          style: GoogleFonts.cairo(
+            fontSize: 12.sp,
+            fontWeight: FontWeight.w600,
+            color: subtitleColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildEmptyState(bool isDark, Color textColor, Color subtitleColor) {
     return Center(
       child: Padding(
-        padding: EdgeInsets.all(24.r),
+        padding: EdgeInsets.symmetric(vertical: 40.h, horizontal: 20.w),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
               padding: EdgeInsets.all(20.r),
               decoration: BoxDecoration(
-                color: AppColors.primaryColor.withValues(alpha: 0.08),
+                color: AppColors.accentTeal.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Text("📚", style: TextStyle(fontSize: 48.sp)),
+              child: Text("📚", style: TextStyle(fontSize: 44.sp)),
             ),
             SizedBox(height: 16.h),
             Text(
-              isArabic
-                  ? "لا توجد امتحانات مكتملة بعد."
-                  : "No completed exams yet.",
-              style: TextStyle(
-                fontSize: 18.sp,
+              "no_completed_exams".tr(),
+              style: GoogleFonts.cairo(
+                fontSize: 17.sp,
                 fontWeight: FontWeight.bold,
-                color: Colors.black87,
+                color: textColor,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: 8.h),
+            SizedBox(height: 6.h),
             Text(
-              isArabic
-                  ? "خوض امتحاناً لرؤية نتائجك هنا."
-                  : "Take an exam to see your results here.",
-              style: TextStyle(fontSize: 14.sp, color: Colors.grey[600]),
+              "take_exam_hint".tr(),
+              style: GoogleFonts.cairo(fontSize: 13.sp, color: subtitleColor),
               textAlign: TextAlign.center,
             ),
           ],
         ),
       ),
     );
+  }
+}
+
+class MultiSliverWrapper extends StatelessWidget {
+  final List<Widget> slivers;
+  const MultiSliverWrapper({super.key, required this.slivers});
+
+  @override
+  Widget build(BuildContext context) {
+    return SliverMainAxisGroup(slivers: slivers);
   }
 }

@@ -9,7 +9,8 @@ import 'package:platformexamapp/core/widgets/loading_state.dart';
 import 'package:platformexamapp/features/states/ui/widgets/custom_bod_container.dart';
 
 class LeaderboardScreen extends StatefulWidget {
-  const LeaderboardScreen({super.key});
+  const LeaderboardScreen({super.key, this.isTab = false});
+  final bool isTab;
 
   @override
   State<LeaderboardScreen> createState() => _LeaderboardScreenState();
@@ -108,10 +109,12 @@ class _LeaderboardScreenState extends State<LeaderboardScreen> {
         backgroundColor: pageBg,
         elevation: 0,
         automaticallyImplyLeading: false,
-        leading: IconButton(
-          onPressed: () => Navigator.pop(context),
-          icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
-        ),
+        leading: (!widget.isTab && Navigator.canPop(context))
+            ? IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(Icons.arrow_back_ios, color: textColor, size: 20.r),
+              )
+            : null,
         centerTitle: true,
         title: Text(
           "top_players".tr(),

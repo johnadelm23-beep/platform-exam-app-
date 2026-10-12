@@ -72,6 +72,7 @@ class CustomBodyContainer extends StatelessWidget {
           Expanded(
             child: ListView.separated(
               physics: const BouncingScrollPhysics(),
+              padding: EdgeInsets.only(bottom: 80.h),
               itemCount: others.length,
               separatorBuilder: (_, _) => SizedBox(height: 10.h),
               itemBuilder: (context, index) {
