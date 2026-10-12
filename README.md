@@ -25,35 +25,19 @@ The app supports both **users** and **admins**, providing a complete exam experi
 
 ## 📸 Screenshots
 
-### 🔑 Authentication
-<img src="https://github.com/user-attachments/assets/9a4dc960-4cd9-4bf7-9139-e71fa3d808fb" width="250"/>
-<img src="https://github.com/user-attachments/assets/8728691a-7b3e-4e89-8728-8f76937c05d2" width="250"/>
-
-### 🏠 Home & Feed
-<img src="https://github.com/user-attachments/assets/b3560f2a-3b4b-4380-8c37-8dfae174056c" width="250"/>
-<img src="https://github.com/user-attachments/assets/7ed9f305-8772-4a6d-a15a-0f8a522f8c5b" width="250"/>
-
-### 📝 Exams
-<img src="https://github.com/user-attachments/assets/b9accf01-fd22-4061-b694-f601fc3a09dd" width="250"/>
-<img src="https://github.com/user-attachments/assets/17d9052d-4b01-4819-a5a2-8d3b584ce8c5" width="250"/>
-<img src="https://github.com/user-attachments/assets/5827e889-36ba-45e1-9c94-a915f346063e" width="250"/>
-
-### 📊 Results & Dialogs
-<img src="https://github.com/user-attachments/assets/e9d4d81e-ad22-458f-bc2f-4f3155dbdc85" width="250"/>
-<img src="https://github.com/user-attachments/assets/283aa024-202f-463c-a860-61513a81db8d" width="250"/>
-<img src="https://github.com/user-attachments/assets/8bb51262-c179-4001-a17c-be4496005a3c" width="250"/>
-
-### 🛠️ Admin Panel
-<img src="https://github.com/user-attachments/assets/595ac699-f09e-47dd-aa5b-200a30b43951" width="250"/>
-<img src="https://github.com/user-attachments/assets/d755939f-4cab-4f81-9a77-6a12a74a5b01" width="250"/>
-<img src="https://github.com/user-attachments/assets/32e4eb0a-6427-487f-a9fe-8feb57d9936d" width="250"/>
-
-### 👤 Profile
-<img src="https://github.com/user-attachments/assets/64e2113b-6cb5-4243-8175-aabc8c73f096" width="250"/>
+<img width="494" height="1023" alt="Screenshot 2026-10-12 111815" src="https://github.com/user-attachments/assets/684982d5-4b10-49a3-86e1-f2ba74ae5a64" />
+<img width="500" height="1014" alt="Screenshot 2026-10-12 104908" src="https://github.com/user-attachments/assets/17df1326-7c19-4771-9326-546341e65797" />
+<img width="501" height="1000" alt="Screenshot 2026-10-12 104853" src="https://github.com/user-attachments/assets/d303df84-82b4-448f-b9e7-c970c0ead069" />
+<img width="490" height="1017" alt="Screenshot 2026-10-12 102401" src="https://github.com/user-attachments/assets/f2daba5d-9bd6-4449-8b9b-773cce426879" />
+<img width="506" height="1025" alt="Screenshot 2026-10-12 102238" src="https://github.com/user-attachments/assets/ebe54e24-857d-4a49-8330-253a22bfce7f" />
+<img width="503" height="1025" alt="Screenshot 2026-10-12 102223" src="https://github.com/user-attachments/assets/9a1ce2cb-8c48-478d-ab5d-6eb641996091" />
+<img width="497" height="1016" alt="Screenshot 2026-10-12 102149" src="https://github.com/user-attachments/assets/14325c93-7cea-4df1-88a0-051b2730fa90" />
 
 ---
 
-## 🧱 Tech Stack
+## 🧱 Tech Stack<img width="487" height="1011" alt="Screenshot 2026-10-12 100911" src="https://github.com/user-attachments/assets/624b236a-a6c7-403a-90ae-a68e37c68473" />
+
+
 
 - 💙 Flutter
 - 🔥 Firebase
